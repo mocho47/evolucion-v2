@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: evolucion-v2
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn evolucion_server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GROQ_API_KEY
+        value: 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
+      - key: ZAI_API_KEY
+        value: 51e52183073542feb10d9c63d19a1731.TqakijJotGp76x5q
+      - key: EVO_DB
+        value: /data/evolucion.db
+    disk:
+      name: evolucion-db
+      mountPath: /data
+      sizeGB: 1
