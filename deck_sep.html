@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución — Propuesta Institucional</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#03050a;--s1:#060a14;--s2:#0a0f1e;--border:#1a2040;
+  --blue:#0080ff;--blue2:#0060cc;--blue-dim:rgba(0,128,255,.1);
+  --blue-glow:rgba(0,128,255,.2);
+  --accent:#00e5a0;--accent-dim:rgba(0,229,160,.1);
+  --purple:#7c3aed;--purple-dim:rgba(124,58,237,.12);
+  --gold:#ffab00;--gold-dim:rgba(255,171,0,.1);
+  --text:#eeeef8;--muted:#8888aa;--muted2:#4a4a6a;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  overflow:hidden;}
+
+#deck{width:100%;height:100%;position:relative;}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;
+  align-items:center;justify-content:center;padding:3rem 2rem;text-align:center;}
+.slide.active{display:flex;}
+
+#nav{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:1rem;z-index:100;
+  background:rgba(6,10,20,.92);backdrop-filter:blur(10px);
+  border:1px solid var(--border);border-radius:99px;padding:.5rem 1.25rem;}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:var(--muted2);cursor:pointer;transition:all .2s;}
+.nav-dot.on{background:var(--blue);box-shadow:0 0 6px var(--blue);}
+#prev,#next{background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:.15rem .4rem;transition:color .15s;}
+#prev:hover,#next:hover{color:var(--blue);}
+#slide-n{font-size:.7rem;color:var(--muted2);min-width:36px;text-align:center;}
+
+.logo{font-size:.95rem;font-weight:900;letter-spacing:-.01em;position:fixed;top:1.25rem;left:1.5rem;}
+.logo span{color:var(--accent);}
+.logo-tag{font-size:.6rem;color:var(--muted2);letter-spacing:.06em;position:fixed;top:1.25rem;right:1.5rem;}
+
+.tag{display:inline-block;background:var(--blue-dim);border:1px solid rgba(0,128,255,.3);
+  color:var(--blue);border-radius:99px;padding:.3rem .9rem;
+  font-size:.72rem;font-weight:700;letter-spacing:.06em;margin-bottom:1.5rem;}
+.tag.gold{background:var(--gold-dim);border-color:rgba(255,171,0,.3);color:var(--gold);}
+.tag.green{background:var(--accent-dim);border-color:rgba(0,229,160,.25);color:var(--accent);}
+
+h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:900;line-height:1.1;
+  letter-spacing:-.03em;margin-bottom:1rem;max-width:760px;}
+h1 em{font-style:normal;color:var(--blue);}
+h2{font-size:clamp(1.4rem,3.5vw,2.2rem);font-weight:800;line-height:1.2;
+  letter-spacing:-.02em;margin-bottom:.85rem;max-width:720px;}
+h2 em{font-style:normal;color:var(--blue);}
+h2 em.green{color:var(--accent);}
+.sub{font-size:clamp(.9rem,2vw,1.1rem);color:var(--muted);max-width:600px;line-height:1.65;margin-bottom:1.5rem;}
+
+.grid{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:1.5rem;max-width:920px;width:100%;}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1.25rem 1.4rem;text-align:left;flex:1;min-width:220px;max-width:280px;}
+.card.blue{border-color:rgba(0,128,255,.25);}
+.card-ico{font-size:1.5rem;margin-bottom:.6rem;}
+.card-t{font-weight:700;font-size:.92rem;margin-bottom:.35rem;}
+.card-d{font-size:.8rem;color:var(--muted);line-height:1.55;}
+
+/* Modelo 4 partes */
+.cuatro{display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:700px;width:100%;margin-top:1.5rem;}
+.cuatro-item{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1.2rem;text-align:left;}
+.cuatro-item.hl{border-color:rgba(0,128,255,.3);background:var(--blue-dim);}
+.ci-rol{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--blue);margin-bottom:.5rem;}
+.ci-rol.gold{color:var(--gold);}
+.ci-rol.green{color:var(--accent);}
+.ci-t{font-weight:700;font-size:.9rem;margin-bottom:.3rem;}
+.ci-d{font-size:.78rem;color:var(--muted);line-height:1.5;}
+
+/* Ruta */
+.ruta{display:flex;flex-direction:column;gap:.6rem;max-width:600px;width:100%;margin-top:1.25rem;text-align:left;}
+.ruta-step{background:var(--s1);border:1px solid var(--border);border-radius:10px;
+  padding:.85rem 1rem;display:flex;align-items:center;gap:.85rem;}
+.ruta-step.hl{border-color:rgba(0,128,255,.3);}
+.rs-num{font-size:.68rem;font-weight:700;color:var(--blue);min-width:48px;}
+.rs-t{font-weight:700;font-size:.88rem;}
+.rs-d{font-size:.75rem;color:var(--muted);margin-top:.1rem;line-height:1.4;}
+
+/* Datos */
+.dato-row{display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center;margin-top:1.5rem;}
+.dato{text-align:center;min-width:140px;}
+.dato-n{font-size:clamp(2rem,6vw,3.5rem);font-weight:900;color:var(--blue);line-height:1;}
+.dato-l{font-size:.78rem;color:var(--muted);margin-top:.3rem;line-height:1.4;}
+
+.list{list-style:none;text-align:left;max-width:560px;width:100%;margin-top:1rem;}
+.list li{padding:.6rem 0;border-bottom:1px solid var(--border);
+  font-size:.9rem;display:flex;gap:.75rem;align-items:flex-start;line-height:1.5;}
+.list li:last-child{border:none;}
+.list li::before{content:'▸';color:var(--blue);font-weight:700;flex-shrink:0;}
+
+.cta-btn{background:linear-gradient(135deg,var(--blue),var(--blue2));
+  color:#fff;border:none;padding:.85rem 2.2rem;border-radius:99px;
+  font-weight:700;font-size:1rem;cursor:pointer;text-decoration:none;
+  margin-top:1.5rem;display:inline-block;
+  box-shadow:0 8px 24px var(--blue-glow);}
+.url{font-size:.8rem;color:var(--muted2);margin-top:.65rem;}
+
+.slide-cover{background:radial-gradient(ellipse at 50% 30%,#040c1a 0%,var(--bg) 65%);}
+.slide-dark{background:var(--s1);}
+
+@media(max-width:600px){
+  .cuatro{grid-template-columns:1fr;}
+  .card{min-width:160px;}
+  .slide{padding:2rem 1.25rem;}
+  .dato-row{gap:.85rem;}
+}
+</style>
+</head>
+<body>
+
+<div class="logo">EVO<span>LUCIÓN</span></div>
+<div class="logo-tag">Propuesta institucional</div>
+
+<div id="deck">
+
+<!-- 1. PORTADA -->
+<div class="slide slide-cover active">
+  <div class="tag">Secretaría de Educación Pública · Gobierno del Estado</div>
+  <h1>Inteligencia artificial<br>para el <em>desarrollo humano</em><br>del adolescente mexicano</h1>
+  <p class="sub">Una plataforma que ya opera, con familias reales, diseñada desde México para el sistema educativo mexicano.</p>
+</div>
+
+<!-- 2. EL DIAGNÓSTICO -->
+<div class="slide">
+  <div class="tag">El diagnóstico</div>
+  <h2>Tres crisis simultáneas que el sistema educativo actual <em>no tiene herramientas para atender</em></h2>
+  <div class="grid">
+    <div class="card blue"><div class="card-ico">🧠</div><div class="card-t">Bienestar emocional</div><div class="card-d">El orientador escolar atiende a cientos de alumnos con recursos mínimos. Las señales de riesgo no se detectan hasta que se convierten en crisis.</div></div>
+    <div class="card blue"><div class="card-ico">🧭</div><div class="card-t">Deserción vocacional</div><div class="card-d">Los jóvenes eligen carrera por presión familiar o por descarte. El resultado es deserción universitaria masiva y talento humano desperdiciado.</div></div>
+    <div class="card blue"><div class="card-ico">📚</div><div class="card-t">Rezago académico</div><div class="card-d">Ciclo tras ciclo, miles de alumnos reprueban materias sin acceso a apoyo personalizado. Las academias presenciales son inalcanzables para la mayoría.</div></div>
+  </div>
+</div>
+
+<!-- 3. QUÉ ES -->
+<div class="slide slide-dark">
+  <div class="tag green">La solución</div>
+  <h2>Evolución: el primer asistente de desarrollo humano adolescente <em class="green">diseñado para México</em></h2>
+  <ul class="list">
+    <li>Acompañamiento emocional continuo con marcos psicológicos validados (Erikson, Siegel, Dweck, CNV)</li>
+    <li>Detección automática de aptitudes e inteligencias múltiples (Gardner) a través de conversación natural</li>
+    <li>Orientación vocacional activa — no un catálogo, un proceso vivo con el alumno</li>
+    <li>Tutoría académica personalizada para regularización — única en su tipo en el mercado digital</li>
+    <li>Funciona sin internet — modelos de IA locales para comunidades con baja conectividad</li>
+  </ul>
+</div>
+
+<!-- 4. DIFERENCIADOR CLAVE -->
+<div class="slide">
+  <div class="tag gold">Innovación sin precedente</div>
+  <h2>Regularización escolar con IA:<br><em>nadie lo hace.</em></h2>
+  <p class="sub">No existe en México una solución digital que combine tutoría conversacional con IA, perfil psicológico del alumno y seguimiento real del avance en materias reprobadas.</p>
+  <div class="grid">
+    <div class="card"><div class="card-ico">❌</div><div class="card-t">Academia presencial</div><div class="card-d">Costosa, inaccesible para la mayoría, horario fijo, genérica, no conoce al alumno.</div></div>
+    <div class="card"><div class="card-ico">❌</div><div class="card-t">Plataformas de video</div><div class="card-d">Unidireccionales. No detectan el bloqueo real. No se adaptan al perfil del alumno.</div></div>
+    <div class="card blue"><div class="card-ico">✅</div><div class="card-t">Evolución</div><div class="card-d">Conversacional, personalizada, a cualquier hora, desde cualquier lugar, con perfil psicológico integrado.</div></div>
+  </div>
+</div>
+
+<!-- 5. MODELO 4 PARTES -->
+<div class="slide slide-dark">
+  <div class="tag">Modelo de colaboración</div>
+  <h2>Un modelo donde <em>todos aportan</em><br>y todos ganan</h2>
+  <div class="cuatro">
+    <div class="cuatro-item"><div class="ci-rol">Alumno</div><div class="ci-t">Aporta tiempo y confianza</div><div class="ci-d">Recibe un asistente real de desarrollo humano que lo acompaña durante toda su trayectoria.</div></div>
+    <div class="cuatro-item"><div class="ci-rol">Institución educativa</div><div class="ci-t">Aporta infraestructura y orientador</div><div class="ci-d">Obtiene diferenciación, mejores indicadores de bienestar y resultados académicos medibles.</div></div>
+    <div class="cuatro-item hl"><div class="ci-rol gold">SEP / Gobierno del Estado</div><div class="ci-t">Aporta certificación y respaldo</div><div class="ci-d">Accede a datos anónimos agregados de aptitudes, bienestar y rezago — sin ver datos individuales. Política pública basada en evidencia real.</div></div>
+    <div class="cuatro-item"><div class="ci-rol green">Simplex / Evolución</div><div class="ci-t">Aporta plataforma y tecnología</div><div class="ci-d">Mantiene y escala el sistema. Modelo de ingreso por alumno activo — alineado al impacto real.</div></div>
+  </div>
+</div>
+
+<!-- 6. DATOS PARA SEP -->
+<div class="slide">
+  <div class="tag gold">Valor para la autoridad educativa</div>
+  <h2>Por primera vez, datos reales<br>del <em>bienestar adolescente</em> a escala</h2>
+  <p class="sub">Sin acceder a ningún dato individual, la SEP puede ver tendencias nacionales que hoy no existen en ningún sistema.</p>
+  <div class="grid">
+    <div class="card blue"><div class="card-ico">📊</div><div class="card-t">Aptitudes emergentes por región</div><div class="card-d">¿Qué talentos predominan en los jóvenes de cada estado? Datos para política de becas y programas vocacionales.</div></div>
+    <div class="card blue"><div class="card-ico">🧠</div><div class="card-t">Indicadores de bienestar</div><div class="card-d">Tendencias emocionales anónimas por ciclo escolar — un termómetro real que hoy no existe.</div></div>
+    <div class="card blue"><div class="card-ico">📉</div><div class="card-t">Rezago académico real</div><div class="card-d">Qué materias generan más bloqueo y en qué puntos exactos — información accionable para reformas curriculares.</div></div>
+  </div>
+</div>
+
+<!-- 7. PRIVACIDAD Y MARCO LEGAL -->
+<div class="slide slide-dark">
+  <div class="tag">Marco legal y privacidad</div>
+  <h2>Diseñado con los estándares<br>más altos de <em>protección de datos</em></h2>
+  <ul class="list">
+    <li>Cumplimiento con LFPDPPP — datos de menores, titulares los padres</li>
+    <li>Datos residen en servidores en México — soberanía de datos nacional</li>
+    <li>Consentimiento parental digital, firmado y auditable</li>
+    <li>Director del plantel como responsable legal ante la autoridad educativa</li>
+    <li>Protocolo de crisis documentado por escrito — activa orientador, padres y capellán si aplica</li>
+    <li>SEP accede solo a datos anónimos agregados — nunca a conversaciones individuales</li>
+  </ul>
+</div>
+
+<!-- 8. RUTA DE VALIDACIÓN -->
+<div class="slide">
+  <div class="tag">Ruta de implementación</div>
+  <h2>De piloto privado a<br><em>política educativa nacional</em></h2>
+  <div class="ruta">
+    <div class="ruta-step hl">
+      <div><div class="rs-num">HOY</div></div>
+      <div><div class="rs-t">Sistema operativo con familias reales</div><div class="rs-d">Plataforma funcionando, conversaciones activas, perfiles construidos. La evidencia existe.</div></div>
+    </div>
+    <div class="ruta-step">
+      <div><div class="rs-num">MES 1-3</div></div>
+      <div><div class="rs-t">Primer plantel piloto — colegio privado GDL</div><div class="rs-d">Validación institucional, datos de impacto, métricas de bienestar y rendimiento.</div></div>
+    </div>
+    <div class="ruta-step">
+      <div><div class="rs-num">MES 3-6</div></div>
+      <div><div class="rs-t">Expansión a 5-10 planteles</div><div class="rs-d">Masa crítica de datos. Reporte de impacto para la autoridad educativa.</div></div>
+    </div>
+    <div class="ruta-step hl">
+      <div><div class="rs-num">AÑO 1-2</div></div>
+      <div><div class="rs-t">Presentación formal a SEP con evidencia real del piloto</div><div class="rs-d">Propuesta de certificación como herramienta oficial de orientación educativa.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 9. CTA -->
+<div class="slide slide-cover">
+  <div class="tag green">Siguiente paso</div>
+  <h2>El piloto ya puede comenzar.<br><em>La plataforma está lista.</em></h2>
+  <p class="sub">Solicitamos la oportunidad de presentar la plataforma en operación y definir juntos el primer plantel piloto con respaldo institucional.</p>
+  <a href="/app" class="cta-btn">Ver plataforma en vivo</a>
+  <div class="url">milanmontellanoanuar@gmail.com · Simplex · Guadalajara, México</div>
+</div>
+
+</div>
+
+<div id="nav">
+  <button id="prev">‹</button>
+  <div id="dots"></div>
+  <span id="slide-n">1 / 9</span>
+  <button id="next">›</button>
+</div>
+
+<script>
+const slides=document.querySelectorAll('.slide'),total=slides.length;
+let cur=0;
+const dots=document.getElementById('dots'),slideN=document.getElementById('slide-n');
+for(let i=0;i<total;i++){const d=document.createElement('div');d.className='nav-dot'+(i===0?' on':'');d.onclick=()=>go(i);dots.appendChild(d);}
+function go(n){slides[cur].classList.remove('active');dots.children[cur].classList.remove('on');cur=(n+total)%total;slides[cur].classList.add('active');dots.children[cur].classList.add('on');slideN.textContent=(cur+1)+' / '+total;}
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(cur+1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(cur-1);});
+let tx=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)go(dx<0?cur+1:cur-1);});
+</script>
+</body>
+</html>

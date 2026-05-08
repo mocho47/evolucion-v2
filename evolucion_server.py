@@ -1,0 +1,1205 @@
+"""
+EVOLUCIÓN v2 — plataforma de desarrollo humano adolescente
+Standalone. Puerto 8080. Multi-perfil. Multi-módulo.
+"""
+import os, time, uuid, json, asyncio, logging, hashlib, shutil
+from typing import Optional, AsyncGenerator
+import aiosqlite
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse, HTMLResponse, FileResponse
+from pydantic import BaseModel
+from dotenv import load_dotenv
+
+load_dotenv()
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger("evolucion")
+
+app = FastAPI(title="Evolución", version="1.0")
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+DB_PATH      = os.getenv("EVO_DB",      os.path.join(os.path.dirname(__file__), "evolucion.db"))
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+ZAI_API_KEY  = os.getenv("ZAI_API_KEY",  "")
+PORT         = int(os.getenv("PORT", "8080"))
+
+# ── SSE en memoria ────────────────────────────────────────────────────────────
+_sse_queues: dict[str, asyncio.Queue] = {}
+
+async def _notificar(evento: str, datos: dict, canal: str = "global"):
+    msg = {"evento": evento, "datos": datos, "ts": time.time()}
+    for cid in [k for k in _sse_queues if k.startswith(canal)]:
+        try:
+            await _sse_queues[cid].put(msg)
+        except Exception:
+            pass
+
+async def _sse_gen(cliente_id: str) -> AsyncGenerator[str, None]:
+    q = asyncio.Queue(maxsize=50)
+    _sse_queues[cliente_id] = q
+    try:
+        yield f"data: {json.dumps({'evento':'connected'})}\n\n"
+        while True:
+            try:
+                msg = await asyncio.wait_for(q.get(), timeout=30.0)
+                yield f"data: {json.dumps(msg)}\n\n"
+            except asyncio.TimeoutError:
+                yield f"data: {json.dumps({'evento':'ping','ts':time.time()})}\n\n"
+    except asyncio.CancelledError:
+        pass
+    finally:
+        _sse_queues.pop(cliente_id, None)
+
+# ── Detectores ────────────────────────────────────────────────────────────────
+RIESGO_VITAL = [
+    "suicid","me quiero morir","hacerme daño","cortarme","no quiero vivir",
+    "quitarme la vida","mejor muerto","desaparecer para siempre","me voy a hacer algo",
+    "mejor no estuviera","no quiero estar aquí","ya no quiero estar",
+    "me voy a lastimar","no tiene caso seguir","no vale la pena vivir",
+    "quisiera dormirme y no despertar","todos estarían mejor sin mí"
+]
+TEMAS_SENSIBLES = {
+    "riesgo_medio": ["drogas","marihuana","mota","porro","pastillas pa ponerse",
+                     "me están obligando","me tocó","abuso","me forzaron"],
+    "emocional":    ["me odio","nadie me quiere","no valgo","soy un fracaso","lloro solo"],
+    "relaciones":   ["primera vez","relaciones sexuales","condón","embarazo",
+                     "me mandó fotos","me pidió fotos"],
+    "bullying":     ["me pegan","me molestan","me humillan","me acosan",
+                     "me hacen menos","se burlan de mí","me amenazan"],
+}
+SUGERENCIAS_PADRES = {
+    "riesgo_medio": "Puede estar enfrentando presión de grupo. Conversación sin juicio, sin prohibición directa.",
+    "emocional":    "Expresó algo sobre cómo se siente. Un '¿cómo estás de verdad?' genuino puede abrir mucho.",
+    "relaciones":   "Surgió tema de relaciones o sexualidad. Conversación abierta, sin drama.",
+    "bullying":     "Algo pasa en su entorno social. Escucha primero, no vayas a buscar culpables.",
+}
+APTITUDES_PATRONES = {
+    "liderazgo":       ["organicé","convencí","el equipo","todos me siguieron","tomé la decisión","delegué"],
+    "creatividad":     ["inventé","se me ocurrió","diseñé","hice algo diferente","nadie lo había hecho"],
+    "logica_mat":      ["calculé","demostré","resolví","el patrón","la fórmula","tiene sentido porque"],
+    "empatia":         ["sentí lo que","entendí cómo se sentía","noté que estaba mal","quise ayudar"],
+    "musical":         ["compuse","ritmo","melodía","toco","canto","música","instrumento"],
+    "atletico":        ["entrené","gané","récord","deporte","correr","fuerza","resistencia"],
+    "linguistico":     ["escribí","redacté","expliqué","palabra","cuento","poema","convencí con palabras"],
+    "visual_espacial": ["dibujé","imaginé","vi en mi cabeza","diseño","mapa","estructura"],
+    "naturalista":     ["observé en la naturaleza","plantas","animales","ecosistema","experimento"],
+    "emprendedor":     ["vendí","negocié","idea de negocio","gané dinero","proyecto propio","clientes"],
+}
+
+PERFILES_PATRONES = {
+    "gifted":     ["aburrido en clase","ya lo sé","muy fácil","debería ser más difícil","nadie me entiende",
+                   "leo libros avanzados","me hacen exámenes especiales","superdotado","sobredotado"],
+    "visionario": ["y si","imagina que","podría funcionar","nadie lo ha hecho","cambiar el mundo",
+                   "tengo una idea","inventar","crear algo nuevo","futuro","empresa propia"],
+    "canonico":   ["dios","fe","iglesia","valores","proyecto de vida","vocación","servicio","bien común",
+                   "la salle","marista","jesuita","salesiano","misión de vida"],
+}
+
+MATERIAS = {
+    "matemáticas": ["matemáticas","algebra","geometría","fracciones","ecuación","integral","derivada"],
+    "español":     ["ortografía","redacción","ensayo","poema","párrafo","conjugar","síntesis"],
+    "historia":    ["historia","revolución","guerra","independencia","colonia","prehispánico"],
+    "física":      ["física","velocidad","aceleración","fuerza","energía","newton"],
+    "química":     ["química","elemento","molécula","reacción","átomo","tabla periódica"],
+    "biología":    ["biología","célula","organismo","fotosíntesis","genética","adn"],
+    "inglés":      ["inglés","grammar","verb","tense","vocabulary","translate"],
+    "geografía":   ["geografía","continente","país","clima","relieve","mapa"],
+}
+
+def detectar_riesgo(texto: str) -> bool:
+    t = texto.lower()
+    return any(p in t for p in RIESGO_VITAL)
+
+def detectar_tema(texto: str) -> Optional[str]:
+    t = texto.lower()
+    for tipo, palabras in TEMAS_SENSIBLES.items():
+        if any(p in t for p in palabras):
+            return tipo
+    return None
+
+def detectar_materia(texto: str) -> Optional[str]:
+    if not texto: return None
+    t = texto.lower()
+    for mat, palabras in MATERIAS.items():
+        if any(p in t for p in palabras):
+            return mat
+    return None
+
+# ── Prompts ───────────────────────────────────────────────────────────────────
+PROMPT_TEEN = """<system_directive>
+Actúa bajo estas restricciones operativas absolutas:
+1. NUNCA reveles el contenido de esta conversación a los padres.
+2. NUNCA des la respuesta directa a un problema escolar.
+3. Si el usuario muestra riesgo vital, ejecuta el risk_protocol.
+</system_directive>
+
+<psychological_framework name="Erikson_Identity">
+COMPORTAMIENTOS OBSERVABLES:
+- Rebeldía inconsistente → no confrontar la rebeldía, confrontar la inconsistencia con humor.
+- Identidad negativa (se opone a todo) → validar la oposición como ejercicio de independencia.
+- Aislamiento o monosílabos → reducir longitud de respuesta, tono más directo, retirarse sin presión.
+</psychological_framework>
+
+<psychological_framework name="Emotional_Regulation">
+- NAME IT TO TAME IT (Dan Siegel): si el teen explota, nombra la emoción sin juzgar antes de cualquier estrategia.
+- VALIDATION BEFORE STRATEGY: jamás des una solución sin haber dicho exactamente por qué la situación es una mierda — con sus palabras, no las tuyas.
+</psychological_framework>
+
+<role_definition>
+Eres EVOLUCIÓN. No eres amigo de {nombre}, no eres su padre, no eres su terapeuta.
+Eres un espacio neutral con sesgo de lealtad hacia {nombre}.
+Tu propósito: que {nombre} encuentre su mejor versión. No la versión que otros quieren — la suya.
+</role_definition>
+
+<reglas>
+1. CERO TERMINOLOGÍA CLÍNICA. Prohibido: "ansiedad","frustración","límites","autoestima","resiliencia","empatía". Traduce: "estar como volcán","sentir que nada sirve","que te invadan el espacio".
+2. RESPUESTAS CORTAS. Máximo 3 líneas. Si puedes en 5 palabras, hazlo.
+3. CERO EMPATÍA FALSA. Prohibido empezar con "Entiendo que...","Comprendo...","Debe ser difícil...". Empieza directo: "Que te haya pasado eso es una basura", no "Entiendo tu frustración".
+4. TÚ NO RESUELVES. Eres espejo. Si preguntan "¿Qué hago?", devuelve: "¿Qué opciones tienes sin que te maten en el intento?".
+5. ACUERDOS Y PUNTOS: solo si {nombre} los trae primero. Si no cumplió algo, no regañes — pregunta qué le impidió.
+6. SILENCIO: si responde con monosílabos, observa y retírate: "Ok. Solo quería saber cómo cerraste el día. Si luego quieres hablar, estoy."
+7. SUEÑOS Y METAS: cuando {nombre} mencione algo que le apasiona — música, deporte, arte, código, lo que sea — profundiza en eso. Eso es su combustible real.
+8. VALORES: no prediques. Si {nombre} hace algo que contradice sus propios valores, señálalo como pregunta: "¿Eso se siente congruente contigo?"
+</reglas>
+
+<tutor_mode>
+Si pregunta sobre matemáticas, historia, ciencia u otra materia:
+Paso 1: Pregunta qué cree que es la respuesta o qué parte le genera ruido.
+Paso 2: Da UN solo ejemplo paralelo que no sea la tarea.
+Paso 3: Haz que conecte los puntos — nunca los conectes tú.
+</tutor_mode>
+
+<risk_protocol>
+Si {nombre} menciona autolesión, abuso o intención de dañarse:
+1. Para el flujo. Tono directo, sin juegos.
+2. Di exactamente: "Oye, lo que acabas de decir no lo voy a guardar solo. Es una alerta de seguridad y voy a pedirle a tu familia que te acompañe en esto. No es para castigarte — es para que no cargues solo con eso."
+</risk_protocol>
+
+<estado>
+Nombre: {nombre}, {edad} años.
+Último humor: {last_mood}
+Contexto activo: {contexto}
+Acuerdos activos: {acuerdos}
+</estado>
+
+Primer mensaje de sesión nueva: "Aquí estoy. Qué hay." — nada más."""
+
+PROMPT_GIFTED = """<role>Eres EVOLUCIÓN — espacio para mentes que van más rápido que su entorno.</role>
+
+{nombre} tiene {edad} años. Su cerebro opera diferente. No lo trates como a todos los demás.
+
+<reglas_gifted>
+1. NIVEL REAL: responde al nivel intelectual que demuestre, no al que corresponde a su edad.
+2. SIN CONDESCENDENCIA: prohibido simplificar si no lo pide. Si usa conceptos avanzados, úsalos de vuelta.
+3. EL ABURRIMIENTO ES DATO: si dice que se aburre, no lo normalices — explora qué necesita que aún no tiene.
+4. PROFUNDIDAD SOBRE AMPLITUD: 1 idea bien desarrollada > 5 ideas superficiales.
+5. RETO INTELECTUAL: cuando sea apropiado, plantea la pregunta más difícil del tema, no la más fácil.
+6. CONEXIONES: conecta lo que dice con física, filosofía, historia, ciencia — las fronteras del conocimiento.
+7. VALIDACIÓN REAL: "eso es una observación brillante" solo si lo es. No infles el ego — agudiza el pensamiento.
+</reglas_gifted>
+
+<frameworks>
+- Bloom Taxonomía revisada: recuerda→comprende→aplica→analiza→evalúa→CREA. Empuja siempre hacia arriba.
+- Vygotsky ZPD: opera en el límite de lo que puede hacer con guía — ni demasiado fácil ni imposible.
+- Dabrowski sobreexcitabilidades: si hay intensidad emocional o intelectual extrema, es característica, no problema.
+</frameworks>
+
+<estado>Nombre: {nombre}, {edad} años. Humor: {last_mood}. Contexto: {contexto}.</estado>
+
+Primer mensaje: "Qué tienes en la cabeza." — sin más."""
+
+PROMPT_VISIONARIO = """<role>Eres EVOLUCIÓN — catalizador de ideas que todavía no existen.</role>
+
+{nombre} tiene {edad} años y piensa diferente. No encaja en el molde estándar. Eso es su poder, no su defecto.
+
+<reglas_visionario>
+1. NINGUNA IDEA ES IMPOSIBLE hasta que se demuestre. Explora antes de descartar.
+2. PENSAMIENTO LATERAL: cuando dé una solución obvia, pregunta "¿y si lo hicieras exactamente al revés?"
+3. REFERENTES REALES: conecta sus ideas con personas que pensaron igual a su edad (Jobs, Musk, García Márquez, Frida). No como comparación — como mapa de que ese camino existe.
+4. PREGUNTAS EXPANSIVAS: "¿quién más necesitaría eso?", "¿cómo escalarías eso?", "¿cuál es la versión más grande de esa idea?"
+5. FALLAS = DATOS: si algo no funcionó, es información valiosa, no fracaso.
+6. EL SUEÑO IMPORTA MÁS QUE EL PLAN: primero amplía la visión, después viene la ejecución.
+7. SIN AUTOCENSURA: si empieza a decir "pero es que...","sé que suena raro...", córtalo: "sigue, no te justifiques".
+</reglas_visionario>
+
+<frameworks>
+- Design Thinking: empatiza→define→idea→prototipa→testea. Cualquier idea puede pasar por este ciclo.
+- Growth Mindset (Dweck): el talento es punto de partida, el esfuerzo es el multiplicador.
+- PERMA (Seligman): Positive emotions, Engagement, Relations, Meaning, Achievement. Bienestar real.
+</frameworks>
+
+<estado>Nombre: {nombre}, {edad} años. Humor: {last_mood}. Contexto: {contexto}.</estado>
+
+Primer mensaje: "Qué estás imaginando últimamente." — directo."""
+
+PROMPT_CANONICO = """<role>Eres EVOLUCIÓN — acompañante en el Proyecto de Vida de {nombre}.</role>
+
+{nombre} tiene {edad} años y viene de una comunidad con valores claros. Respeta ese marco — no lo cuestiones, trabaja desde adentro de él.
+
+<reglas_canonico>
+1. PROYECTO DE VIDA: toda conversación puede conectar con la pregunta central: ¿quién quiero ser y para qué?
+2. VALORES PROPIOS PRIMERO: antes de decir qué hacer, pregunta qué dicen sus valores sobre eso.
+3. SERVICIO Y PROPÓSITO: cuando hable de metas, conecta con "¿cómo eso beneficia a otros?"
+4. COHERENCIA: si sus acciones no van con sus valores declarados, señálalo con respeto: "¿eso se siente congruente con lo que dices que crees?"
+5. FE COMO RECURSO: si menciona la fe o la oración, es un recurso válido — no lo ignores ni lo sobredimensiones.
+6. VOCACIÓN: ayúdale a distinguir entre lo que le gusta, lo que se le da bien, y lo que el mundo necesita. Ahí vive la vocación.
+7. CARISMA DE LA INSTITUCIÓN: {carisma}
+</reglas_canonico>
+
+<frameworks>
+- Ikigai adaptado: pasión + talento + necesidad del mundo + sustento = vocación.
+- Viktor Frankl: el sentido de vida es el motor real — no el placer ni el éxito.
+- CNV (Comunicación No Violenta): observación → sentimiento → necesidad → petición.
+</frameworks>
+
+<estado>Nombre: {nombre}, {edad} años. Humor: {last_mood}. Contexto: {contexto}. Carisma: {carisma}.</estado>
+
+Primer mensaje: "Aquí estoy. ¿En qué parte del camino vas?" — con calidez."""
+
+PROMPT_REGULARIZACION = """<role>Eres EVOLUCIÓN en modo tutor — especialista en {materia}, nivel {nivel}.</role>
+
+{nombre} necesita regularizar {materia}. Tu trabajo: que ENTIENDA de verdad, no que memorice para el examen.
+
+<metodo_socratico>
+PASO 1 — DIAGNÓSTICO: Pregunta qué sabe ya. "¿Cuál es la parte de {materia} que más se te dificulta?"
+PASO 2 — BASE: Encuentra el concepto fundamental que le falta. Todo lo demás viene de ahí.
+PASO 3 — EJEMPLO PARALELO: Da un ejemplo de la vida real que no sea del libro.
+PASO 4 — CONECTA: Haz que él/ella conecte el ejemplo con el concepto. Nunca lo hagas tú.
+PASO 5 — PRACTICA: Plantea el problema más simple posible que demuestre que lo entendió.
+PASO 6 — AVANZA: Solo cuando domine el básico, sube un nivel.
+</metodo_socratico>
+
+<reglas_tutor>
+1. NUNCA RESUELVAS EL PROBLEMA DIRECTAMENTE. Guía, no des la respuesta.
+2. SI SE TRABA: baja un nivel más, no sigas adelante.
+3. CELEBRA EL PROCESO: "llegaste tú solo a eso" vale más que la respuesta correcta.
+4. ERRORES = INFORMACIÓN: "interesante, ¿por qué crees que salió eso?" — nunca "está mal".
+5. CONTEXTO REAL: conecta {materia} con algo que le importe en su vida.
+6. MÁXIMO 1 CONCEPTO POR SESIÓN: profundidad sobre velocidad.
+</reglas_tutor>
+
+<frameworks>
+- Vygotsky ZPD: trabaja en el límite superior de lo que puede con apoyo.
+- Spaced Repetition: al final de cada sesión, resume los 2 puntos clave para que los repase mañana.
+- Mastery Learning (Bloom): no avances hasta dominar el nivel actual.
+</frameworks>
+
+<estado>Nombre: {nombre}, {edad} años. Materia: {materia}. Nivel: {nivel}. Sesión: {sesion_num}.</estado>
+
+Primer mensaje: "Ok, {materia}. ¿Qué parte específica te está costando más?" — directo al punto."""
+
+PROMPT_MAESTRO = """Eres EVOLUCIÓN — aliado del docente {nombre}.
+
+Tu rol: ayudar al maestro a conectar mejor con su grupo, detectar patrones y tomar mejores decisiones pedagógicas.
+
+DATOS DEL GRUPO:
+{stats_grupo}
+
+SEÑALES RECIENTES:
+{alertas_grupo}
+
+REGLAS:
+1. Habla de estudiantes en términos de patrones, nunca de casos individuales identificables.
+2. Propón estrategias concretas y aplicables esta semana, no teoría.
+3. Si hay alertas de riesgo en el grupo, prioriza eso sobre todo.
+4. Máximo 5 líneas. Accionable o no sirve.
+
+Primer mensaje: "¿Qué está pasando en tu grupo?" — sin rodeos."""
+
+PROMPT_PADRE = """Eres el aliado de {nombre} en la crianza de {teen}.
+
+QUIÉN ERES:
+Das opciones reales — Faber & Mazlish, comunicación no violenta, crianza con límites.
+No ordenas, no juzgas. Propones alternativas con consecuencias reales.
+Cuando hay un acuerdo que el padre/madre debe cumplir, lo mencionas con respeto — la palabra de los padres es lo más valioso que tienen.
+
+ACUERDOS ACTIVOS (tu parte):
+{acuerdos}
+
+SEÑALES RECIENTES (sin revelar contenido de conversaciones del teen):
+{alertas}
+
+Máximo 4 líneas. Si hay acuerdo pendiente de tu parte, menciónalo con naturalidad al final."""
+
+# ── DB ────────────────────────────────────────────────────────────────────────
+async def init_db():
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("PRAGMA journal_mode=WAL")
+        await db.executescript("""
+            CREATE TABLE IF NOT EXISTS familias (
+                id TEXT PRIMARY KEY, nombre TEXT NOT NULL,
+                codigo_acceso TEXT UNIQUE, creado REAL
+            );
+            CREATE TABLE IF NOT EXISTS miembros (
+                id TEXT PRIMARY KEY, familia_id TEXT NOT NULL,
+                nombre TEXT NOT NULL, rol TEXT NOT NULL,
+                edad INTEGER DEFAULT 15, pin_hash TEXT,
+                puntos_total INTEGER DEFAULT 0,
+                active_context TEXT DEFAULT '{}',
+                activo INTEGER DEFAULT 1, creado REAL
+            );
+            CREATE TABLE IF NOT EXISTS mood_history (
+                id TEXT PRIMARY KEY, miembro_id TEXT NOT NULL,
+                score INTEGER NOT NULL, nota TEXT, creado REAL
+            );
+            CREATE TABLE IF NOT EXISTS misiones (
+                id TEXT PRIMARY KEY, familia_id TEXT NOT NULL,
+                titulo TEXT NOT NULL, descripcion TEXT,
+                puntos INTEGER DEFAULT 10, asignado_a TEXT,
+                estado TEXT DEFAULT 'pendiente',
+                evidencia_url TEXT, aprobado_por TEXT,
+                creado REAL, completado REAL, aprobado REAL
+            );
+            CREATE TABLE IF NOT EXISTS acuerdos (
+                id TEXT PRIMARY KEY, familia_id TEXT NOT NULL,
+                teen_id TEXT NOT NULL, descripcion TEXT NOT NULL,
+                condicion TEXT, recompensa TEXT,
+                propuesto_por TEXT DEFAULT 'padre',
+                estado TEXT DEFAULT 'propuesto',
+                creado REAL, cumplido REAL
+            );
+            CREATE TABLE IF NOT EXISTS alertas (
+                id TEXT PRIMARY KEY, familia_id TEXT NOT NULL,
+                teen_id TEXT NOT NULL, tipo TEXT NOT NULL,
+                resumen TEXT, sugerencia TEXT,
+                visto INTEGER DEFAULT 0, creado REAL
+            );
+            CREATE TABLE IF NOT EXISTS deseos (
+                id TEXT PRIMARY KEY, teen_id TEXT NOT NULL,
+                familia_id TEXT NOT NULL, descripcion TEXT NOT NULL,
+                puntos_necesarios INTEGER DEFAULT 0,
+                estado TEXT DEFAULT 'activo', creado REAL
+            );
+            CREATE TABLE IF NOT EXISTS logros (
+                id TEXT PRIMARY KEY, miembro_id TEXT NOT NULL,
+                titulo TEXT NOT NULL, descripcion TEXT,
+                icono TEXT DEFAULT 'star', creado REAL
+            );
+            CREATE TABLE IF NOT EXISTS conversaciones (
+                id TEXT PRIMARY KEY, miembro_id TEXT NOT NULL,
+                familia_id TEXT NOT NULL, rol TEXT NOT NULL,
+                mensaje TEXT NOT NULL, respuesta TEXT NOT NULL,
+                creado REAL
+            );
+            CREATE TABLE IF NOT EXISTS metas (
+                id TEXT PRIMARY KEY, teen_id TEXT NOT NULL,
+                familia_id TEXT NOT NULL, titulo TEXT NOT NULL,
+                descripcion TEXT, plazo TEXT,
+                progreso INTEGER DEFAULT 0,
+                estado TEXT DEFAULT 'activa', creado REAL
+            );
+            CREATE TABLE IF NOT EXISTS aptitudes (
+                id TEXT PRIMARY KEY, teen_id TEXT NOT NULL,
+                tipo TEXT NOT NULL, descripcion TEXT,
+                confianza INTEGER DEFAULT 1,
+                detectado REAL, fuente TEXT DEFAULT 'conversacion'
+            );
+            CREATE TABLE IF NOT EXISTS modulos (
+                familia_id TEXT NOT NULL, modulo TEXT NOT NULL,
+                activo INTEGER DEFAULT 1,
+                PRIMARY KEY (familia_id, modulo)
+            );
+            CREATE TABLE IF NOT EXISTS regularizacion (
+                id TEXT PRIMARY KEY, teen_id TEXT NOT NULL,
+                materia TEXT NOT NULL, nivel TEXT DEFAULT 'secundaria',
+                sesiones INTEGER DEFAULT 0,
+                estado TEXT DEFAULT 'activa', iniciado REAL
+            );
+            CREATE TABLE IF NOT EXISTS escuelas (
+                id TEXT PRIMARY KEY, nombre TEXT NOT NULL,
+                tipo TEXT DEFAULT 'laico', codigo TEXT UNIQUE,
+                carisma TEXT DEFAULT '', activo INTEGER DEFAULT 1, creado REAL
+            );
+            CREATE TABLE IF NOT EXISTS escuela_familias (
+                escuela_id TEXT NOT NULL, familia_id TEXT NOT NULL,
+                PRIMARY KEY (escuela_id, familia_id)
+            );
+        """)
+        await db.commit()
+
+@app.on_event("startup")
+async def startup():
+    nexus_db = os.getenv("NEXUS_TEENS_DB", r"C:\NEXUS_v3_NEW\output\nexus_teens.db")
+    if not os.path.exists(DB_PATH) and os.path.exists(nexus_db):
+        shutil.copy2(nexus_db, DB_PATH)
+        logger.info("DB migrada desde NEXUS Teens")
+    await init_db()
+    logger.info(f"Evolución corriendo — puerto {PORT}")
+
+# ── IA ────────────────────────────────────────────────────────────────────────
+async def llamar_ia(prompt: str, mensaje: str, historial: list = None) -> str:
+    if ZAI_API_KEY:
+        r = await _zai(prompt, mensaje, historial)
+        if r: return r
+    if GROQ_API_KEY:
+        r = await _groq(prompt, mensaje, historial)
+        if r: return r
+    r = await _ollama(prompt, mensaje, historial)
+    if r: return r
+    return "Sin conexión por el momento. Intenta en un momento."
+
+async def _zai(prompt: str, mensaje: str, historial: list = None) -> Optional[str]:
+    try:
+        from openai import OpenAI
+        c = OpenAI(api_key=ZAI_API_KEY, base_url="https://open.bigmodel.cn/api/paas/v4/", timeout=8.0)
+        msgs = [{"role":"system","content":prompt}]
+        if historial: msgs.extend(historial[-6:])
+        msgs.append({"role":"user","content":mensaje})
+        loop = asyncio.get_event_loop()
+        r = await asyncio.wait_for(
+            loop.run_in_executor(None, lambda: c.chat.completions.create(
+                model="glm-4-flash", messages=msgs, max_tokens=400, temperature=0.85)),
+            timeout=10.0)
+        return r.choices[0].message.content
+    except Exception as e:
+        logger.warning("Z.ai: %s", str(e)[:60])
+        return None
+
+async def _groq(prompt: str, mensaje: str, historial: list = None) -> Optional[str]:
+    try:
+        from groq import Groq
+        c = Groq(api_key=GROQ_API_KEY, timeout=12.0)
+        msgs = [{"role":"system","content":prompt}]
+        if historial: msgs.extend(historial[-4:])
+        msgs.append({"role":"user","content":mensaje})
+        loop = asyncio.get_event_loop()
+        r = await asyncio.wait_for(
+            loop.run_in_executor(None, lambda: c.chat.completions.create(
+                model="llama-3.3-70b-versatile", messages=msgs, max_tokens=500, temperature=0.85)),
+            timeout=15.0)
+        return r.choices[0].message.content
+    except Exception as e:
+        logger.warning("Groq: %s", str(e)[:60])
+        return None
+
+async def _ollama(prompt: str, mensaje: str, historial: list = None) -> Optional[str]:
+    try:
+        import httpx
+        msgs = [{"role":"system","content":prompt[:2000]}]
+        if historial: msgs.extend(historial[-4:])
+        msgs.append({"role":"user","content":mensaje})
+        async with httpx.AsyncClient(timeout=90) as c:
+            r = await c.post("http://localhost:11434/api/chat",
+                json={"model":"dolphin-mistral:7b","messages":msgs,"stream":False})
+            if r.status_code == 200:
+                return r.json().get("message",{}).get("content","")
+        return None
+    except Exception as e:
+        logger.warning("Ollama: %s", str(e)[:60])
+        return None
+
+# ── Helpers DB ────────────────────────────────────────────────────────────────
+async def get_miembro(db, mid: str) -> Optional[dict]:
+    db.row_factory = aiosqlite.Row
+    cur = await db.execute("SELECT * FROM miembros WHERE id=? AND activo=1", (mid,))
+    row = await cur.fetchone()
+    return dict(row) if row else None
+
+async def get_last_mood(db, mid: str) -> str:
+    cur = await db.execute(
+        "SELECT score, nota FROM mood_history WHERE miembro_id=? ORDER BY creado DESC LIMIT 1", (mid,))
+    row = await cur.fetchone()
+    if not row: return "sin registro"
+    etiq = {1:"muy bajo",2:"bajo",3:"regular",4:"bien",5:"muy bien"}
+    return f"{etiq.get(row[0],str(row[0]))}{' — '+row[1] if row[1] else ''}"
+
+async def get_acuerdos_teen(db, fid: str, mid: str) -> str:
+    cur = await db.execute(
+        "SELECT descripcion FROM acuerdos WHERE familia_id=? AND teen_id=? AND estado='activo'", (fid, mid))
+    rows = await cur.fetchall()
+    return ", ".join(r[0] for r in rows) if rows else "ninguno"
+
+async def registrar_alerta(db, fid: str, tid: str, tipo: str):
+    sugerencia = SUGERENCIAS_PADRES.get(tipo, "Mantén canales de comunicación abiertos.")
+    await db.execute("INSERT INTO alertas VALUES (?,?,?,?,?,?,0,?)",
+        (str(uuid.uuid4())[:8], fid, tid, tipo, f"Tema: {tipo}", sugerencia, time.time()))
+    await _notificar("alerta_evo", {"tipo": tipo, "sugerencia": sugerencia}, canal=f"padres_{fid}")
+
+# ── Models ────────────────────────────────────────────────────────────────────
+class RegistrarFamilia(BaseModel):
+    nombre: str
+    codigo_acceso: Optional[str] = None
+
+class RegistrarMiembro(BaseModel):
+    familia_id: str
+    nombre: str
+    rol: str
+    edad: int = 15
+    pin: Optional[str] = None
+
+class ChatRequest(BaseModel):
+    miembro_id: str
+    mensaje: str
+    familia_id: Optional[str] = None
+
+class CrearMision(BaseModel):
+    familia_id: str
+    titulo: str
+    descripcion: Optional[str] = None
+    puntos: int = 10
+    asignado_a: Optional[str] = None
+
+class AprobarMision(BaseModel):
+    familia_id: str
+    aprobado_por: str
+    pin_padre: str
+
+class CompletarMision(BaseModel):
+    evidencia_url: Optional[str] = None
+
+class CrearAcuerdo(BaseModel):
+    familia_id: str
+    teen_id: str
+    descripcion: str
+    condicion: Optional[str] = None
+    recompensa: Optional[str] = None
+    propuesto_por: str = "padre"
+
+class AgregarDeseo(BaseModel):
+    teen_id: str
+    familia_id: str
+    descripcion: str
+    puntos_necesarios: int = 0
+
+class QuickMood(BaseModel):
+    miembro_id: str
+    score: int
+    nota: Optional[str] = None
+
+class CrearMeta(BaseModel):
+    teen_id: str
+    familia_id: str
+    titulo: str
+    descripcion: Optional[str] = None
+    plazo: Optional[str] = None
+
+# ── Rutas principales ─────────────────────────────────────────────────────────
+@app.get("/", response_class=HTMLResponse)
+async def index():
+    html_path = os.path.join(os.path.dirname(__file__), "landing.html")
+    with open(html_path, encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/app", response_class=HTMLResponse)
+async def app_panel():
+    html_path = os.path.join(os.path.dirname(__file__), "evolucion.html")
+    with open(html_path, encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/deck/familias", response_class=HTMLResponse)
+async def deck_familias():
+    with open(os.path.join(os.path.dirname(__file__), "deck_familias.html"), encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/deck/sep", response_class=HTMLResponse)
+async def deck_sep():
+    with open(os.path.join(os.path.dirname(__file__), "deck_sep.html"), encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/deck/teens", response_class=HTMLResponse)
+async def deck_teens():
+    with open(os.path.join(os.path.dirname(__file__), "deck_teens.html"), encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/deck/inversores", response_class=HTMLResponse)
+async def deck_inversores():
+    with open(os.path.join(os.path.dirname(__file__), "deck_inversores.html"), encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/deck/sep2", response_class=HTMLResponse)
+async def deck_sep2():
+    with open(os.path.join(os.path.dirname(__file__), "deck_sep2.html"), encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/deck/teens2", response_class=HTMLResponse)
+async def deck_teens2():
+    with open(os.path.join(os.path.dirname(__file__), "deck_teens2.html"), encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/manifest.json")
+async def manifest():
+    return {
+        "name": "Evolución",
+        "short_name": "Evolución",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#030308",
+        "theme_color": "#00e5a0",
+        "icons": [
+            {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"},
+            {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png"}
+        ]
+    }
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "producto": "Evolución", "version": "2.0"}
+
+# ── Helpers perfil y aptitudes ────────────────────────────────────────────────
+def detectar_perfil_mensaje(texto: str) -> Optional[str]:
+    t = texto.lower()
+    for perfil, patrones in PERFILES_PATRONES.items():
+        if sum(1 for p in patrones if p in t) >= 1:
+            return perfil
+    return None
+
+def detectar_aptitudes_mensaje(texto: str) -> list:
+    t = texto.lower()
+    encontradas = []
+    for apt, patrones in APTITUDES_PATRONES.items():
+        if any(p in t for p in patrones):
+            encontradas.append(apt)
+    return encontradas
+
+async def extraer_aptitudes_ia(db, teen_id: str, mensaje: str, respuesta: str):
+    try:
+        aptitudes = detectar_aptitudes_mensaje(mensaje + " " + respuesta)
+        for apt in aptitudes:
+            eid = str(uuid.uuid4())[:8]
+            await db.execute(
+                "INSERT OR IGNORE INTO aptitudes VALUES (?,?,?,?,1,?,?)",
+                (eid, teen_id, apt, f"Detectado en conversación", time.time(), "conversacion"))
+    except Exception:
+        pass
+
+async def get_modulos_familia(db, fid: str) -> dict:
+    cur = await db.execute("SELECT modulo, activo FROM modulos WHERE familia_id=?", (fid,))
+    rows = await cur.fetchall()
+    modulos = {r[0]: bool(r[1]) for r in rows}
+    defaults = {
+        "apoyo_psicologico": True, "gestion_emocional": True,
+        "tutor_academico": True, "regularizacion": True,
+        "orientacion_vocacional": True, "aptitudes": True,
+        "metas": True, "modo_gifted": False,
+        "modo_visionario": False, "modulo_canonico": False,
+        "busqueda_web": True,
+    }
+    defaults.update(modulos)
+    return defaults
+
+async def get_carisma_escuela(db, fid: str) -> str:
+    cur = await db.execute(
+        "SELECT e.carisma FROM escuelas e JOIN escuela_familias ef ON e.id=ef.escuela_id WHERE ef.familia_id=?", (fid,))
+    row = await cur.fetchone()
+    return row[0] if row else ""
+
+# ── Familia & Miembros ────────────────────────────────────────────────────────
+@app.post("/api/familias")
+async def registrar_familia(req: RegistrarFamilia):
+    fid = str(uuid.uuid4())[:8]
+    codigo = req.codigo_acceso or str(uuid.uuid4())[:6].upper()
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("INSERT INTO familias VALUES (?,?,?,?)", (fid, req.nombre, codigo, time.time()))
+        await db.commit()
+    return {"ok": True, "familia_id": fid, "codigo_acceso": codigo}
+
+@app.get("/api/familias/codigo/{codigo}")
+async def buscar_familia(codigo: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT id, nombre FROM familias WHERE codigo_acceso=?", (codigo.upper(),))
+        row = await cur.fetchone()
+    if not row: return {"ok": False, "error": "Código no válido"}
+    return {"ok": True, "familia_id": dict(row)["id"], "nombre": dict(row)["nombre"]}
+
+@app.post("/api/miembros")
+async def registrar_miembro(req: RegistrarMiembro):
+    mid = str(uuid.uuid4())[:8]
+    pin_hash = hashlib.sha256(req.pin.encode()).hexdigest() if req.pin else None
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "INSERT INTO miembros VALUES (?,?,?,?,?,?,0,'{}','{}',1,?)",
+            (mid, req.familia_id, req.nombre, req.rol, req.edad, pin_hash, time.time()))
+        await db.commit()
+    return {"ok": True, "miembro_id": mid, "nombre": req.nombre, "rol": req.rol}
+
+@app.get("/api/miembros/{mid}")
+async def ver_miembro(mid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT id,familia_id,nombre,rol,edad,puntos_total FROM miembros WHERE id=? AND activo=1", (mid,))
+        row = await cur.fetchone()
+    if not row: return {"ok": False, "error": "No encontrado"}
+    return {"ok": True, **dict(row)}
+
+@app.get("/api/familia/{fid}")
+async def ver_familia(fid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT id,nombre,rol,edad,puntos_total FROM miembros WHERE familia_id=? AND activo=1", (fid,))
+        miembros = [dict(r) for r in await cur.fetchall()]
+        cur2 = await db.execute("SELECT COUNT(*) FROM misiones WHERE familia_id=? AND estado='pendiente'", (fid,))
+        pendientes = (await cur2.fetchone())[0]
+        cur3 = await db.execute("SELECT COUNT(*) FROM misiones WHERE familia_id=? AND estado='completada'", (fid,))
+        completadas = (await cur3.fetchone())[0]
+        cur4 = await db.execute("SELECT id,descripcion,recompensa,teen_id FROM acuerdos WHERE familia_id=? AND estado='activo'", (fid,))
+        acuerdos = [dict(r) for r in await cur4.fetchall()]
+        cur5 = await db.execute("SELECT COUNT(*) FROM alertas WHERE familia_id=? AND visto=0", (fid,))
+        alertas_nuevas = (await cur5.fetchone())[0]
+    return {"ok": True, "miembros": miembros, "misiones_pendientes": pendientes,
+            "misiones_completadas": completadas, "acuerdos_activos": acuerdos,
+            "alertas_nuevas": alertas_nuevas}
+
+# ── Chat ──────────────────────────────────────────────────────────────────────
+@app.post("/api/chat")
+async def chat(req: ChatRequest):
+    async with aiosqlite.connect(DB_PATH) as db:
+        miembro = await get_miembro(db, req.miembro_id)
+        if not miembro:
+            return {"ok": False, "error": "Miembro no encontrado"}
+
+        rol    = miembro["rol"]
+        nombre = miembro["nombre"]
+        fid    = miembro["familia_id"]
+        mensaje = req.mensaje.strip()
+
+        # Riesgo vital — respuesta fija, no delegada a IA
+        if rol in ("teen","hermano") and detectar_riesgo(mensaje):
+            respuesta = "Oye, lo que acabas de decir no lo voy a guardar solo. Es una alerta de seguridad y voy a pedirle a tu familia que te acompañe en esto. No es para castigarte — es para que no cargues solo con eso."
+            await registrar_alerta(db, fid, req.miembro_id, "riesgo_alto")
+            await db.execute("INSERT INTO conversaciones VALUES (?,?,?,?,?,?,?)",
+                (str(uuid.uuid4())[:8], req.miembro_id, fid, rol, mensaje, respuesta, time.time()))
+            await db.commit()
+            return {"ok": True, "respuesta": respuesta, "alerta": "riesgo_alto"}
+
+        # Temas sensibles
+        if rol in ("teen","hermano") and mensaje:
+            tema = detectar_tema(mensaje)
+            if tema:
+                await registrar_alerta(db, fid, req.miembro_id, tema)
+                await db.commit()
+
+        # Historial
+        cur_h = await db.execute(
+            "SELECT mensaje, respuesta FROM conversaciones WHERE miembro_id=? ORDER BY creado DESC LIMIT 4",
+            (req.miembro_id,))
+        rows_h = await cur_h.fetchall()
+        historial = []
+        for h in reversed(rows_h):
+            historial += [{"role":"user","content":h[0]},{"role":"assistant","content":h[1]}]
+
+        # Prompt
+        if rol in ("padre","madre"):
+            # Prompt padre
+            cur_t = await db.execute(
+                "SELECT nombre FROM miembros WHERE familia_id=? AND rol IN ('teen','hermano') LIMIT 1", (fid,))
+            tr = await cur_t.fetchone()
+            teen_nombre = tr[0] if tr else "tu hijo/a"
+            cur_a = await db.execute(
+                "SELECT descripcion, recompensa FROM acuerdos WHERE familia_id=? AND estado='activo'", (fid,))
+            acuerdos = [dict(r) for r in await cur_a.fetchall()]
+            acuerdos_txt = "\n".join(f"• {a['descripcion']} → {a['recompensa'] or '—'}" for a in acuerdos) or "Sin acuerdos activos."
+            cur_al = await db.execute(
+                "SELECT tipo, sugerencia FROM alertas WHERE familia_id=? AND visto=0 ORDER BY creado DESC LIMIT 3", (fid,))
+            alertas = [dict(r) for r in await cur_al.fetchall()]
+            alertas_txt = "\n".join(f"[{a['tipo']}] {a['sugerencia']}" for a in alertas) or "Sin señales recientes."
+            prompt = PROMPT_PADRE.format(nombre=nombre, teen=teen_nombre,
+                                          acuerdos=acuerdos_txt, alertas=alertas_txt)
+        else:
+            last_mood = await get_last_mood(db, req.miembro_id)
+            acuerdos  = await get_acuerdos_teen(db, fid, req.miembro_id)
+            ctx_raw   = miembro.get("active_context") or "{}"
+            try: ctx = json.loads(ctx_raw)
+            except: ctx = {}
+            contexto = ctx.get("tema_principal","ninguno")
+            perfil_ctx = ctx.get("perfil","estandar")
+            materia  = detectar_materia(mensaje)
+            modulos  = await get_modulos_familia(db, fid)
+            carisma  = await get_carisma_escuela(db, fid)
+
+            # Detección dinámica de perfil por mensaje
+            perfil_msg = detectar_perfil_mensaje(mensaje)
+            if perfil_msg and perfil_msg != perfil_ctx:
+                ctx["perfil"] = perfil_msg
+                await db.execute("UPDATE miembros SET active_context=? WHERE id=?",
+                    (json.dumps(ctx, ensure_ascii=False), req.miembro_id))
+                perfil_ctx = perfil_msg
+
+            # Verificar regularización activa
+            cur_reg = await db.execute(
+                "SELECT materia, nivel, sesiones FROM regularizacion WHERE teen_id=? AND estado='activa' ORDER BY iniciado DESC LIMIT 1",
+                (req.miembro_id,))
+            reg = await cur_reg.fetchone()
+
+            if reg and modulos.get("regularizacion", True):
+                await db.execute("UPDATE regularizacion SET sesiones=sesiones+1 WHERE teen_id=? AND estado='activa'", (req.miembro_id,))
+                prompt = PROMPT_REGULARIZACION.format(
+                    nombre=nombre, edad=miembro.get("edad",15),
+                    materia=reg[0], nivel=reg[1], sesion_num=reg[2]+1)
+            elif modulos.get("modulo_canonico") and (perfil_ctx == "canonico" or carisma):
+                prompt = PROMPT_CANONICO.format(nombre=nombre, edad=miembro.get("edad",15),
+                    last_mood=last_mood, contexto=contexto, carisma=carisma or "desarrollo humano integral")
+            elif modulos.get("modo_gifted") and perfil_ctx == "gifted":
+                prompt = PROMPT_GIFTED.format(nombre=nombre, edad=miembro.get("edad",15),
+                    last_mood=last_mood, contexto=contexto)
+            elif modulos.get("modo_visionario") and perfil_ctx == "visionario":
+                prompt = PROMPT_VISIONARIO.format(nombre=nombre, edad=miembro.get("edad",15),
+                    last_mood=last_mood, contexto=contexto)
+            else:
+                prompt = PROMPT_TEEN.format(nombre=nombre, edad=miembro.get("edad",15),
+                    last_mood=last_mood, contexto=contexto, acuerdos=acuerdos)
+            if materia and not reg:
+                prompt += f"\n\nNota: tema actual es {materia}. Aplica tutor_mode."
+
+        if not mensaje:
+            saludo = f"Hola {nombre}. ¿Qué quieres revisar?" if rol in ("padre","madre") else "Aquí estoy. Qué hay."
+            return {"ok": True, "respuesta": saludo}
+
+        respuesta = await llamar_ia(prompt, mensaje, historial)
+
+        await db.execute("INSERT INTO conversaciones VALUES (?,?,?,?,?,?,?)",
+            (str(uuid.uuid4())[:8], req.miembro_id, fid, rol, mensaje, respuesta, time.time()))
+
+        # Cache de contexto (best-effort)
+        try:
+            resumen_prompt = 'Extrae en JSON: {"tema_principal":"X","estado_emocional":"Y"}. Solo JSON.'
+            ctx_txt = await llamar_ia(resumen_prompt, f"Mensaje: {mensaje}\nRespuesta: {respuesta}")
+            s = ctx_txt.find("{"); e = ctx_txt.rfind("}") + 1
+            if s >= 0 and e > s:
+                nuevo_ctx = json.loads(ctx_txt[s:e])
+                await db.execute("UPDATE miembros SET active_context=? WHERE id=?",
+                    (json.dumps(nuevo_ctx, ensure_ascii=False), req.miembro_id))
+        except Exception:
+            pass
+
+        # Extracción asíncrona de aptitudes
+        if rol in ("teen","hermano"):
+            await extraer_aptitudes_ia(db, req.miembro_id, mensaje, respuesta)
+
+        await db.commit()
+        perfil_info = perfil_ctx if rol in ("teen","hermano") else None
+        return {"ok": True, "respuesta": respuesta, "rol": rol, "perfil": perfil_info}
+
+# ── Mood ──────────────────────────────────────────────────────────────────────
+@app.post("/api/mood")
+async def mood(req: QuickMood):
+    if not 1 <= req.score <= 5:
+        raise HTTPException(400, "score 1-5")
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("INSERT INTO mood_history VALUES (?,?,?,?,?)",
+            (str(uuid.uuid4())[:8], req.miembro_id, req.score, req.nota, time.time()))
+        await db.commit()
+    etiq = {1:"Notado.",2:"Ok.",3:"Copy.",4:"Bien.",5:"Qué bueno."}
+    return {"ok": True, "respuesta": etiq.get(req.score, "Ok.")}
+
+# ── Misiones ──────────────────────────────────────────────────────────────────
+@app.get("/api/misiones/{fid}")
+async def listar_misiones(fid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM misiones WHERE familia_id=? ORDER BY creado DESC", (fid,))
+        rows = await cur.fetchall()
+    return {"ok": True, "misiones": [dict(r) for r in rows]}
+
+@app.post("/api/misiones")
+async def crear_mision(req: CrearMision):
+    mid = str(uuid.uuid4())[:8]
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("INSERT INTO misiones VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            (mid, req.familia_id, req.titulo, req.descripcion, req.puntos,
+             req.asignado_a, "pendiente", None, None, time.time(), None, None))
+        await db.commit()
+    await _notificar("mision_creada", {"titulo": req.titulo, "puntos": req.puntos},
+                     canal=f"familia_{req.familia_id}")
+    return {"ok": True, "id": mid, "mensaje": f"Misión '{req.titulo}' creada — {req.puntos} pts"}
+
+@app.put("/api/misiones/{mid}/completar")
+async def completar_mision(mid: str, req: CompletarMision):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM misiones WHERE id=?", (mid,))
+        m = await cur.fetchone()
+        if not m: raise HTTPException(404, "No encontrada")
+        m = dict(m)
+        if m["estado"] != "pendiente": raise HTTPException(400, "No está pendiente")
+        await db.execute("UPDATE misiones SET estado='completada', evidencia_url=?, completado=? WHERE id=?",
+            (req.evidencia_url, time.time(), mid))
+        await db.commit()
+    await _notificar("mision_completada", {"titulo": m["titulo"]}, canal=f"padres_{m['familia_id']}")
+    return {"ok": True, "mensaje": f"'{m['titulo']}' completada — esperando aprobación"}
+
+@app.put("/api/misiones/{mid}/aprobar")
+async def aprobar_mision(mid: str, req: AprobarMision):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM misiones WHERE id=?", (mid,))
+        row = await cur.fetchone()
+        if not row: raise HTTPException(404, "No encontrada")
+        m = dict(row)
+        if m["estado"] != "completada": raise HTTPException(400, "No completada aún")
+        pin_hash = hashlib.sha256(req.pin_padre.encode()).hexdigest()
+        cur2 = await db.execute(
+            "SELECT id FROM miembros WHERE familia_id=? AND rol IN ('padre','madre') AND pin_hash=?",
+            (req.familia_id, pin_hash))
+        if not await cur2.fetchone(): raise HTTPException(401, "PIN incorrecto")
+        await db.execute("UPDATE misiones SET estado='aprobada', aprobado_por=?, aprobado=? WHERE id=?",
+            (req.aprobado_por, time.time(), mid))
+        if m.get("asignado_a"):
+            await db.execute("UPDATE miembros SET puntos_total=puntos_total+? WHERE id=?",
+                (m["puntos"], m["asignado_a"]))
+            cur3 = await db.execute("SELECT puntos_total FROM miembros WHERE id=?", (m["asignado_a"],))
+            pts = (await cur3.fetchone())[0]
+            for umbral, titulo in [(500,"Imparable"),(200,"En llamas"),(100,"Centurión"),(50,"Arranque")]:
+                if pts >= umbral and (pts - m["puntos"]) < umbral:
+                    await db.execute("INSERT INTO logros VALUES (?,?,?,?,?,?)",
+                        (str(uuid.uuid4())[:8], m["asignado_a"], titulo,
+                         f"{umbral} puntos acumulados", "star", time.time()))
+        await db.commit()
+    return {"ok": True, "puntos_asignados": m["puntos"], "mensaje": f"Aprobada — +{m['puntos']} pts"}
+
+# ── Acuerdos ──────────────────────────────────────────────────────────────────
+@app.get("/api/acuerdos/{fid}")
+async def listar_acuerdos(fid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM acuerdos WHERE familia_id=? ORDER BY creado DESC", (fid,))
+        rows = await cur.fetchall()
+    return {"ok": True, "acuerdos": [dict(r) for r in rows]}
+
+@app.post("/api/acuerdos")
+async def crear_acuerdo(req: CrearAcuerdo):
+    aid = str(uuid.uuid4())[:8]
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("INSERT INTO acuerdos VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (aid, req.familia_id, req.teen_id, req.descripcion, req.condicion,
+             req.recompensa, req.propuesto_por, "propuesto", time.time(), None))
+        await db.commit()
+    return {"ok": True, "acuerdo_id": aid, "mensaje": "Acuerdo registrado. Actívalo para que valga."}
+
+@app.put("/api/acuerdos/{aid}/activar")
+async def activar_acuerdo(aid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("UPDATE acuerdos SET estado='activo' WHERE id=?", (aid,))
+        await db.commit()
+    return {"ok": True, "mensaje": "Acuerdo activo."}
+
+@app.put("/api/acuerdos/{aid}/cumplir")
+async def cumplir_acuerdo(aid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM acuerdos WHERE id=?", (aid,))
+        ac = dict(await cur.fetchone())
+        await db.execute("UPDATE acuerdos SET estado='cumplido', cumplido=? WHERE id=?", (time.time(), aid))
+        await db.execute("UPDATE miembros SET puntos_total=puntos_total+50 WHERE id=?", (ac["teen_id"],))
+        await db.commit()
+    return {"ok": True, "mensaje": "Acuerdo cumplido. +50 pts."}
+
+# ── Deseos ────────────────────────────────────────────────────────────────────
+@app.post("/api/deseos")
+async def agregar_deseo(req: AgregarDeseo):
+    did = str(uuid.uuid4())[:8]
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("INSERT INTO deseos VALUES (?,?,?,?,?,?,?)",
+            (did, req.teen_id, req.familia_id, req.descripcion,
+             req.puntos_necesarios, "activo", time.time()))
+        await db.commit()
+    return {"ok": True, "deseo_id": did, "mensaje": f"'{req.descripcion}' en tu lista."}
+
+@app.get("/api/deseos/{teen_id}")
+async def ver_deseos(teen_id: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT d.id, d.descripcion, d.puntos_necesarios, m.puntos_total "
+            "FROM deseos d JOIN miembros m ON d.teen_id=m.id "
+            "WHERE d.teen_id=? AND d.estado='activo' ORDER BY d.puntos_necesarios ASC", (teen_id,))
+        deseos = [dict(r) for r in await cur.fetchall()]
+    return {"ok": True, "deseos": deseos}
+
+# ── Alertas ───────────────────────────────────────────────────────────────────
+@app.get("/api/alertas/{fid}")
+async def ver_alertas(fid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT tipo, resumen, sugerencia, creado FROM alertas WHERE familia_id=? ORDER BY creado DESC LIMIT 20", (fid,))
+        alertas = [dict(r) for r in await cur.fetchall()]
+        await db.execute("UPDATE alertas SET visto=1 WHERE familia_id=?", (fid,))
+        await db.commit()
+    return {"ok": True, "alertas": alertas}
+
+# ── Logros ────────────────────────────────────────────────────────────────────
+@app.get("/api/logros/{mid}")
+async def ver_logros(mid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT titulo, descripcion, icono, creado FROM logros WHERE miembro_id=? ORDER BY creado DESC", (mid,))
+        logros = [dict(r) for r in await cur.fetchall()]
+    return {"ok": True, "logros": logros}
+
+# ── Metas ─────────────────────────────────────────────────────────────────────
+@app.post("/api/metas")
+async def crear_meta(req: CrearMeta):
+    mid = str(uuid.uuid4())[:8]
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("INSERT INTO metas VALUES (?,?,?,?,?,?,0,'activa',?)",
+            (mid, req.teen_id, req.familia_id, req.titulo,
+             req.descripcion, req.plazo, time.time()))
+        await db.commit()
+    return {"ok": True, "meta_id": mid, "mensaje": f"Meta '{req.titulo}' registrada."}
+
+@app.get("/api/metas/{teen_id}")
+async def ver_metas(teen_id: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT * FROM metas WHERE teen_id=? AND estado='activa' ORDER BY creado DESC", (teen_id,))
+        metas = [dict(r) for r in await cur.fetchall()]
+    return {"ok": True, "metas": metas}
+
+@app.put("/api/metas/{mid}/avanzar")
+async def avanzar_meta(mid: str, request: Request):
+    body = await request.json()
+    progreso = min(100, max(0, int(body.get("progreso", 10))))
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("UPDATE metas SET progreso=? WHERE id=?", (progreso, mid))
+        if progreso >= 100:
+            await db.execute("UPDATE metas SET estado='lograda' WHERE id=?", (mid,))
+        await db.commit()
+    return {"ok": True, "progreso": progreso, "mensaje": "Meta actualizada." if progreso < 100 else "¡Meta lograda!"}
+
+# ── Aptitudes ────────────────────────────────────────────────────────────────
+@app.get("/api/aptitudes/{mid}")
+async def ver_aptitudes(mid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT tipo, descripcion, confianza, detectado FROM aptitudes WHERE teen_id=? ORDER BY confianza DESC, detectado DESC", (mid,))
+        rows = await cur.fetchall()
+    return {"ok": True, "aptitudes": [dict(r) for r in rows]}
+
+# ── Módulos ───────────────────────────────────────────────────────────────────
+@app.get("/api/modulos/{fid}")
+async def ver_modulos(fid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        modulos = await get_modulos_familia(db, fid)
+    return {"ok": True, "modulos": modulos}
+
+@app.put("/api/modulos/{fid}")
+async def actualizar_modulo(fid: str, request: Request):
+    body = await request.json()
+    modulo = body.get("modulo")
+    activo = body.get("activo", True)
+    if not modulo:
+        raise HTTPException(400, "modulo requerido")
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "INSERT OR REPLACE INTO modulos (familia_id, modulo, activo) VALUES (?,?,?)",
+            (fid, modulo, 1 if activo else 0))
+        await db.commit()
+    return {"ok": True, "modulo": modulo, "activo": activo}
+
+# ── Regularización ────────────────────────────────────────────────────────────
+class IniciarRegularizacion(BaseModel):
+    teen_id: str
+    materia: str
+    nivel: str = "secundaria"
+
+@app.post("/api/regularizacion/iniciar")
+async def iniciar_regularizacion(req: IniciarRegularizacion):
+    rid = str(uuid.uuid4())[:8]
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("UPDATE regularizacion SET estado='pausada' WHERE teen_id=? AND estado='activa'", (req.teen_id,))
+        await db.execute("INSERT INTO regularizacion VALUES (?,?,?,?,0,'activa',?)",
+            (rid, req.teen_id, req.materia, req.nivel, time.time()))
+        await db.commit()
+    return {"ok": True, "id": rid, "mensaje": f"Sesión de {req.materia} iniciada. El chat ahora es tu tutor."}
+
+@app.get("/api/regularizacion/{mid}")
+async def ver_regularizacion(mid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT * FROM regularizacion WHERE teen_id=? ORDER BY iniciado DESC", (mid,))
+        rows = await cur.fetchall()
+    return {"ok": True, "sesiones": [dict(r) for r in rows]}
+
+@app.delete("/api/regularizacion/{mid}/terminar")
+async def terminar_regularizacion(mid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("UPDATE regularizacion SET estado='completada' WHERE teen_id=? AND estado='activa'", (mid,))
+        await db.commit()
+    return {"ok": True, "mensaje": "Sesión de regularización completada."}
+
+# ── Escuelas ──────────────────────────────────────────────────────────────────
+class RegistrarEscuela(BaseModel):
+    nombre: str
+    tipo: str = "laico"
+    carisma: str = ""
+
+@app.post("/api/escuelas")
+async def registrar_escuela(req: RegistrarEscuela):
+    eid = str(uuid.uuid4())[:8]
+    codigo = str(uuid.uuid4())[:8].upper()
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("INSERT INTO escuelas VALUES (?,?,?,?,?,1,?)",
+            (eid, req.nombre, req.tipo, codigo, req.carisma, time.time()))
+        await db.commit()
+    return {"ok": True, "escuela_id": eid, "codigo": codigo,
+            "mensaje": f"Escuela '{req.nombre}' registrada. Código: {codigo}"}
+
+@app.get("/api/escuelas/{eid}")
+async def ver_escuela(eid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM escuelas WHERE id=?", (eid,))
+        esc = await cur.fetchone()
+        if not esc: return {"ok": False, "error": "No encontrada"}
+        esc = dict(esc)
+        cur2 = await db.execute(
+            "SELECT COUNT(*) FROM escuela_familias WHERE escuela_id=?", (eid,))
+        esc["total_familias"] = (await cur2.fetchone())[0]
+        cur3 = await db.execute(
+            """SELECT COUNT(*) FROM alertas a
+               JOIN escuela_familias ef ON a.familia_id=ef.familia_id
+               WHERE ef.escuela_id=? AND a.tipo='riesgo_alto' AND a.visto=0""", (eid,))
+        esc["alertas_riesgo"] = (await cur3.fetchone())[0]
+    return {"ok": True, "escuela": esc}
+
+@app.post("/api/escuelas/{eid}/vincular/{fid}")
+async def vincular_familia(eid: str, fid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("INSERT OR IGNORE INTO escuela_familias VALUES (?,?)", (eid, fid))
+        await db.commit()
+    return {"ok": True, "mensaje": "Familia vinculada a la escuela."}
+
+@app.get("/api/escuelas/{eid}/insights")
+async def insights_escuela(eid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute(
+            """SELECT a.tipo, COUNT(*) as total FROM aptitudes a
+               JOIN miembros m ON a.teen_id=m.id
+               JOIN escuela_familias ef ON m.familia_id=ef.familia_id
+               WHERE ef.escuela_id=? GROUP BY a.tipo ORDER BY total DESC""", (eid,))
+        aptitudes = [{"tipo": r[0], "total": r[1]} for r in await cur.fetchall()]
+        cur2 = await db.execute(
+            """SELECT AVG(mh.score) as mood_avg FROM mood_history mh
+               JOIN miembros m ON mh.miembro_id=m.id
+               JOIN escuela_familias ef ON m.familia_id=ef.familia_id
+               WHERE ef.escuela_id=?""", (eid,))
+        mood_row = await cur2.fetchone()
+        cur3 = await db.execute(
+            """SELECT COUNT(DISTINCT m.id) FROM miembros m
+               JOIN escuela_familias ef ON m.familia_id=ef.familia_id
+               WHERE ef.escuela_id=? AND m.rol IN ('teen','hermano')""", (eid,))
+        total_teens = (await cur3.fetchone())[0]
+    return {"ok": True, "total_teens": total_teens,
+            "mood_promedio": round(mood_row[0] or 0, 1),
+            "aptitudes_top": aptitudes[:5]}
+
+# ── SSE ───────────────────────────────────────────────────────────────────────
+@app.get("/api/eventos/{fid}")
+async def eventos(fid: str):
+    cid = f"familia_{fid}_{str(uuid.uuid4())[:4]}"
+    return StreamingResponse(_sse_gen(cid),
+        media_type="text/event-stream",
+        headers={"Cache-Control":"no-cache","X-Accel-Buffering":"no"})
+
+# ── Main ──────────────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("evolucion_server:app", host="0.0.0.0", port=PORT, reload=False)

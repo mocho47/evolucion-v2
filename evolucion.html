@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#00e5a0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Evolución</title>
+<link rel="manifest" href="/manifest.json">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#030308;
+  --surface:#0c0c18;
+  --surface2:#14142a;
+  --border:#1e1e3a;
+  --accent:#00e5a0;
+  --accent2:#00b87a;
+  --accent-dim:rgba(0,229,160,.12);
+  --accent-glow:rgba(0,229,160,.25);
+  --purple:#7c3aed;
+  --purple-dim:rgba(124,58,237,.12);
+  --purple-glow:rgba(124,58,237,.3);
+  --text:#eeeef8;
+  --muted:#4a4a6a;
+  --muted2:#6a6a8a;
+  --danger:#ff4060;
+  --danger-dim:rgba(255,64,96,.12);
+  --warn:#ffab00;
+  --warn-dim:rgba(255,171,0,.1);
+  --r:14px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  overflow:hidden;}
+
+/* ── UTILIDADES ─────────────────────────────────────── */
+.screen{display:none;position:fixed;inset:0;flex-direction:column;}
+.screen.active{display:flex;}
+.hidden{display:none!important;}
+
+.btn{background:var(--accent);color:#030308;border:none;padding:.85rem 1.2rem;
+  border-radius:var(--r);font-size:.95rem;font-weight:700;cursor:pointer;
+  transition:all .2s;letter-spacing:.01em;width:100%;}
+.btn:hover{background:var(--accent2);transform:translateY(-1px);}
+.btn:active{transform:translateY(0);}
+.btn.purple{background:var(--purple);color:#fff;}
+.btn.purple:hover{background:#6d28d9;}
+.btn.ghost{background:transparent;color:var(--muted2);border:1px solid var(--border);}
+.btn.ghost:hover{border-color:var(--accent);color:var(--text);}
+.btn.danger-ghost{background:transparent;color:var(--danger);border:1px solid var(--danger-dim);}
+.btn.sm{padding:.5rem .85rem;font-size:.82rem;width:auto;}
+.btn.sm.success{background:var(--accent);color:#030308;}
+.btn.sm.warn{background:var(--warn);color:#030308;}
+
+.field{display:flex;flex-direction:column;gap:.4rem;}
+.field label{font-size:.7rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+.field input,.field select{
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);padding:.75rem 1rem;border-radius:10px;
+  font-size:.95rem;outline:none;transition:border .2s,box-shadow .2s;
+  font-family:inherit;appearance:none;}
+.field input:focus,.field select:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-dim);}
+
+.err{color:var(--danger);font-size:.8rem;min-height:1rem;text-align:center;font-weight:500;}
+
+/* ── SPLASH ─────────────────────────────────────────── */
+#s-splash{
+  align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 40%, #0a1a12 0%, var(--bg) 70%);
+}
+.splash-logo{
+  font-size:3rem;font-weight:900;letter-spacing:-.03em;
+  animation:splashIn .8s cubic-bezier(.22,1,.36,1) both;
+}
+.splash-logo span{color:var(--accent);}
+.splash-tag{
+  color:var(--muted2);font-size:.95rem;margin-top:.75rem;letter-spacing:.04em;
+  animation:splashIn .8s .2s cubic-bezier(.22,1,.36,1) both;
+}
+.splash-bar{
+  width:40px;height:3px;background:var(--accent);border-radius:99px;
+  margin-top:2.5rem;
+  animation:splashBar 1.2s .5s ease-in-out infinite alternate;
+}
+@keyframes splashIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+@keyframes splashBar{from{width:24px;opacity:.4;}to{width:56px;opacity:1;}}
+
+/* ── LOGIN ──────────────────────────────────────────── */
+#s-login{
+  align-items:center;justify-content:flex-start;
+  padding:env(safe-area-inset-top, 1.5rem) 1.5rem 1.5rem;
+  overflow-y:auto;gap:0;
+  background:radial-gradient(ellipse at 50% 0%, #0a1a12 0%, var(--bg) 60%);
+}
+.login-logo{
+  font-size:1.8rem;font-weight:900;letter-spacing:-.02em;
+  padding-top:2.5rem;padding-bottom:.25rem;
+}
+.login-logo span{color:var(--accent);}
+.login-sub{color:var(--muted2);font-size:.82rem;margin-bottom:2rem;letter-spacing:.02em;}
+
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:1.5rem;width:100%;max-width:380px;
+  display:flex;flex-direction:column;gap:1.1rem;
+  margin-bottom:1rem;
+}
+.card h2{font-size:1rem;font-weight:700;color:var(--text);}
+
+/* Selector quién eres — tarjetas grandes */
+.who-cards{display:flex;flex-direction:column;gap:.75rem;width:100%;max-width:380px;}
+.who-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:1.4rem 1.5rem;
+  display:flex;align-items:center;gap:1rem;
+  cursor:pointer;transition:all .2s;text-align:left;width:100%;
+}
+.who-card:hover,.who-card:focus{
+  border-color:var(--accent);
+  background:var(--accent-dim);
+  box-shadow:0 0 0 1px var(--accent),0 8px 24px rgba(0,229,160,.08);
+  transform:translateY(-2px);
+}
+.who-card.purple-card:hover,.who-card.purple-card:focus{
+  border-color:var(--purple);
+  background:var(--purple-dim);
+  box-shadow:0 0 0 1px var(--purple),0 8px 24px rgba(124,58,237,.08);
+}
+.who-icon{font-size:2rem;flex-shrink:0;}
+.who-info{flex:1;}
+.who-title{font-weight:700;font-size:1rem;margin-bottom:.2rem;}
+.who-desc{font-size:.78rem;color:var(--muted2);line-height:1.4;}
+
+.divider{display:flex;align-items:center;gap:.75rem;color:var(--muted);font-size:.75rem;width:100%;max-width:380px;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* código de acceso */
+.code-box{
+  background:var(--accent-dim);border:1px solid var(--accent);
+  border-radius:14px;padding:1.2rem;text-align:center;
+}
+.code-val{font-size:2.4rem;font-weight:900;letter-spacing:.2em;color:var(--accent);
+  font-variant-numeric:tabular-nums;}
+.code-hint{color:var(--muted2);font-size:.75rem;margin-top:.4rem;display:block;}
+.copy-link{background:none;border:none;color:var(--accent);
+  cursor:pointer;font-size:.78rem;margin-top:.4rem;text-decoration:underline;}
+
+/* ── PANTALLA COMPARTIDA: HEADER ─────────────────────── */
+.top-bar{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:.8rem 1rem;display:flex;align-items:center;gap:.75rem;flex-shrink:0;
+}
+.av{
+  width:40px;height:40px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:1rem;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),#00b0ff);
+  color:#030308;
+}
+.av.padre-av{background:linear-gradient(135deg,var(--purple),#9f67ff);}
+.hinfo{flex:1;min-width:0;}
+.hname{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hstatus{font-size:.68rem;color:var(--accent);letter-spacing:.03em;margin-top:.05rem;}
+.hstatus.padre{color:var(--purple);}
+.hmenu{background:none;border:none;color:var(--muted2);font-size:1.3rem;cursor:pointer;padding:.3rem;}
+
+/* Nivel badge */
+.nivel-badge{
+  background:var(--accent-dim);border:1px solid rgba(0,229,160,.2);
+  border-radius:99px;padding:.2rem .6rem;
+  font-size:.65rem;font-weight:700;color:var(--accent);
+  white-space:nowrap;letter-spacing:.04em;
+}
+
+/* ── CHAT ───────────────────────────────────────────── */
+#s-chat{background:var(--bg);}
+#messages{
+  flex:1;overflow-y:auto;padding:.75rem;
+  display:flex;flex-direction:column;gap:.55rem;
+}
+#messages::-webkit-scrollbar{width:2px;}
+#messages::-webkit-scrollbar-thumb{background:var(--border);}
+
+.msg{max-width:82%;display:flex;flex-direction:column;gap:.14rem;}
+.msg.user{align-self:flex-end;align-items:flex-end;}
+.msg.bot{align-self:flex-start;align-items:flex-start;}
+
+.bubble{
+  padding:.65rem .95rem;border-radius:18px;
+  font-size:.93rem;line-height:1.52;white-space:pre-wrap;word-break:break-word;
+}
+.msg.user .bubble{
+  background:linear-gradient(135deg,var(--accent2),var(--accent));
+  color:#030308;font-weight:500;border-bottom-right-radius:4px;
+}
+.msg.bot .bubble{
+  background:var(--surface);border:1px solid var(--border);
+  border-bottom-left-radius:4px;
+}
+.msg.alerta .bubble{
+  border-color:var(--danger)!important;
+  background:rgba(255,64,96,.07)!important;
+}
+.mtime{font-size:.6rem;color:var(--muted);margin:0 .2rem;}
+
+/* Typing */
+.typing{
+  display:flex;gap:5px;align-items:center;
+  padding:.65rem .95rem;background:var(--surface);
+  border:1px solid var(--border);border-radius:18px;border-bottom-left-radius:4px;
+  width:fit-content;
+}
+.typing span{
+  width:5px;height:5px;background:var(--accent);border-radius:50%;
+  animation:pulse .9s infinite;
+}
+.typing span:nth-child(2){animation-delay:.18s;}
+.typing span:nth-child(3){animation-delay:.36s;}
+@keyframes pulse{0%,60%,100%{transform:translateY(0);opacity:.4;}30%{transform:translateY(-5px);opacity:1;}}
+
+/* Mood bar */
+#mood{
+  background:var(--surface);border-top:1px solid var(--border);
+  padding:.5rem .75rem;display:none;align-items:center;gap:.35rem;flex-shrink:0;
+}
+#mood span{font-size:.7rem;color:var(--muted2);white-space:nowrap;}
+.mb{
+  background:none;border:none;font-size:1.15rem;cursor:pointer;
+  padding:.2rem .3rem;border-radius:8px;transition:all .15s;flex:1;text-align:center;
+}
+.mb:hover{transform:scale(1.25);background:var(--accent-dim);}
+
+/* Input */
+#input-area{
+  background:var(--surface);border-top:1px solid var(--border);
+  padding:.65rem .75rem;display:flex;align-items:flex-end;gap:.5rem;flex-shrink:0;
+}
+#txt{
+  flex:1;background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);padding:.65rem .95rem;border-radius:20px;
+  font-size:.92rem;outline:none;resize:none;max-height:120px;
+  line-height:1.45;transition:border .2s,box-shadow .2s;font-family:inherit;
+}
+#txt:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+#sbtn{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;color:#030308;width:42px;height:42px;border-radius:50%;
+  cursor:pointer;font-size:1.1rem;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;box-shadow:0 4px 12px var(--accent-glow);
+}
+#sbtn:hover{transform:scale(1.08);}
+#sbtn:disabled{background:var(--border);box-shadow:none;cursor:not-allowed;}
+
+/* Drawer */
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:none;}
+#drawer{
+  position:fixed;right:0;top:0;bottom:0;width:240px;
+  background:var(--surface);border-left:1px solid var(--border);
+  padding:1.25rem 1rem;display:flex;flex-direction:column;gap:.5rem;z-index:201;
+}
+.duser{font-weight:700;font-size:.95rem;padding-bottom:.75rem;border-bottom:1px solid var(--border);}
+.dpts{color:var(--accent);font-size:.8rem;margin-top:.2rem;}
+.dbar{height:3px;background:var(--border);border-radius:99px;margin-top:.4rem;overflow:hidden;}
+.dbar-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .5s;}
+.dnext{font-size:.65rem;color:var(--muted2);margin-top:.2rem;}
+.dsec{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:.5rem;font-weight:600;}
+.ditem{
+  background:transparent;border:1px solid transparent;color:var(--text);
+  padding:.65rem .9rem;border-radius:10px;cursor:pointer;
+  font-size:.87rem;text-align:left;transition:all .15s;width:100%;display:flex;gap:.6rem;align-items:center;
+}
+.ditem:hover{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
+
+/* ── PANEL PADRE ────────────────────────────────────── */
+#s-padre{background:var(--bg);}
+.padre-stats{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;
+  padding:.75rem 1rem;flex-shrink:0;
+}
+.stat-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:.7rem;text-align:center;
+}
+.stat-n{font-size:1.6rem;font-weight:900;line-height:1;}
+.stat-n.green{color:var(--accent);}
+.stat-n.yellow{color:var(--warn);}
+.stat-n.red{color:var(--danger);}
+.stat-l{font-size:.62rem;color:var(--muted2);margin-top:.2rem;text-transform:uppercase;letter-spacing:.04em;}
+
+.tab-bar{
+  display:flex;border-bottom:1px solid var(--border);flex-shrink:0;
+  background:var(--surface);
+}
+.tab{
+  flex:1;padding:.65rem .25rem;border:none;background:none;color:var(--muted2);
+  font-size:.72rem;cursor:pointer;border-bottom:2px solid transparent;
+  transition:all .15s;position:relative;font-weight:600;letter-spacing:.02em;
+}
+.tab.active{color:var(--purple);border-bottom-color:var(--purple);}
+.tbadge{
+  position:absolute;top:4px;right:6px;background:var(--danger);color:#fff;
+  border-radius:99px;padding:.05rem .3rem;font-size:.6rem;font-weight:700;display:none;
+}
+.tbadge.on{display:inline;}
+
+#padre-content{flex:1;overflow-y:auto;padding:1rem;}
+#padre-content::-webkit-scrollbar{width:2px;}
+#padre-content::-webkit-scrollbar-thumb{background:var(--border);}
+
+/* Member cards */
+.member-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:1rem;display:flex;align-items:center;
+  gap:.85rem;margin-bottom:.75rem;transition:border .2s;
+}
+.member-card:hover{border-color:var(--purple);}
+.mc-av{
+  width:46px;height:46px;border-radius:50%;font-weight:800;font-size:1.1rem;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),#00b0ff);color:#030308;
+}
+.mc-av.padre-av{background:linear-gradient(135deg,var(--purple),#9f67ff);}
+.mc-info{flex:1;min-width:0;}
+.mc-name{font-weight:700;font-size:.92rem;}
+.mc-role{font-size:.7rem;color:var(--muted2);text-transform:capitalize;margin-top:.1rem;}
+.mc-pts{font-size:.78rem;color:var(--accent);margin-top:.2rem;font-weight:600;}
+.mc-mood{font-size:1.3rem;flex-shrink:0;}
+
+/* Mission cards */
+.mission-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:.95rem 1rem;margin-bottom:.75rem;
+  transition:border .2s;
+}
+.mission-card:hover{border-color:var(--purple);}
+.m-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.35rem;}
+.m-titulo{font-weight:700;font-size:.9rem;}
+.m-pts{
+  background:var(--purple-dim);color:#a78bfa;
+  border-radius:99px;padding:.15rem .55rem;font-size:.72rem;font-weight:700;white-space:nowrap;
+}
+.m-desc{font-size:.8rem;color:var(--muted2);margin-bottom:.65rem;line-height:1.4;}
+.m-footer{display:flex;gap:.5rem;align-items:center;}
+.m-asig{font-size:.72rem;color:var(--muted2);flex:1;}
+.status{border-radius:99px;padding:.14rem .5rem;font-size:.7rem;font-weight:700;}
+.s-pend{background:var(--warn-dim);color:var(--warn);}
+.s-comp{background:var(--accent-dim);color:var(--accent);}
+.s-apro{background:var(--purple-dim);color:#a78bfa;}
+
+/* Alert cards */
+.alert-card{border-radius:14px;padding:.9rem 1rem;margin-bottom:.75rem;border:1px solid;}
+.al-bajo{background:rgba(0,229,160,.04);border-color:rgba(0,229,160,.2);}
+.al-medio{background:var(--warn-dim);border-color:rgba(255,171,0,.25);}
+.al-alto{background:var(--danger-dim);border-color:rgba(255,64,96,.25);}
+.al-tipo{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;}
+.al-sugg{font-size:.82rem;color:var(--muted2);margin-top:.3rem;line-height:1.4;}
+
+/* Acuerdo cards */
+.acuerdo-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:.9rem 1rem;margin-bottom:.75rem;
+}
+.ac-desc{font-weight:700;font-size:.88rem;margin-bottom:.3rem;}
+.ac-cond{font-size:.78rem;color:var(--muted2);line-height:1.4;}
+.ac-recomp{font-size:.78rem;color:var(--accent);margin-top:.25rem;}
+
+/* Meta cards */
+.meta-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:.9rem 1rem;margin-bottom:.75rem;
+}
+.meta-title{font-weight:700;font-size:.9rem;margin-bottom:.4rem;}
+.meta-desc{font-size:.8rem;color:var(--muted2);margin-bottom:.6rem;}
+.meta-bar{height:5px;background:var(--border);border-radius:99px;overflow:hidden;}
+.meta-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),#00b0ff);
+  border-radius:99px;transition:width .5s;}
+.meta-prog{font-size:.7rem;color:var(--muted2);margin-top:.35rem;}
+
+.empty{text-align:center;color:var(--muted);padding:2.5rem 1rem;font-size:.88rem;line-height:1.6;}
+
+/* FAB */
+.fab{
+  position:fixed;bottom:1.25rem;right:1.25rem;
+  width:54px;height:54px;background:linear-gradient(135deg,var(--purple),#9f67ff);
+  border:none;color:#fff;border-radius:50%;font-size:1.5rem;cursor:pointer;
+  box-shadow:0 4px 20px var(--purple-glow);z-index:50;
+  display:none;align-items:center;justify-content:center;transition:all .2s;
+}
+.fab:hover{transform:scale(1.08);}
+
+/* ── MÓDULOS ────────────────────────────────────────── */
+.modulo-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:.9rem 1rem;margin-bottom:.75rem;
+  display:flex;align-items:center;gap:.85rem;
+}
+.mod-ico{font-size:1.4rem;flex-shrink:0;}
+.mod-info{flex:1;min-width:0;}
+.mod-name{font-weight:700;font-size:.88rem;}
+.mod-desc{font-size:.72rem;color:var(--muted2);margin-top:.1rem;line-height:1.4;}
+.toggle{
+  position:relative;width:40px;height:22px;flex-shrink:0;
+}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-track{
+  position:absolute;inset:0;background:var(--border);border-radius:99px;
+  cursor:pointer;transition:.2s;
+}
+.toggle input:checked + .toggle-track{background:var(--accent);}
+.toggle-track::after{
+  content:'';position:absolute;left:3px;top:3px;width:16px;height:16px;
+  background:#fff;border-radius:50%;transition:.2s;
+}
+.toggle input:checked + .toggle-track::after{transform:translateX(18px);}
+
+/* Aptitudes */
+.apt-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem;}
+.apt-chip{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:.5rem .75rem;font-size:.72rem;
+  display:flex;align-items:center;gap:.4rem;
+}
+.apt-bar{flex:1;height:4px;background:var(--border);border-radius:99px;overflow:hidden;}
+.apt-fill{height:100%;background:var(--accent);border-radius:99px;}
+
+/* Perfil badge teen */
+.perfil-badge{
+  background:var(--purple-dim);border:1px solid rgba(124,58,237,.3);
+  border-radius:99px;padding:.15rem .55rem;font-size:.6rem;font-weight:700;
+  color:#a78bfa;white-space:nowrap;letter-spacing:.04em;
+}
+
+/* ── MODALES ────────────────────────────────────────── */
+.modal-bg{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.8);z-index:400;
+  align-items:flex-end;justify-content:center;padding:.5rem;
+}
+.modal-bg.on{display:flex;}
+.modal-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px 20px 16px 16px;padding:1.5rem;width:100%;max-width:400px;
+  display:flex;flex-direction:column;gap:1rem;max-height:90vh;overflow-y:auto;
+  animation:slideUp .25s cubic-bezier(.22,1,.36,1);
+}
+.modal-box h3{font-size:1rem;font-weight:700;}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0;}to{transform:none;opacity:1;}}
+
+/* ── TOAST ──────────────────────────────────────────── */
+#toast{
+  position:fixed;bottom:85px;left:50%;transform:translateX(-50%);
+  background:var(--surface2);border:1px solid var(--accent);color:var(--accent);
+  padding:.5rem 1.2rem;border-radius:99px;font-size:.82rem;font-weight:600;
+  opacity:0;transition:opacity .25s;pointer-events:none;z-index:500;
+  white-space:nowrap;box-shadow:0 4px 16px var(--accent-glow);
+}
+#toast.on{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- ══ SPLASH ══════════════════════════════════════════════════════════ -->
+<div id="s-splash" class="screen active">
+  <div class="splash-logo">EVO<span>LUCIÓN</span></div>
+  <div class="splash-tag">Tu espacio. Sin filtros.</div>
+  <div class="splash-bar"></div>
+</div>
+
+<!-- ══ LOGIN ═══════════════════════════════════════════════════════════ -->
+<div id="s-login" class="screen">
+  <div class="login-logo">EVO<span>LUCIÓN</span></div>
+  <div class="login-sub">Tu espacio. Sin filtros.</div>
+
+  <!-- ¿Quién eres? -->
+  <div class="who-cards" id="c-quien">
+    <div class="who-card purple-card" onclick="mostrar('c-padre')" tabindex="0">
+      <div class="who-icon">👨‍👩‍👧</div>
+      <div class="who-info">
+        <div class="who-title" style="color:#a78bfa">Soy papá o mamá</div>
+        <div class="who-desc">Crea el espacio familiar. Crea misiones, acuerdos y recibe señales de tus hijos.</div>
+      </div>
+    </div>
+    <div class="who-card" onclick="mostrar('c-teen')" tabindex="0">
+      <div class="who-icon">⚡</div>
+      <div class="who-info">
+        <div class="who-title" style="color:var(--accent)">Soy teen</div>
+        <div class="who-desc">Entra con el código de tu familia. Tu espacio de desahogo, metas y logros.</div>
+      </div>
+    </div>
+    <div class="divider">o</div>
+    <button class="btn ghost" onclick="mostrar('c-regresar')" style="margin-top:-.25rem">Ya tengo cuenta</button>
+  </div>
+
+  <!-- Padre: crear familia -->
+  <div class="card hidden" id="c-padre">
+    <h2>Crea tu espacio familiar</h2>
+    <div class="field"><label>Tu nombre</label>
+      <input id="p-nombre" placeholder="¿Cómo te llamas?" autocomplete="off"></div>
+    <div class="field"><label>Eres</label>
+      <select id="p-rol"><option value="padre">Papá</option><option value="madre">Mamá</option></select></div>
+    <div class="field"><label>Nombre de la familia</label>
+      <input id="p-familia" placeholder="Ej: Familia Milán" autocomplete="off"></div>
+    <div class="field"><label>PIN de seguridad (4 dígitos)</label>
+      <input id="p-pin" type="password" inputmode="numeric" maxlength="4" placeholder="Para aprobar misiones" autocomplete="off"></div>
+    <div class="err" id="p-err"></div>
+    <button class="btn purple" onclick="crearFamilia()">Crear familia</button>
+    <button class="btn ghost" onclick="mostrar('c-quien')">← Atrás</button>
+  </div>
+
+  <!-- Código generado -->
+  <div class="card hidden" id="c-codigo">
+    <h2>¡Familia creada! 🎉</h2>
+    <div class="code-box">
+      <div class="code-val" id="codigo-val">——</div>
+      <span class="code-hint">Comparte este código con tus hijos</span>
+      <button class="copy-link" onclick="copiarCodigo()">Copiar código</button>
+    </div>
+    <button class="btn purple" onclick="entrar()">Ir a mi panel</button>
+  </div>
+
+  <!-- Teen: unirse -->
+  <div class="card hidden" id="c-teen">
+    <h2>Únete a tu familia</h2>
+    <div class="field"><label>Código de familia</label>
+      <input id="t-codigo" placeholder="Ej: AB12CD" autocomplete="off"
+        style="text-transform:uppercase;font-size:1.3rem;font-weight:700;letter-spacing:.15em"
+        oninput="this.value=this.value.toUpperCase()"></div>
+    <div class="field"><label>Tu nombre</label>
+      <input id="t-nombre" placeholder="¿Cómo te llamas?" autocomplete="off"></div>
+    <div class="field"><label>Eres</label>
+      <select id="t-rol"><option value="teen">Teen</option><option value="hermano">Hermano/a menor</option></select></div>
+    <div class="field"><label>Edad</label>
+      <input id="t-edad" type="number" value="15" min="10" max="22"></div>
+    <div class="err" id="t-err"></div>
+    <button class="btn" onclick="unirse()">Entrar</button>
+    <button class="btn ghost" onclick="mostrar('c-quien')">← Atrás</button>
+  </div>
+
+  <!-- Regresar -->
+  <div class="card hidden" id="c-regresar">
+    <h2>Bienvenido de vuelta</h2>
+    <p style="font-size:.82rem;color:var(--muted2);margin-top:-.25rem;line-height:1.5;">
+      Tu ID se guardó automáticamente en este dispositivo. Si cambiaste de teléfono, pídele el código a tu familia.</p>
+    <div class="err" id="r-err"></div>
+    <button class="btn" onclick="reentrar()">Continuar</button>
+    <button class="btn ghost" onclick="mostrar('c-quien')">← Atrás</button>
+  </div>
+</div>
+
+<!-- ══ CHAT TEEN ═══════════════════════════════════════════════════════ -->
+<div id="s-chat" class="screen">
+  <div class="top-bar">
+    <div class="av" id="hav">E</div>
+    <div class="hinfo">
+      <div class="hname" id="hname">Evolución</div>
+      <div class="hstatus" id="hstatus">● activo</div>
+    </div>
+    <div class="nivel-badge" id="nivel-badge">NV 1</div>
+    <div class="perfil-badge hidden" id="perfil-badge">estándar</div>
+    <button class="hmenu" onclick="abrirMenu()">⋮</button>
+  </div>
+  <div id="messages"></div>
+  <div id="mood">
+    <span>¿Hoy?</span>
+    <button class="mb" onclick="mood(1)" title="Mal">😶</button>
+    <button class="mb" onclick="mood(2)" title="Regular">😐</button>
+    <button class="mb" onclick="mood(3)" title="Bien">🙂</button>
+    <button class="mb" onclick="mood(4)" title="Muy bien">😊</button>
+    <button class="mb" onclick="mood(5)" title="Fuego">🔥</button>
+  </div>
+  <div id="input-area">
+    <textarea id="txt" rows="1" placeholder="¿Qué tienes en la cabeza?"
+      oninput="resize(this)" onkeydown="tecla(event)"></textarea>
+    <button id="sbtn" onclick="enviar()">↑</button>
+  </div>
+</div>
+
+<!-- Menú lateral teen -->
+<div id="overlay" onclick="cerrarMenu()"></div>
+<div id="drawer" style="display:none">
+  <div class="duser" id="d-nombre">—</div>
+  <div class="dpts" id="d-pts"></div>
+  <div class="dbar"><div class="dbar-fill" id="d-bar" style="width:0%"></div></div>
+  <div class="dnext" id="d-next"></div>
+  <div class="dsec">Mi espacio</div>
+  <button class="ditem" onclick="cerrarMenu();verMisiones()">📋 Mis misiones</button>
+  <button class="ditem" onclick="cerrarMenu();verMetas()">🎯 Mis metas</button>
+  <button class="ditem" onclick="cerrarMenu();verDeseos()">✨ Lista de deseos</button>
+  <button class="ditem" onclick="cerrarMenu();verLogros()">⭐ Logros</button>
+  <button class="ditem" onclick="cerrarMenu();tutor()">📚 Tutor escolar</button>
+  <div style="flex:1"></div>
+  <button class="ditem" style="color:var(--muted2)" onclick="salir()">← Salir</button>
+</div>
+
+<!-- ══ PANEL PADRE ══════════════════════════════════════════════════════ -->
+<div id="s-padre" class="screen">
+  <div class="top-bar">
+    <div class="av padre-av" id="ph-av">P</div>
+    <div class="hinfo">
+      <div class="hname" id="ph-nombre">Mi familia</div>
+      <div class="hstatus padre" id="ph-status">● panel familiar</div>
+    </div>
+    <button class="hmenu" onclick="salir()" title="Salir">✕</button>
+  </div>
+
+  <div class="padre-stats" id="padre-stats">
+    <div class="stat-box"><div class="stat-n green" id="st-miembros">—</div><div class="stat-l">Familia</div></div>
+    <div class="stat-box"><div class="stat-n yellow" id="st-pend">—</div><div class="stat-l">Pendientes</div></div>
+    <div class="stat-box"><div class="stat-n red" id="st-alertas">—</div><div class="stat-l">Señales</div></div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" id="tab-familia"  onclick="switchTab('familia')">Familia<span class="tbadge" id="b-familia"></span></button>
+    <button class="tab"        id="tab-misiones" onclick="switchTab('misiones')">Misiones<span class="tbadge" id="b-misiones"></span></button>
+    <button class="tab"        id="tab-alertas"  onclick="switchTab('alertas')">Señales<span class="tbadge" id="b-alertas"></span></button>
+    <button class="tab"        id="tab-acuerdos" onclick="switchTab('acuerdos')">Acuerdos</button>
+    <button class="tab"        id="tab-modulos"  onclick="switchTab('modulos')">Módulos</button>
+  </div>
+
+  <div id="padre-content"></div>
+
+  <!-- Chat del padre en panel -->
+  <div id="padre-chat-wrap" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+    <div id="padre-messages" style="flex:1;overflow-y:auto;padding:.75rem;display:flex;flex-direction:column;gap:.55rem;"></div>
+    <div id="padre-input-area" style="background:var(--surface);border-top:1px solid var(--border);padding:.65rem .75rem;display:flex;align-items:flex-end;gap:.5rem;flex-shrink:0;">
+      <textarea id="padre-txt" rows="1" placeholder="Pregunta o pide consejo..."
+        style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:.65rem .95rem;border-radius:20px;font-size:.92rem;outline:none;resize:none;max-height:120px;line-height:1.45;font-family:inherit;"
+        oninput="resize(this)" onkeydown="teclaPadre(event)"></textarea>
+      <button style="background:linear-gradient(135deg,var(--purple),#9f67ff);border:none;color:#fff;width:42px;height:42px;border-radius:50%;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;"
+        onclick="enviarPadre()">↑</button>
+    </div>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fab" onclick="fabAction()">＋</button>
+
+<!-- ══ MODALES ══════════════════════════════════════════════════════════ -->
+
+<!-- Modal misión -->
+<div class="modal-bg" id="m-mision">
+  <div class="modal-box">
+    <h3>Nueva misión</h3>
+    <div class="field"><label>Título</label><input id="nm-titulo" placeholder="Ej: Lavar los trastes" autocomplete="off"></div>
+    <div class="field"><label>Descripción (opcional)</label><input id="nm-desc" placeholder="Detalles de la misión" autocomplete="off"></div>
+    <div class="field"><label>Puntos de recompensa</label><input id="nm-puntos" type="number" value="10" min="1" max="500"></div>
+    <div class="field"><label>Asignar a</label><select id="nm-asig"></select></div>
+    <div class="err" id="nm-err"></div>
+    <button class="btn purple" onclick="crearMision()">Crear misión</button>
+    <button class="btn ghost" onclick="cerrarModal('m-mision')">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal acuerdo -->
+<div class="modal-bg" id="m-acuerdo">
+  <div class="modal-box">
+    <h3>Nuevo acuerdo</h3>
+    <div class="field"><label>Acuerdo</label><input id="na-desc" placeholder="Ej: Llego antes de las 10pm" autocomplete="off"></div>
+    <div class="field"><label>Condición</label><input id="na-cond" placeholder="Ej: De lunes a viernes" autocomplete="off"></div>
+    <div class="field"><label>Recompensa</label><input id="na-recomp" placeholder="Ej: Salida el fin de semana" autocomplete="off"></div>
+    <div class="field"><label>Teen involucrado</label><select id="na-teen"></select></div>
+    <div class="err" id="na-err"></div>
+    <button class="btn purple" onclick="crearAcuerdo()">Guardar acuerdo</button>
+    <button class="btn ghost" onclick="cerrarModal('m-acuerdo')">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal familiar -->
+<div class="modal-bg" id="m-familiar">
+  <div class="modal-box">
+    <h3>Agregar familiar</h3>
+    <div class="field"><label>Nombre</label><input id="af-nombre" placeholder="Nombre" autocomplete="off"></div>
+    <div class="field"><label>Es</label>
+      <select id="af-rol">
+        <option value="teen">Teen</option>
+        <option value="hermano">Hermano/a menor</option>
+        <option value="madre">Mamá</option>
+        <option value="padre">Papá adicional</option>
+      </select>
+    </div>
+    <div class="field"><label>Edad</label><input id="af-edad" type="number" value="14" min="8" max="25"></div>
+    <div class="err" id="af-err"></div>
+    <button class="btn purple" onclick="agregarFamiliar()">Agregar</button>
+    <button class="btn ghost" onclick="cerrarModal('m-familiar')">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal PIN -->
+<div class="modal-bg" id="m-pin">
+  <div class="modal-box" style="max-width:320px">
+    <h3>Confirmar aprobación</h3>
+    <p style="font-size:.85rem;color:var(--muted2)" id="pin-info">Ingresa tu PIN para aprobar.</p>
+    <div class="field"><label>Tu PIN</label>
+      <input id="pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="4 dígitos" autocomplete="off"
+        style="font-size:1.5rem;letter-spacing:.3em;text-align:center;"></div>
+    <div class="err" id="pin-err"></div>
+    <button class="btn sm success" style="width:100%;padding:.8rem" onclick="confirmarAprobacion()">Aprobar misión</button>
+    <button class="btn ghost" onclick="cerrarModal('m-pin')">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal meta (teen) -->
+<div class="modal-bg" id="m-meta">
+  <div class="modal-box">
+    <h3>Nueva meta</h3>
+    <div class="field"><label>¿Qué quieres lograr?</label><input id="mt-titulo" placeholder="Ej: Aprender guitarra" autocomplete="off"></div>
+    <div class="field"><label>¿Cómo lo sabrás cuando llegues?</label><input id="mt-desc" placeholder="Ej: Tocar 3 canciones completas" autocomplete="off"></div>
+    <div class="field"><label>¿Para cuándo?</label><input id="mt-plazo" placeholder="Ej: Junio 2026" autocomplete="off"></div>
+    <div class="err" id="mt-err"></div>
+    <button class="btn" onclick="crearMeta()">Guardar meta</button>
+    <button class="btn ghost" onclick="cerrarModal('m-meta')">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal regularización -->
+<div class="modal-bg" id="m-regular">
+  <div class="modal-box">
+    <h3>Regularización escolar</h3>
+    <p style="font-size:.82rem;color:var(--muted2);margin-top:-.25rem;line-height:1.5;">
+      El AI te acompaña materia por materia, a tu ritmo, sin juzgarte. Solo tienes que empezar.</p>
+    <div class="field"><label>Materia</label>
+      <select id="rg-materia">
+        <option value="matematicas">Matemáticas</option>
+        <option value="espanol">Español</option>
+        <option value="historia">Historia</option>
+        <option value="ciencias">Ciencias / Biología</option>
+        <option value="fisica">Física</option>
+        <option value="quimica">Química</option>
+        <option value="ingles">Inglés</option>
+        <option value="geografia">Geografía</option>
+        <option value="otra">Otra</option>
+      </select></div>
+    <div class="field"><label>¿Qué grado cursas?</label>
+      <select id="rg-grado">
+        <option value="1sec">1° Secundaria</option>
+        <option value="2sec">2° Secundaria</option>
+        <option value="3sec">3° Secundaria</option>
+        <option value="1bac">1° Bachillerato</option>
+        <option value="2bac">2° Bachillerato</option>
+        <option value="3bac">3° Bachillerato</option>
+      </select></div>
+    <div class="field"><label>¿Qué tema te cuesta más?</label>
+      <input id="rg-tema" placeholder="Ej: fracciones, verbos irregulares..." autocomplete="off"></div>
+    <div class="err" id="rg-err"></div>
+    <button class="btn" onclick="iniciarRegularizacion()">Empezar ahora</button>
+    <button class="btn ghost" onclick="cerrarModal('m-regular')">Cancelar</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Estado global ─────────────────────────────────────────────────────────
+const BASE = '';
+let S = {mid:'', fid:'', nombre:'', rol:'', pts:0, codigo:'', pin:''};
+let _miembros = [];
+let _tabActual = 'familia';
+let _misionAprobar = null;
+let _refreshTimer = null;
+const MOODS = ['','😶','😐','🙂','😊','🔥'];
+const NIVELES = [
+  {min:0,   max:49,  label:'NV 1 · Chispa',   next:50},
+  {min:50,  max:149, label:'NV 2 · Llama',     next:150},
+  {min:150, max:299, label:'NV 3 · Fuego',     next:300},
+  {min:300, max:499, label:'NV 4 · Volcán',    next:500},
+  {min:500, max:Infinity, label:'NV 5 · Leyenda', next:null},
+];
+
+function getNivel(pts){
+  return NIVELES.find(n => pts >= n.min && pts <= n.max) || NIVELES[0];
+}
+
+function save(){ localStorage.setItem('evo1', JSON.stringify({...S, pin:''})); }
+function load(){
+  try{
+    const d = JSON.parse(localStorage.getItem('evo1')||'{}');
+    if(d.mid) S = {...S, ...d};
+  }catch(e){}
+}
+
+async function api(path, method='GET', body=null){
+  const o = {method, headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'}};
+  if(body) o.body = JSON.stringify(body);
+  const r = await fetch(BASE+'/api'+path, o);
+  if(!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+// ── Splash → Login ────────────────────────────────────────────────────────
+window.addEventListener('load', ()=>{
+  load();
+  setTimeout(()=>{
+    document.getElementById('s-splash').classList.remove('active');
+    // Auto-login si hay sesión guardada
+    if(S.mid){
+      document.getElementById('s-login').classList.add('active');
+      reentrar();
+    } else {
+      document.getElementById('s-login').classList.add('active');
+      mostrar('c-quien');
+    }
+  }, 1800);
+});
+
+// ── Navegación login ──────────────────────────────────────────────────────
+function mostrar(id){
+  ['c-quien','c-padre','c-codigo','c-teen','c-regresar'].forEach(c=>{
+    const el = document.getElementById(c);
+    if(el) el.classList.add('hidden');
+  });
+  // También ocultar who-cards si es necesario
+  const wc = document.getElementById('c-quien');
+  if(wc) wc.classList.add('hidden');
+  const el = document.getElementById(id);
+  if(el) el.classList.remove('hidden');
+}
+
+// ── Crear familia ─────────────────────────────────────────────────────────
+async function crearFamilia(){
+  const nombre = document.getElementById('p-nombre').value.trim();
+  const rol    = document.getElementById('p-rol').value;
+  const fam    = document.getElementById('p-familia').value.trim();
+  const pin    = document.getElementById('p-pin').value.trim();
+  const errEl  = document.getElementById('p-err');
+  if(!nombre||!fam){errEl.textContent='Completa tu nombre y el de la familia.';return;}
+  if(pin && pin.length !== 4){errEl.textContent='El PIN debe ser de 4 dígitos.';return;}
+  errEl.textContent='';
+  try{
+    const rf = await api('/familias','POST',{nombre:fam});
+    if(!rf.ok){errEl.textContent='Error al crear la familia.';return;}
+    const rm = await api('/miembros','POST',{familia_id:rf.familia_id, nombre, rol, edad:35, pin:pin||'0000'});
+    if(!rm.ok){errEl.textContent='Error al registrarte.';return;}
+    S = {mid:rm.miembro_id, fid:rf.familia_id, nombre, rol, pts:0, codigo:rf.codigo_acceso, pin};
+    save();
+    document.getElementById('codigo-val').textContent = rf.codigo_acceso;
+    mostrar('c-codigo');
+  }catch(e){errEl.textContent='Sin conexión. Intenta de nuevo.';}
+}
+
+function copiarCodigo(){
+  navigator.clipboard?.writeText(S.codigo).then(()=>toast('Código copiado ✓'));
+}
+
+// ── Teen: unirse ──────────────────────────────────────────────────────────
+async function unirse(){
+  const codigo = document.getElementById('t-codigo').value.trim().toUpperCase();
+  const nombre = document.getElementById('t-nombre').value.trim();
+  const rol    = document.getElementById('t-rol').value;
+  const edad   = parseInt(document.getElementById('t-edad').value)||15;
+  const errEl  = document.getElementById('t-err');
+  if(!codigo||!nombre){errEl.textContent='Completa todos los campos.';return;}
+  errEl.textContent='Buscando tu familia...';
+  try{
+    const rf = await api(`/familias/codigo/${codigo}`);
+    if(!rf.ok){errEl.textContent='Código no válido. Pídelo a tus papás.';return;}
+    const rm = await api('/miembros','POST',{familia_id:rf.familia_id, nombre, rol, edad});
+    if(!rm.ok){errEl.textContent='Error al registrarte.';return;}
+    S = {mid:rm.miembro_id, fid:rf.familia_id, nombre, rol, pts:0, codigo, pin:''};
+    save();
+    entrar();
+  }catch(e){errEl.textContent='Sin conexión. Intenta de nuevo.';}
+}
+
+// ── Regresar ──────────────────────────────────────────────────────────────
+async function reentrar(){
+  if(!S.mid){mostrar('c-regresar');return;}
+  document.getElementById('r-err').textContent = 'Verificando...';
+  try{
+    const r = await api(`/miembros/${S.mid}`);
+    if(!r.ok){
+      document.getElementById('r-err').textContent = 'Sesión expirada. Crea una cuenta nueva.';
+      S = {mid:'',fid:'',nombre:'',rol:'',pts:0,codigo:'',pin:''};
+      save();
+      mostrar('c-quien');
+      return;
+    }
+    S.pts = r.puntos_total || 0;
+    save();
+    entrar();
+  }catch(e){
+    mostrar('c-regresar');
+    document.getElementById('r-err').textContent = 'Sin conexión.';
+  }
+}
+
+// ── Enrutador ─────────────────────────────────────────────────────────────
+function entrar(){
+  document.getElementById('s-login').classList.remove('active');
+  if(['padre','madre'].includes(S.rol)){
+    entrarPanel();
+  } else {
+    entrarChat();
+  }
+}
+
+// ══ CHAT TEEN ══════════════════════════════════════════════════════════════
+function entrarChat(){
+  document.getElementById('s-chat').classList.add('active');
+  document.getElementById('hname').textContent = S.nombre || 'Evolución';
+  document.getElementById('hav').textContent = (S.nombre||'E')[0].toUpperCase();
+  document.getElementById('d-nombre').textContent = S.nombre || '—';
+  actualizarNivel();
+  if(['teen','hermano'].includes(S.rol)){
+    document.getElementById('mood').style.display = 'flex';
+  }
+  cargarPerfilBadge();
+  setTimeout(()=>primerMensaje(), 400);
+}
+
+async function cargarPerfilBadge(){
+  if(!S.mid) return;
+  try{
+    const r = await api(`/aptitudes/${S.mid}`);
+    const apts = r.aptitudes || [];
+    const labels = {gifted:'✦ Superdotado', visionario:'◈ Visionario', canonico:'† Canónico'};
+    const especial = apts.find(a => labels[a.tipo]);
+    const badgeEl = document.getElementById('perfil-badge');
+    if(especial){
+      badgeEl.textContent = labels[especial.tipo];
+      badgeEl.classList.remove('hidden');
+    } else {
+      badgeEl.classList.add('hidden');
+    }
+  }catch(e){}
+}
+
+async function primerMensaje(){
+  showTyping('messages');
+  try{
+    const r = await api('/chat','POST',{miembro_id:S.mid, mensaje:''});
+    removeTyping('messages');
+    addBot(r.respuesta||'Aquí estoy. Qué hay.', false, 'messages');
+  }catch(e){
+    removeTyping('messages');
+    addBot('Aquí estoy. Qué hay.', false, 'messages');
+  }
+}
+
+function actualizarNivel(){
+  const nv = getNivel(S.pts);
+  document.getElementById('nivel-badge').textContent = nv.label;
+  document.getElementById('d-pts').textContent = `${S.pts} puntos · ${nv.label}`;
+  if(nv.next){
+    const pct = Math.round(((S.pts - nv.min) / (nv.next - nv.min)) * 100);
+    document.getElementById('d-bar').style.width = pct + '%';
+    document.getElementById('d-next').textContent = `${nv.next - S.pts} pts para siguiente nivel`;
+  } else {
+    document.getElementById('d-bar').style.width = '100%';
+    document.getElementById('d-next').textContent = '¡Nivel máximo!';
+  }
+}
+
+function addUser(txt, containerId='messages'){
+  const box = document.getElementById(containerId);
+  const d = document.createElement('div');
+  d.className = 'msg user';
+  d.innerHTML = `<div class="bubble">${esc(txt)}</div><div class="mtime">${hora()}</div>`;
+  box.appendChild(d); scroll(containerId);
+}
+
+function addBot(txt, alerta=false, containerId='messages'){
+  const box = document.getElementById(containerId);
+  const d = document.createElement('div');
+  d.className = 'msg bot' + (alerta ? ' alerta' : '');
+  d.innerHTML = `<div class="bubble">${esc(txt)}</div><div class="mtime">${hora()}</div>`;
+  box.appendChild(d); scroll(containerId);
+}
+
+function showTyping(cid='messages'){
+  const box = document.getElementById(cid);
+  const d = document.createElement('div');
+  d.id = 'typing-' + cid;
+  d.className = 'typing';
+  d.innerHTML = '<span></span><span></span><span></span>';
+  box.appendChild(d); scroll(cid);
+}
+
+function removeTyping(cid='messages'){
+  const el = document.getElementById('typing-' + cid);
+  if(el) el.remove();
+}
+
+async function enviar(){
+  const txt = document.getElementById('txt');
+  const msg = txt.value.trim();
+  if(!msg) return;
+  txt.value = ''; txt.style.height = '';
+  document.getElementById('sbtn').disabled = true;
+  addUser(msg);
+  showTyping();
+  try{
+    const r = await api('/chat','POST',{miembro_id:S.mid, mensaje:msg, familia_id:S.fid});
+    removeTyping();
+    addBot(r.respuesta || '...', r.alerta === 'riesgo_alto');
+    if(r.alerta === 'riesgo_alto'){
+      setTimeout(()=>toast('⚠️ Se notificó a tu familia'), 1000);
+    }
+  }catch(e){
+    removeTyping();
+    addBot('Error de conexión. Intenta de nuevo.');
+  }
+  document.getElementById('sbtn').disabled = false;
+}
+
+function resize(el){
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function tecla(e){
+  if(e.key==='Enter' && !e.shiftKey){e.preventDefault();enviar();}
+}
+
+function teclaPadre(e){
+  if(e.key==='Enter' && !e.shiftKey){e.preventDefault();enviarPadre();}
+}
+
+async function mood(score){
+  try{
+    await api('/mood','POST',{miembro_id:S.mid, score});
+    const etiq = {1:'😶 Notado.',2:'😐 Ok.',3:'🙂 Copy.',4:'😊 Bien.',5:'🔥 Qué bueno.'};
+    toast(etiq[score]||'Ok.');
+  }catch(e){}
+}
+
+// Drawer
+function abrirMenu(){
+  document.getElementById('overlay').style.display='block';
+  document.getElementById('drawer').style.display='flex';
+}
+function cerrarMenu(){
+  document.getElementById('overlay').style.display='none';
+  document.getElementById('drawer').style.display='none';
+}
+
+// Misiones del teen
+async function verMisiones(){
+  const r = await api(`/misiones/${S.fid}`);
+  const mias = (r.misiones||[]).filter(m=>m.asignado_a===S.mid);
+  if(!mias.length){addBot('Sin misiones asignadas por ahora.');return;}
+  const txt = mias.map(m=>`📋 ${m.titulo} — ${m.puntos}pts [${m.estado}]`).join('\n');
+  addBot(txt);
+}
+
+// Metas del teen
+async function verMetas(){
+  abrirModal('m-meta');
+}
+
+async function crearMeta(){
+  const titulo = document.getElementById('mt-titulo').value.trim();
+  const desc   = document.getElementById('mt-desc').value.trim();
+  const plazo  = document.getElementById('mt-plazo').value.trim();
+  const errEl  = document.getElementById('mt-err');
+  if(!titulo){errEl.textContent='Escribe tu meta.';return;}
+  try{
+    await api('/metas','POST',{teen_id:S.mid, familia_id:S.fid, titulo, descripcion:desc, plazo});
+    cerrarModal('m-meta');
+    toast('Meta guardada ✓');
+    addBot(`Meta registrada: "${titulo}". Cada paso cuenta.`);
+  }catch(e){errEl.textContent='Error al guardar.';}
+}
+
+async function verDeseos(){
+  const r = await api(`/deseos/${S.mid}`);
+  if(!r.deseos?.length){addBot('Sin deseos en tu lista. Ve al menú → Deseos para agregar uno.');return;}
+  const txt = r.deseos.map(d=>`✨ ${d.descripcion} — ${d.puntos_necesarios}pts (tienes: ${d.puntos_total}pts)`).join('\n');
+  addBot(txt);
+}
+
+async function verLogros(){
+  const r = await api(`/logros/${S.mid}`);
+  if(!r.logros?.length){addBot('Sin logros aún. Completa misiones para ganarlos.');return;}
+  const txt = '⭐ ' + r.logros.map(l=>l.titulo).join(' · ⭐ ');
+  addBot(txt);
+}
+
+function tutor(){
+  abrirModal('m-regular');
+}
+
+async function iniciarRegularizacion(){
+  const materia = document.getElementById('rg-materia').value;
+  const grado   = document.getElementById('rg-grado').value;
+  const tema    = document.getElementById('rg-tema').value.trim();
+  const errEl   = document.getElementById('rg-err');
+  errEl.textContent = 'Iniciando sesión de regularización...';
+  try{
+    await api('/regularizacion/iniciar','POST',{
+      teen_id:S.mid, materia, nivel: grado
+    });
+    cerrarModal('m-regular');
+    const msg = `Quiero regularizarme en ${materia}${tema?' — especialmente en '+tema:''}. Estoy en ${grado}.`;
+    document.getElementById('txt').value = msg;
+    enviar();
+  }catch(e){errEl.textContent='Error al iniciar. Intenta de nuevo.';}
+}
+
+// ══ PANEL PADRE ════════════════════════════════════════════════════════════
+function entrarPanel(){
+  document.getElementById('s-padre').classList.add('active');
+  document.getElementById('ph-av').textContent = (S.nombre||'P')[0].toUpperCase();
+  document.getElementById('ph-nombre').textContent = S.nombre || 'Mi familia';
+  document.getElementById('fab').style.display = 'flex';
+  cargarTab('familia');
+  _refreshTimer = setInterval(()=>cargarTab(_tabActual, true), 30000);
+  // Chat padre abajo — preparar
+  document.getElementById('padre-chat-wrap').style.display = 'flex';
+}
+
+function switchTab(tab){
+  _tabActual = tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const tabEl = document.getElementById('tab-'+tab);
+  if(tabEl) tabEl.classList.add('active');
+  document.getElementById('fab').style.display = tab==='misiones' ? 'flex' : 'none';
+  document.getElementById('padre-content').style.display = 'block';
+  document.getElementById('padre-chat-wrap').style.display = tab==='chat' ? 'flex' : 'none';
+  if(tab !== 'chat') cargarTab(tab);
+}
+
+async function cargarTab(tab, silencioso=false){
+  const content = document.getElementById('padre-content');
+  if(!silencioso) content.innerHTML = '<div class="empty">Cargando...</div>';
+  switch(tab){
+    case 'familia':   await renderFamilia(); break;
+    case 'misiones':  await renderMisiones(); break;
+    case 'alertas':   await renderAlertas(); break;
+    case 'acuerdos':  await renderAcuerdos(); break;
+    case 'modulos':   await renderModulos(); break;
+  }
+}
+
+async function renderFamilia(){
+  try{
+    const r = await api(`/familia/${S.fid}`);
+    if(!r.ok){document.getElementById('padre-content').innerHTML='<div class="empty">Sin datos de familia.</div>';return;}
+    _miembros = r.miembros||[];
+
+    // Stats
+    document.getElementById('st-miembros').textContent = _miembros.length;
+    document.getElementById('st-pend').textContent = (r.misiones_pendientes||0)+(r.misiones_completadas||0);
+    document.getElementById('st-alertas').textContent = r.alertas_nuevas||0;
+    setBadge('b-misiones', (r.misiones_completadas||0));
+    setBadge('b-alertas', r.alertas_nuevas||0);
+
+    let html = '';
+    if(!_miembros.length){
+      html = '<div class="empty">Comparte el código con tu familia para que se unan.</div>';
+    } else {
+      _miembros.forEach(m=>{
+        const esPadre = ['padre','madre'].includes(m.rol);
+        const ini = (m.nombre||'?')[0].toUpperCase();
+        html += `<div class="member-card">
+          <div class="mc-av ${esPadre?'padre-av':''}">${ini}</div>
+          <div class="mc-info">
+            <div class="mc-name">${esc(m.nombre)}</div>
+            <div class="mc-role">${m.rol}${m.edad?' · '+m.edad+' años':''}</div>
+            <div class="mc-pts">${m.puntos_total||0} puntos · ${getNivel(m.puntos_total||0).label}</div>
+          </div>
+        </div>`;
+      });
+    }
+    html += `<div style="margin-top:.5rem;display:flex;gap:.6rem;">
+      <button class="btn ghost" style="flex:1" onclick="abrirModal('m-familiar')">＋ Familiar</button>
+      <button class="btn purple" style="flex:1" onclick="abrirChatPadre()">💬 Consejo</button>
+    </div>`;
+    if(S.codigo){
+      html += `<div style="margin-top:.75rem">
+        <div class="code-box">
+          <div class="code-val" style="font-size:1.6rem">${S.codigo}</div>
+          <span class="code-hint">Código de la familia</span>
+          <button class="copy-link" onclick="navigator.clipboard?.writeText('${S.codigo}').then(()=>toast('Código copiado ✓'))">Copiar</button>
+        </div>
+      </div>`;
+    }
+    document.getElementById('padre-content').innerHTML = html;
+  }catch(e){document.getElementById('padre-content').innerHTML='<div class="empty">Error al cargar.</div>';}
+}
+
+async function renderMisiones(){
+  try{
+    const r = await api(`/misiones/${S.fid}`);
+    const misiones = r.misiones||[];
+    setBadge('b-misiones', misiones.filter(m=>m.estado==='completada').length);
+    if(!misiones.length){
+      document.getElementById('padre-content').innerHTML=
+        '<div class="empty">Sin misiones todavía.<br>Toca ＋ para crear la primera.</div>';return;
+    }
+    const orden = {completada:0, pendiente:1, aprobada:2};
+    misiones.sort((a,b)=>(orden[a.estado]??9)-(orden[b.estado]??9));
+    let html = '';
+    misiones.forEach(m=>{
+      const asigNom = _miembros.find(x=>x.id===m.asignado_a)?.nombre||'—';
+      const statusMap = {pendiente:'s-pend',completada:'s-comp',aprobada:'s-apro'};
+      const btnAprobar = m.estado==='completada'
+        ?`<button class="btn sm success" onclick="pedirPin('${m.id}','${esc(m.titulo)}')">Aprobar</button>`:'';
+      html += `<div class="mission-card">
+        <div class="m-top">
+          <div class="m-titulo">${esc(m.titulo)}</div>
+          <div class="m-pts">+${m.puntos} pts</div>
+        </div>
+        ${m.descripcion?`<div class="m-desc">${esc(m.descripcion)}</div>`:''}
+        <div class="m-footer">
+          <div class="m-asig">Para: ${esc(asigNom)} · <span class="status ${statusMap[m.estado]||'s-pend'}">${m.estado}</span></div>
+          ${btnAprobar}
+        </div>
+      </div>`;
+    });
+    document.getElementById('padre-content').innerHTML = html;
+  }catch(e){document.getElementById('padre-content').innerHTML='<div class="empty">Error al cargar.</div>';}
+}
+
+async function renderAlertas(){
+  try{
+    const r = await api(`/alertas/${S.fid}`);
+    setBadge('b-alertas', 0);
+    document.getElementById('st-alertas').textContent = 0;
+    if(!r.alertas?.length){
+      document.getElementById('padre-content').innerHTML=
+        '<div class="empty">Sin señales recientes.<br>Todo tranquilo. 🟢</div>';return;
+    }
+    let html = '';
+    r.alertas.forEach(a=>{
+      const nivel = a.tipo?.includes('vital')||a.tipo?.includes('alto') ? 'al-alto'
+                  : a.tipo?.includes('medio') ? 'al-medio' : 'al-bajo';
+      const color = nivel==='al-alto'?'var(--danger)':nivel==='al-medio'?'var(--warn)':'var(--accent)';
+      html += `<div class="alert-card ${nivel}">
+        <div class="al-tipo" style="color:${color}">${esc(a.tipo||'señal')}</div>
+        <div style="font-size:.85rem">${esc(a.resumen||'')}</div>
+        ${a.sugerencia?`<div class="al-sugg">${esc(a.sugerencia)}</div>`:''}
+      </div>`;
+    });
+    document.getElementById('padre-content').innerHTML = html;
+  }catch(e){document.getElementById('padre-content').innerHTML='<div class="empty">Error al cargar.</div>';}
+}
+
+async function renderAcuerdos(){
+  try{
+    const r = await api(`/acuerdos/${S.fid}`);
+    let html = '';
+    if(!r.acuerdos?.length){
+      html = '<div class="empty">Sin acuerdos registrados.<br>Los acuerdos son la base de la confianza.</div>';
+    } else {
+      r.acuerdos.forEach(a=>{
+        const teenNom = _miembros.find(x=>x.id===a.teen_id)?.nombre||'—';
+        const estadoColor = a.estado==='activo'?'var(--accent)':a.estado==='cumplido'?'var(--muted2)':'var(--warn)';
+        const estadoLabel = a.estado==='activo'?'● activo':a.estado==='cumplido'?'✓ cumplido':'● propuesto';
+        html += `<div class="acuerdo-card">
+          <div class="ac-desc">${esc(a.descripcion)}</div>
+          ${a.condicion?`<div class="ac-cond">Cuando: ${esc(a.condicion)}</div>`:''}
+          ${a.recompensa?`<div class="ac-recomp">Recompensa: ${esc(a.recompensa)}</div>`:''}
+          <div style="margin-top:.5rem;display:flex;justify-content:space-between;align-items:center;font-size:.75rem">
+            <span style="color:var(--muted2)">${esc(teenNom)}</span>
+            <span style="color:${estadoColor}">${estadoLabel}</span>
+          </div>
+          ${a.estado==='propuesto'?`<div style="margin-top:.6rem"><button class="btn sm success" onclick="activarAcuerdo('${a.id}')">Activar</button></div>`:''}
+        </div>`;
+      });
+    }
+    html += `<div style="margin-top:.5rem"><button class="btn ghost" style="width:100%" onclick="abrirModal('m-acuerdo')">＋ Nuevo acuerdo</button></div>`;
+    document.getElementById('padre-content').innerHTML = html;
+  }catch(e){document.getElementById('padre-content').innerHTML='<div class="empty">Error al cargar.</div>';}
+}
+
+async function renderModulos(){
+  const content = document.getElementById('padre-content');
+  const MODULOS_DEFS = [
+    {key:'soporte_psicologico',   icon:'🧠', name:'Soporte psicológico',     desc:'Apoyo emocional basado en Erikson, CNV y Siegel'},
+    {key:'deteccion_aptitudes',   icon:'🔍', name:'Detección de aptitudes',   desc:'Perfil de inteligencias múltiples (Gardner)'},
+    {key:'orientacion_vocacional',icon:'🧭', name:'Orientación vocacional',   desc:'Exploración de carreras y proyectos de vida'},
+    {key:'proyecto_vida',          icon:'🌱', name:'Proyecto de Vida',         desc:'Módulo canónico para colegios religiosos'},
+    {key:'virtudes',               icon:'✨', name:'Virtudes detectadas',      desc:'Reconocimiento de valores en conversación'},
+    {key:'salud_real',             icon:'💊', name:'Salud sin filtros',        desc:'Información real sin versión sanitizada'},
+    {key:'busqueda_web',           icon:'🌐', name:'Búsqueda web libre',       desc:'SearXNG — sin censura'},
+    {key:'educacion_financiera',   icon:'💰', name:'Educación financiera',     desc:'Bases de dinero, ahorro e inversión'},
+    {key:'materias_escolares',     icon:'📚', name:'Refuerzo de materias',     desc:'Enseña, no hace la tarea'},
+    {key:'regularizacion',         icon:'🎯', name:'Regularización escolar',   desc:'Tutoring AI para materias reprobadas'},
+  ];
+
+  let modulos = {};
+  try{
+    const r = await api(`/modulos/${S.fid}`);
+    (r.modulos||[]).forEach(m=>{ modulos[m.clave] = m.activo; });
+  }catch(e){}
+
+  let html = '<div style="margin-bottom:.75rem;font-size:.78rem;color:var(--muted2);line-height:1.5;">Activa o desactiva módulos para toda la familia. Los cambios aplican inmediatamente.</div>';
+  MODULOS_DEFS.forEach(m=>{
+    const activo = modulos[m.key] !== false;
+    html += `<div class="modulo-card">
+      <div class="mod-ico">${m.icon}</div>
+      <div class="mod-info">
+        <div class="mod-name">${m.name}</div>
+        <div class="mod-desc">${m.desc}</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" ${activo?'checked':''} onchange="toggleModulo('${m.key}',this.checked)">
+        <div class="toggle-track"></div>
+      </label>
+    </div>`;
+  });
+  content.innerHTML = html;
+}
+
+async function toggleModulo(clave, activo){
+  try{
+    await api(`/modulos/${S.fid}`,'PUT',{modulo:clave, activo});
+    toast((activo?'Módulo activado':'Módulo desactivado') + ' ✓');
+  }catch(e){toast('Error al cambiar módulo.');}
+}
+
+// Chat del padre
+function abrirChatPadre(){
+  document.getElementById('padre-content').style.display = 'none';
+  document.getElementById('padre-chat-wrap').style.display = 'flex';
+  if(!document.getElementById('padre-messages').children.length){
+    addBot('Hola ' + S.nombre + '. ¿Qué quieres revisar?', false, 'padre-messages');
+  }
+  document.getElementById('padre-txt').focus();
+}
+
+async function enviarPadre(){
+  const txt = document.getElementById('padre-txt');
+  const msg = txt.value.trim();
+  if(!msg) return;
+  txt.value = ''; txt.style.height = '';
+  addUser(msg, 'padre-messages');
+  showTyping('padre-messages');
+  try{
+    const r = await api('/chat','POST',{miembro_id:S.mid, mensaje:msg, familia_id:S.fid});
+    removeTyping('padre-messages');
+    addBot(r.respuesta||'...', false, 'padre-messages');
+  }catch(e){
+    removeTyping('padre-messages');
+    addBot('Error de conexión.', false, 'padre-messages');
+  }
+}
+
+// Aprobar misión
+function pedirPin(misionId, titulo){
+  _misionAprobar = misionId;
+  document.getElementById('pin-info').textContent = `Aprobar: "${titulo}"`;
+  document.getElementById('pin-input').value = '';
+  document.getElementById('pin-err').textContent = '';
+  abrirModal('m-pin');
+  setTimeout(()=>document.getElementById('pin-input').focus(), 250);
+}
+
+async function confirmarAprobacion(){
+  const pin = document.getElementById('pin-input').value.trim() || S.pin;
+  const errEl = document.getElementById('pin-err');
+  if(!pin){errEl.textContent='Ingresa tu PIN.';return;}
+  try{
+    const r = await api(`/misiones/${_misionAprobar}/aprobar`,'PUT',{
+      familia_id:S.fid, aprobado_por:S.mid, pin_padre:pin});
+    if(!r.ok){errEl.textContent='PIN incorrecto.';return;}
+    cerrarModal('m-pin');
+    toast(`+${r.puntos_asignados||0} puntos asignados 🎉`);
+    cargarTab('misiones');
+    cargarStats();
+  }catch(e){errEl.textContent='Error al aprobar.';}
+}
+
+// Crear misión
+function fabAction(){
+  if(_tabActual === 'misiones'){
+    const sel = document.getElementById('nm-asig');
+    sel.innerHTML = _miembros.filter(m=>!['padre','madre'].includes(m.rol))
+      .map(m=>`<option value="${m.id}">${esc(m.nombre)}</option>`).join('');
+    if(!sel.options.length) sel.innerHTML = '<option value="">Sin teens aún</option>';
+    document.getElementById('nm-err').textContent = '';
+    abrirModal('m-mision');
+  }
+}
+
+async function crearMision(){
+  const titulo   = document.getElementById('nm-titulo').value.trim();
+  const desc     = document.getElementById('nm-desc').value.trim();
+  const puntos   = parseInt(document.getElementById('nm-puntos').value)||10;
+  const asignado = document.getElementById('nm-asig').value;
+  const errEl    = document.getElementById('nm-err');
+  if(!titulo){errEl.textContent='Escribe el título de la misión.';return;}
+  try{
+    await api('/misiones','POST',{familia_id:S.fid, titulo, descripcion:desc, puntos, asignado_a:asignado});
+    cerrarModal('m-mision');
+    toast('Misión creada ✓');
+    document.getElementById('nm-titulo').value='';
+    document.getElementById('nm-desc').value='';
+    cargarTab('misiones');
+  }catch(e){errEl.textContent='Error al crear.';}
+}
+
+// Crear acuerdo
+async function crearAcuerdo(){
+  const desc   = document.getElementById('na-desc').value.trim();
+  const cond   = document.getElementById('na-cond').value.trim();
+  const recomp = document.getElementById('na-recomp').value.trim();
+  const teen   = document.getElementById('na-teen').value;
+  const errEl  = document.getElementById('na-err');
+  if(!desc){errEl.textContent='Escribe el acuerdo.';return;}
+  try{
+    await api('/acuerdos','POST',{familia_id:S.fid, teen_id:teen, descripcion:desc, condicion:cond, recompensa:recomp});
+    cerrarModal('m-acuerdo');
+    toast('Acuerdo guardado ✓');
+    cargarTab('acuerdos');
+  }catch(e){errEl.textContent='Error al guardar.';}
+}
+
+function abrirModalAcuerdo(){
+  const sel = document.getElementById('na-teen');
+  sel.innerHTML = _miembros.filter(m=>!['padre','madre'].includes(m.rol))
+    .map(m=>`<option value="${m.id}">${esc(m.nombre)}</option>`).join('');
+  document.getElementById('na-err').textContent='';
+  abrirModal('m-acuerdo');
+}
+
+async function activarAcuerdo(id){
+  await api(`/acuerdos/${id}/activar`,'PUT');
+  toast('Acuerdo activado ✓');
+  cargarTab('acuerdos');
+}
+
+// Agregar familiar
+async function agregarFamiliar(){
+  const nombre = document.getElementById('af-nombre').value.trim();
+  const rol    = document.getElementById('af-rol').value;
+  const edad   = parseInt(document.getElementById('af-edad').value)||14;
+  const errEl  = document.getElementById('af-err');
+  if(!nombre){errEl.textContent='Escribe el nombre.';return;}
+  errEl.textContent='Registrando...';
+  try{
+    const r = await api('/miembros','POST',{familia_id:S.fid, nombre, rol, edad});
+    if(!r.ok){errEl.textContent='Error al registrar.';return;}
+    cerrarModal('m-familiar');
+    toast(`${nombre} registrado/a ✓ — ID: ${r.miembro_id}`);
+    cargarTab('familia');
+  }catch(e){errEl.textContent='Sin conexión.';}
+}
+
+async function cargarStats(){
+  try{
+    const r = await api(`/familia/${S.fid}`);
+    document.getElementById('st-miembros').textContent = (r.miembros||[]).length;
+    document.getElementById('st-pend').textContent = (r.misiones_pendientes||0)+(r.misiones_completadas||0);
+    document.getElementById('st-alertas').textContent = r.alertas_nuevas||0;
+  }catch(e){}
+}
+
+// ── Modales ───────────────────────────────────────────────────────────────
+function abrirModal(id){document.getElementById(id).classList.add('on');}
+function cerrarModal(id){document.getElementById(id).classList.remove('on');}
+document.querySelectorAll('.modal-bg').forEach(m=>{
+  m.addEventListener('click', e=>{if(e.target===m) m.classList.remove('on');});
+});
+
+// ── Salir ─────────────────────────────────────────────────────────────────
+function salir(){
+  clearInterval(_refreshTimer);
+  ['s-chat','s-padre'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('messages').innerHTML = '';
+  document.getElementById('padre-messages').innerHTML = '';
+  document.getElementById('padre-content').innerHTML = '';
+  document.getElementById('padre-content').style.display = 'block';
+  document.getElementById('padre-chat-wrap').style.display = 'none';
+  document.getElementById('fab').style.display = 'none';
+  document.getElementById('s-login').classList.add('active');
+  mostrar('c-quien');
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function hora(){
+  const d=new Date();
+  return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+}
+function scroll(id='messages'){
+  const el=document.getElementById(id);
+  if(el) setTimeout(()=>el.scrollTop=el.scrollHeight,50);
+}
+function setBadge(id, n){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.textContent=n;
+  el.classList.toggle('on', n>0);
+}
+let _toastTimer;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('on');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>el.classList.remove('on'),2200);
+}
+
+// Enter en campos de login
+['p-nombre','p-familia','p-pin','t-codigo','t-nombre'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){
+      e.preventDefault();
+      if(id.startsWith('p-')) crearFamilia();
+      else unirse();
+    }
+  });
+});
+document.getElementById('pin-input')?.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();confirmarAprobacion();}
+});
+</script>
+</body>
+</html>

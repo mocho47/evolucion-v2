@@ -1,0 +1,12 @@
+*.db
+*.db-shm
+*.db-wal
+.env
+__pycache__/
+*.pyc
+*.log
+*.bat
+arrancar.ps1
+duckdns_updater.ps1
+run_hidden.vbs
+start.bat

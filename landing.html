@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Evolución — El primer asistente de desarrollo humano adolescente para México. Acompañamiento emocional, orientación vocacional y tutoría académica con IA.">
+<title>Evolución — Desarrollo Humano Adolescente</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#030308;
+  --s1:#080814;
+  --s2:#0d0d20;
+  --border:#1a1a35;
+  --accent:#00e5a0;
+  --accent2:#00b87a;
+  --accent-dim:rgba(0,229,160,.1);
+  --accent-glow:rgba(0,229,160,.2);
+  --purple:#7c3aed;
+  --purple-dim:rgba(124,58,237,.12);
+  --text:#eeeef8;
+  --muted:#8888aa;
+  --muted2:#4a4a6a;
+  --r:16px;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  font-size:16px;line-height:1.6;overflow-x:hidden;}
+
+/* ── NAV ──────────────────────────────────────────────────── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(3,3,8,.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between;
+}
+.nav-logo{font-size:1.1rem;font-weight:900;letter-spacing:-.01em;}
+.nav-logo span{color:var(--accent);}
+.nav-cta{
+  background:var(--accent);color:#030308;border:none;
+  padding:.5rem 1.2rem;border-radius:99px;font-weight:700;
+  font-size:.85rem;cursor:pointer;text-decoration:none;
+  transition:all .2s;
+}
+.nav-cta:hover{background:var(--accent2);transform:translateY(-1px);}
+
+/* ── HERO ─────────────────────────────────────────────────── */
+#hero{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;
+  padding:6rem 1.5rem 4rem;
+  background:radial-gradient(ellipse at 50% 30%, #061a0e 0%, var(--bg) 65%);
+  position:relative;overflow:hidden;
+}
+#hero::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 70% 70%, rgba(124,58,237,.06) 0%, transparent 60%);
+  pointer-events:none;
+}
+.hero-tag{
+  display:inline-block;background:var(--accent-dim);border:1px solid rgba(0,229,160,.25);
+  color:var(--accent);border-radius:99px;padding:.35rem 1rem;
+  font-size:.78rem;font-weight:600;letter-spacing:.04em;margin-bottom:1.75rem;
+}
+.hero-title{
+  font-size:clamp(2.4rem,7vw,4.2rem);font-weight:900;line-height:1.08;
+  letter-spacing:-.03em;margin-bottom:1.25rem;max-width:780px;
+}
+.hero-title span{
+  background:linear-gradient(135deg,var(--accent),#00b0ff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-sub{
+  font-size:clamp(1rem,2.5vw,1.2rem);color:var(--muted);max-width:580px;
+  margin-bottom:2.5rem;line-height:1.65;
+}
+.hero-actions{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#030308;border:none;padding:.85rem 2rem;border-radius:99px;
+  font-weight:700;font-size:1rem;cursor:pointer;text-decoration:none;
+  transition:all .2s;box-shadow:0 8px 28px var(--accent-glow);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 36px var(--accent-glow);}
+.btn-ghost{
+  background:transparent;color:var(--text);border:1px solid var(--border);
+  padding:.85rem 2rem;border-radius:99px;font-weight:600;font-size:1rem;
+  cursor:pointer;text-decoration:none;transition:all .2s;
+}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+
+.hero-note{margin-top:2.5rem;font-size:.78rem;color:var(--muted2);display:flex;align-items:center;gap:.5rem;}
+.hero-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;
+  box-shadow:0 0 6px var(--accent);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* ── SECCIÓN GENÉRICA ─────────────────────────────────────── */
+section{padding:5rem 1.5rem;}
+.container{max-width:1040px;margin:0 auto;}
+.section-tag{font-size:.72rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--accent);margin-bottom:.75rem;}
+.section-title{font-size:clamp(1.7rem,4vw,2.5rem);font-weight:800;
+  line-height:1.15;letter-spacing:-.02em;margin-bottom:1rem;}
+.section-sub{font-size:1rem;color:var(--muted);max-width:560px;line-height:1.65;}
+
+/* ── PROBLEMA ─────────────────────────────────────────────── */
+#problema{background:var(--s1);}
+.problema-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem;margin-top:3rem;}
+.problema-card{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--r);padding:1.5rem;
+}
+.prob-ico{font-size:1.8rem;margin-bottom:.75rem;}
+.prob-title{font-weight:700;font-size:1rem;margin-bottom:.4rem;}
+.prob-desc{font-size:.88rem;color:var(--muted);line-height:1.6;}
+
+/* ── DIFERENCIADORES ──────────────────────────────────────── */
+#diferenciadores{}
+.dif-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.25rem;margin-top:3rem;}
+.dif-card{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:var(--r);padding:1.75rem;
+  transition:border .2s,transform .2s;
+}
+.dif-card:hover{border-color:var(--accent);transform:translateY(-3px);}
+.dif-card.purple:hover{border-color:var(--purple);}
+.dif-num{
+  font-size:.68rem;font-weight:700;letter-spacing:.1em;
+  color:var(--accent);margin-bottom:.85rem;
+}
+.dif-card.purple .dif-num{color:#a78bfa;}
+.dif-title{font-size:1.05rem;font-weight:700;margin-bottom:.5rem;}
+.dif-desc{font-size:.88rem;color:var(--muted);line-height:1.6;}
+
+/* ── PERFILES ─────────────────────────────────────────────── */
+#perfiles{background:var(--s1);}
+.perfiles-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:3rem;}
+.perfil-card{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--r);padding:1.4rem;text-align:center;
+}
+.perfil-ico{font-size:2rem;margin-bottom:.65rem;}
+.perfil-name{font-weight:700;font-size:.95rem;margin-bottom:.35rem;}
+.perfil-desc{font-size:.8rem;color:var(--muted);line-height:1.5;}
+.perfil-badge{
+  display:inline-block;margin-top:.6rem;
+  font-size:.65rem;font-weight:700;border-radius:99px;
+  padding:.2rem .65rem;letter-spacing:.04em;
+}
+.pb-green{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(0,229,160,.2);}
+.pb-purple{background:var(--purple-dim);color:#a78bfa;border:1px solid rgba(124,58,237,.2);}
+
+/* ── MODELO INSTITUCIONAL ─────────────────────────────────── */
+#institucional{}
+.inst-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.25rem;margin-top:3rem;}
+.inst-card{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:var(--r);padding:1.75rem;
+}
+.inst-tipo{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--accent);margin-bottom:.85rem;}
+.inst-tipo.purple{color:#a78bfa;}
+.inst-titulo{font-size:1.05rem;font-weight:700;margin-bottom:.5rem;}
+.inst-desc{font-size:.88rem;color:var(--muted);line-height:1.6;}
+.inst-items{list-style:none;margin-top:.85rem;display:flex;flex-direction:column;gap:.35rem;}
+.inst-items li{font-size:.82rem;color:var(--muted);display:flex;gap:.5rem;align-items:flex-start;}
+.inst-items li::before{content:'✓';color:var(--accent);flex-shrink:0;font-weight:700;}
+.inst-items li.purple::before{color:#a78bfa;}
+
+/* ── PRIVACIDAD ───────────────────────────────────────────── */
+#privacidad{background:var(--s1);}
+.priv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-top:3rem;}
+.priv-item{display:flex;gap:.85rem;align-items:flex-start;}
+.priv-ico{
+  width:40px;height:40px;background:var(--accent-dim);border:1px solid rgba(0,229,160,.2);
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;flex-shrink:0;
+}
+.priv-text{flex:1;}
+.priv-title{font-weight:700;font-size:.9rem;margin-bottom:.2rem;}
+.priv-desc{font-size:.8rem;color:var(--muted);line-height:1.5;}
+
+/* ── CTA FINAL ────────────────────────────────────────────── */
+#cta-final{
+  text-align:center;
+  background:radial-gradient(ellipse at 50% 0%, #061a0e 0%, var(--bg) 70%);
+}
+.cta-title{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;
+  line-height:1.15;letter-spacing:-.02em;margin-bottom:1rem;}
+.cta-sub{font-size:1rem;color:var(--muted);margin-bottom:2.5rem;max-width:500px;margin-left:auto;margin-right:auto;}
+.cta-note{margin-top:1.25rem;font-size:.8rem;color:var(--muted2);}
+
+/* ── FOOTER ───────────────────────────────────────────────── */
+footer{
+  background:var(--s1);border-top:1px solid var(--border);
+  padding:2rem 1.5rem;text-align:center;
+  font-size:.78rem;color:var(--muted2);
+}
+footer strong{color:var(--text);}
+
+/* ── RESPONSIVE ───────────────────────────────────────────── */
+@media(max-width:600px){
+  .hero-actions{flex-direction:column;align-items:center;}
+  .btn-primary,.btn-ghost{width:100%;max-width:320px;text-align:center;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">EVO<span>LUCIÓN</span></div>
+  <a href="/app" class="nav-cta">Ingresar a la plataforma</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-tag">Plataforma educativa · México</div>
+  <h1 class="hero-title">El primer asistente de<br><span>desarrollo humano adolescente</span><br>para México</h1>
+  <p class="hero-sub">Acompañamiento emocional, orientación vocacional y tutoría académica personalizada — todo en una conversación continua con el estudiante.</p>
+  <div class="hero-actions">
+    <a href="/app" class="btn-primary">Ver demostración</a>
+    <a href="#diferenciadores" class="btn-ghost">Conocer más</a>
+  </div>
+  <div class="hero-note">
+    <div class="hero-dot"></div>
+    <span>Plataforma activa · Familias reales · Guadalajara, México</span>
+  </div>
+</section>
+
+<!-- PROBLEMA -->
+<section id="problema">
+  <div class="container">
+    <div class="section-tag">El problema</div>
+    <h2 class="section-title">Tres crisis que ninguna institución atiende de manera integrada</h2>
+    <p class="section-sub">Los adolescentes mexicanos enfrentan simultáneamente una crisis emocional, una crisis vocacional y una crisis académica.</p>
+    <div class="problema-grid">
+      <div class="problema-card">
+        <div class="prob-ico">🧠</div>
+        <div class="prob-title">Crisis emocional</div>
+        <div class="prob-desc">Los jóvenes no tienen espacios seguros para expresar lo que viven. El orientador escolar atiende cientos de alumnos con recursos mínimos. Las señales de riesgo no se detectan hasta que se convierten en crisis.</div>
+      </div>
+      <div class="problema-card">
+        <div class="prob-ico">🧭</div>
+        <div class="prob-title">Crisis vocacional</div>
+        <div class="prob-desc">México produce generaciones que eligen carrera por presión o descarte, no por autoconocimiento. El resultado es deserción universitaria masiva y talento humano desperdiciado.</div>
+      </div>
+      <div class="problema-card">
+        <div class="prob-ico">📚</div>
+        <div class="prob-title">Crisis académica</div>
+        <div class="prob-desc">Miles de familias pierden vacaciones y dinero porque sus hijos reprueban materias. Las academias presenciales son inaccesibles. Las plataformas digitales son genéricas e impersonales.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DIFERENCIADORES -->
+<section id="diferenciadores">
+  <div class="container">
+    <div class="section-tag">Lo que hace Evolución</div>
+    <h2 class="section-title">Diferenciadores que ninguna plataforma tiene hoy</h2>
+    <p class="section-sub">No es una app de chat. No es un catálogo de carreras. No es un buscador. Es un acompañante de desarrollo humano que aprende al alumno con el tiempo.</p>
+    <div class="dif-grid">
+      <div class="dif-card">
+        <div class="dif-num">01 — ACOMPAÑAMIENTO</div>
+        <div class="dif-title">Conversación real, no formularios</div>
+        <div class="dif-desc">El sistema conversa naturalmente y construye un perfil psicológico dinámico del alumno. Reconoce estados de ánimo, detecta angustia y aplica marcos validados: Erikson, Siegel, Dweck, Comunicación No Violenta.</div>
+      </div>
+      <div class="dif-card">
+        <div class="dif-num">02 — DETECCIÓN</div>
+        <div class="dif-title">Aptitudes que emergen del diálogo</div>
+        <div class="dif-desc">Sin tests formales ni cuestionarios. Las inteligencias múltiples y los talentos del alumno se identifican a través de la conversación cotidiana. El perfil crece con el tiempo y no se resetea.</div>
+      </div>
+      <div class="dif-card">
+        <div class="dif-num">03 — REGULARIZACIÓN</div>
+        <div class="dif-title">Lo que nadie más ofrece digitalmente</div>
+        <div class="dif-desc">Tutoría con IA conversacional para materias reprobadas. El sistema detecta el punto exacto del bloqueo y trabaja desde ahí. A ritmo propio, sin privar a la familia de sus vacaciones.</div>
+      </div>
+      <div class="dif-card">
+        <div class="dif-num">04 — AUTONOMÍA</div>
+        <div class="dif-title">Funciona sin internet</div>
+        <div class="dif-desc">A diferencia de cualquier plataforma de IA educativa, Evolución puede operar con modelos de inteligencia artificial locales. Determinante para comunidades con conectividad limitada — una realidad mayoritaria en México.</div>
+      </div>
+      <div class="dif-card">
+        <div class="dif-num">05 — FAMILIA</div>
+        <div class="dif-title">El padre presente, no excluido</div>
+        <div class="dif-desc">Panel familiar con visibilidad del estado emocional general, aptitudes emergentes, acuerdos activos y señales de riesgo — sin acceder al contenido de las conversaciones del adolescente.</div>
+      </div>
+      <div class="dif-card purple">
+        <div class="dif-num purple" style="color:#a78bfa">06 — INSTITUCIÓN</div>
+        <div class="dif-title">Inteligencia real para el orientador</div>
+        <div class="dif-desc">El orientador escolar accede a tendencias anónimas de su grupo: emociones predominantes, aptitudes emergentes, señales de riesgo. Sin ver datos individuales, tiene información real para actuar en el momento correcto.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PERFILES -->
+<section id="perfiles">
+  <div class="container">
+    <div class="section-tag">Perfiles de alumno</div>
+    <h2 class="section-title">Cada alumno es diferente.<br>Evolución lo reconoce.</h2>
+    <p class="section-sub">Las plataformas genéricas fracasan porque tratan a todos igual. Evolución adapta su forma de acompañar según quién es el estudiante.</p>
+    <div class="perfiles-grid">
+      <div class="perfil-card">
+        <div class="perfil-ico">⚡</div>
+        <div class="perfil-name">Teen estándar</div>
+        <div class="perfil-desc">Apoyo emocional, misiones de crecimiento, orientación vocacional general y seguimiento familiar.</div>
+        <div class="perfil-badge pb-green">Base</div>
+      </div>
+      <div class="perfil-card">
+        <div class="perfil-ico">✦</div>
+        <div class="perfil-name">Capacidades sobresalientes</div>
+        <div class="perfil-desc">Detección automática por patrones de conversación. Reto intelectual superior, canalización a programas de talento y alertas al orientador.</div>
+        <div class="perfil-badge pb-purple">Gifted</div>
+      </div>
+      <div class="perfil-card">
+        <div class="perfil-ico">◈</div>
+        <div class="perfil-name">Visionario</div>
+        <div class="perfil-desc">Curioso radical, emprendedor nato. El sistema valida su forma de ver el mundo en lugar de corregirla. Proyectos propios e innovación.</div>
+        <div class="perfil-badge pb-purple">Visionario</div>
+      </div>
+      <div class="perfil-card">
+        <div class="perfil-ico">†</div>
+        <div class="perfil-name">Colegio con valores</div>
+        <div class="perfil-desc">El asistente conoce el carisma de la institución — La Salle, Maristas, Jesuitas, Salesianos — e integra el Proyecto de Vida desde ese marco.</div>
+        <div class="perfil-badge pb-green">Canónico</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MODELO INSTITUCIONAL -->
+<section id="institucional">
+  <div class="container">
+    <div class="section-tag">Modelo institucional</div>
+    <h2 class="section-title">Para escuelas, orientadores<br>y sistemas educativos</h2>
+    <p class="section-sub">Evolución está diseñado para operar a tres escalas simultáneas, desde el plantel individual hasta la política pública.</p>
+    <div class="inst-grid">
+      <div class="inst-card">
+        <div class="inst-tipo">Nivel 1 — Colegio privado</div>
+        <div class="inst-titulo">La Salle, Maristas, Jesuitas, Salesianos y similares</div>
+        <div class="inst-desc">El primer cliente natural. Ya tienen Proyecto de Vida como materia, ya creen en el desarrollo humano, ya tienen presupuesto destinado a formación integral.</div>
+        <ul class="inst-items">
+          <li>El AI conoce el carisma de la orden</li>
+          <li>Protocolo de crisis incluye capellán + orientador + padre</li>
+          <li>Panel de tendencias para el orientador vocacional</li>
+          <li>Licencia anual por plantel</li>
+        </ul>
+      </div>
+      <div class="inst-card">
+        <div class="inst-tipo">Nivel 2 — Escuela laica privada</div>
+        <div class="inst-titulo">Diferenciador real frente a la competencia</div>
+        <div class="inst-desc">Una herramienta de orientación vocacional oficial que mejora los indicadores de bienestar estudiantil y reduce la deserción — argumentos medibles para padres y directivos.</div>
+        <ul class="inst-items">
+          <li>Orientación vocacional con perfil acumulativo</li>
+          <li>Regularización escolar como valor agregado</li>
+          <li>Reportes de grupo para dirección académica</li>
+          <li>Licencia anual por plantel</li>
+        </ul>
+      </div>
+      <div class="inst-card">
+        <div class="inst-tipo purple">Nivel 3 — Sistema público · SEP</div>
+        <div class="inst-titulo">El premio mayor: escala nacional</div>
+        <div class="inst-desc">Los datos del piloto privado son el argumento. Con suficiente evidencia, Evolución puede certificarse como herramienta oficial de orientación educativa.</div>
+        <ul class="inst-items">
+          <li class="purple">Modelo por alumno activo</li>
+          <li class="purple">Datos anónimos agregados para política pública</li>
+          <li class="purple">Tendencias nacionales de aptitudes y bienestar</li>
+          <li class="purple">Sin ver datos individuales de alumnos</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRIVACIDAD -->
+<section id="privacidad">
+  <div class="container">
+    <div class="section-tag">Privacidad y protección</div>
+    <h2 class="section-title">Los datos de menores<br>son el activo más sensible</h2>
+    <p class="section-sub">Diseñado desde la arquitectura con los más altos estándares de protección de datos de menores de edad.</p>
+    <div class="priv-grid" style="margin-top:3rem">
+      <div class="priv-item">
+        <div class="priv-ico">🇲🇽</div>
+        <div class="priv-text">
+          <div class="priv-title">Datos en México</div>
+          <div class="priv-desc">Toda la información reside en servidores nacionales. Cumplimiento con LFPDPPP.</div>
+        </div>
+      </div>
+      <div class="priv-item">
+        <div class="priv-ico">👨‍👩‍👧</div>
+        <div class="priv-text">
+          <div class="priv-title">Padres como titulares</div>
+          <div class="priv-desc">Los padres son los titulares legales de los datos de sus hijos menores. Consentimiento digital firmado y auditable.</div>
+        </div>
+      </div>
+      <div class="priv-item">
+        <div class="priv-ico">🏫</div>
+        <div class="priv-text">
+          <div class="priv-title">Director responsable</div>
+          <div class="priv-desc">El responsable legal ante la autoridad educativa es el director del plantel. Contrato institucional explícito.</div>
+        </div>
+      </div>
+      <div class="priv-item">
+        <div class="priv-ico">🚨</div>
+        <div class="priv-text">
+          <div class="priv-title">Protocolo de crisis documentado</div>
+          <div class="priv-desc">Cuando el sistema detecta riesgo vital, activa simultáneamente a padres, orientador y, si la institución lo define, capellán o figura equivalente.</div>
+        </div>
+      </div>
+      <div class="priv-item">
+        <div class="priv-ico">🔒</div>
+        <div class="priv-text">
+          <div class="priv-title">Sin acceso al contenido</div>
+          <div class="priv-desc">Ni padres ni escuela acceden a las conversaciones del adolescente. Solo tendencias anónimas agregadas.</div>
+        </div>
+      </div>
+      <div class="priv-item">
+        <div class="priv-ico">📊</div>
+        <div class="priv-text">
+          <div class="priv-title">Datos anonimizados para SEP</div>
+          <div class="priv-desc">La autoridad educativa puede ver tendencias nacionales sin tener acceso a ningún dato individual identificable.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section id="cta-final">
+  <div class="container">
+    <h2 class="cta-title">El sistema está en operación.<br>El primer plantel define el rumbo.</h2>
+    <p class="cta-sub">Evolución no es un proyecto en papel. Hay conversaciones activas, perfiles construidos y señales detectadas. Lo que viene es la validación institucional.</p>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;">
+      <a href="/app" class="btn-primary">Ver plataforma en vivo</a>
+      <a href="mailto:milanmontellanoanuar@gmail.com" class="btn-ghost">Contactar al equipo</a>
+    </div>
+    <div class="cta-note">Evolución es un proyecto de <strong>Simplex</strong> — Guadalajara, México</div>
+  </div>
+</section>
+
+<footer>
+  <strong>EVOLUCIÓN</strong> by Simplex &nbsp;·&nbsp; Guadalajara, México &nbsp;·&nbsp; milanmontellanoanuar@gmail.com
+</footer>
+
+</body>
+</html>

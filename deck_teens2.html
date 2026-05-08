@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución — Para la generación que cambia todo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#030308;--s1:#080814;--s2:#0d0d20;--border:#1a1a35;
+  --accent:#00e5a0;--accent2:#00b87a;--accent-dim:rgba(0,229,160,.1);--accent-glow:rgba(0,229,160,.25);
+  --purple:#7c3aed;--purple-dim:rgba(124,58,237,.15);--purple-glow:rgba(124,58,237,.3);
+  --blue:#00b4ff;--blue-dim:rgba(0,180,255,.1);
+  --gold:#ffab00;--gold-dim:rgba(255,171,0,.1);
+  --text:#eeeef8;--muted:#8888aa;--muted2:#4a4a6a;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;overflow:hidden;}
+#deck{width:100%;height:100%;position:relative;}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;
+  align-items:center;justify-content:center;padding:3rem 2rem;text-align:center;}
+.slide.active{display:flex;}
+#nav{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:1rem;z-index:100;
+  background:rgba(3,3,8,.92);backdrop-filter:blur(10px);
+  border:1px solid var(--border);border-radius:99px;padding:.5rem 1.25rem;}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:var(--muted2);cursor:pointer;transition:all .2s;}
+.nav-dot.on{background:var(--accent);box-shadow:0 0 6px var(--accent);}
+#prev,#next{background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:.15rem .4rem;}
+#prev:hover,#next:hover{color:var(--accent);}
+#slide-n{font-size:.7rem;color:var(--muted2);min-width:42px;text-align:center;}
+.logo{font-size:.95rem;font-weight:900;position:fixed;top:1.25rem;left:1.5rem;}
+.logo span{color:var(--accent);}
+.logo-tag{font-size:.6rem;color:var(--muted2);letter-spacing:.06em;position:fixed;top:1.25rem;right:1.5rem;}
+
+.tag{display:inline-block;border-radius:99px;padding:.3rem .9rem;
+  font-size:.72rem;font-weight:700;letter-spacing:.06em;margin-bottom:1.5rem;}
+.tag.green{background:var(--accent-dim);border:1px solid rgba(0,229,160,.25);color:var(--accent);}
+.tag.purple{background:var(--purple-dim);border:1px solid rgba(124,58,237,.3);color:#a78bfa;}
+.tag.blue{background:var(--blue-dim);border:1px solid rgba(0,180,255,.3);color:var(--blue);}
+.tag.gold{background:var(--gold-dim);border:1px solid rgba(255,171,0,.3);color:var(--gold);}
+
+h1{font-size:clamp(2.2rem,6vw,3.8rem);font-weight:900;line-height:1.08;
+  letter-spacing:-.03em;margin-bottom:1rem;max-width:700px;}
+h1 em{font-style:normal;color:var(--accent);}
+h2{font-size:clamp(1.5rem,4vw,2.4rem);font-weight:800;line-height:1.15;
+  letter-spacing:-.02em;margin-bottom:.85rem;max-width:720px;}
+h2 em{font-style:normal;color:var(--accent);}
+h2 em.purple{color:#a78bfa;}
+h2 em.gold{color:var(--gold);}
+.sub{font-size:clamp(.9rem,2vw,1.1rem);color:var(--muted);max-width:560px;line-height:1.65;margin-bottom:1.5rem;}
+
+.grid{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:1.5rem;max-width:860px;width:100%;}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:1.25rem 1.4rem;text-align:left;flex:1;min-width:200px;max-width:260px;}
+.card-ico{font-size:1.7rem;margin-bottom:.6rem;}
+.card-t{font-weight:700;font-size:.95rem;margin-bottom:.35rem;}
+.card-d{font-size:.82rem;color:var(--muted);line-height:1.55;}
+
+/* Privilegios */
+.priv-list{display:flex;flex-direction:column;gap:.65rem;max-width:620px;width:100%;margin-top:1.25rem;text-align:left;}
+.priv{background:var(--s1);border:1px solid var(--border);border-radius:12px;
+  padding:.9rem 1.1rem;display:flex;align-items:flex-start;gap:.85rem;}
+.priv.new{border-color:rgba(0,229,160,.3);}
+.priv-ico{font-size:1.3rem;flex-shrink:0;}
+.priv-body{flex:1;}
+.priv-t{font-weight:700;font-size:.9rem;margin-bottom:.2rem;}
+.priv-d{font-size:.8rem;color:var(--muted);line-height:1.45;}
+.priv-badge{display:inline-block;margin-top:.4rem;font-size:.62rem;font-weight:700;
+  border-radius:99px;padding:.15rem .55rem;}
+.pb-new{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(0,229,160,.2);}
+.pb-purple{background:var(--purple-dim);color:#a78bfa;border:1px solid rgba(124,58,237,.2);}
+.pb-gold{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(255,171,0,.2);}
+
+/* AI Offline feature */
+.offline-demo{
+  background:var(--s1);border:1px solid rgba(0,229,160,.25);border-radius:16px;
+  padding:1.25rem 1.5rem;max-width:540px;width:100%;margin-top:1.25rem;text-align:left;
+}
+.od-title{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--accent);margin-bottom:.75rem;}
+.od-row{display:flex;justify-content:space-between;align-items:center;
+  padding:.45rem 0;border-bottom:1px solid var(--border);font-size:.85rem;}
+.od-row:last-child{border:none;}
+.od-k{color:var(--muted);}
+.od-v{font-weight:600;}
+.od-v.on{color:var(--accent);}
+.od-v.off{color:var(--muted2);}
+
+/* Métricas teen */
+.metrics{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:1.5rem;max-width:760px;}
+.metric{background:var(--s1);border:1px solid var(--border);border-radius:14px;
+  padding:1.1rem 1.25rem;text-align:center;flex:1;min-width:150px;max-width:190px;}
+.m-n{font-size:clamp(1.8rem,5vw,2.8rem);font-weight:900;color:var(--accent);line-height:1;margin-bottom:.3rem;}
+.m-n.purple{color:#a78bfa;}
+.m-n.gold{color:var(--gold);}
+.m-l{font-size:.7rem;color:var(--muted);line-height:1.4;}
+
+/* Trato -->
+.trato{background:var(--s1);border:2px solid rgba(0,229,160,.3);border-radius:16px;
+  padding:1.5rem;max-width:560px;width:100%;margin-top:1.25rem;text-align:left;}
+.trato-t{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--accent);margin-bottom:.75rem;}
+.trato-item{padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.9rem;
+  display:flex;gap:.65rem;line-height:1.45;}
+.trato-item:last-child{border:none;}
+.trato-item::before{content:'✓';color:var(--accent);font-weight:700;flex-shrink:0;}
+
+/* Generación -->
+.gen{font-size:clamp(3rem,9vw,5.5rem);font-weight:900;line-height:1;
+  background:linear-gradient(135deg,var(--accent),#00b0ff,#a78bfa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:.75rem;}
+
+.cta-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#030308;border:none;padding:.9rem 2.4rem;border-radius:99px;
+  font-weight:700;font-size:1.05rem;cursor:pointer;text-decoration:none;
+  margin-top:1.5rem;display:inline-block;
+  box-shadow:0 8px 28px var(--accent-glow);}
+
+.slide-cover{background:radial-gradient(ellipse at 50% 30%,#061a0e 0%,var(--bg) 65%);}
+.slide-purple{background:radial-gradient(ellipse at 50% 30%,#0e0620 0%,var(--bg) 65%);}
+.slide-dark{background:var(--s1);}
+
+@media(max-width:600px){
+  .card{min-width:160px;}
+  .slide{padding:2rem 1.25rem;}
+}
+</style>
+</head>
+<body>
+<div class="logo">EVO<span>LUCIÓN</span></div>
+<div class="logo-tag">Para teens</div>
+<div id="deck">
+
+<!-- 1. PORTADA -->
+<div class="slide slide-cover active">
+  <div class="tag green">Para ti · Para tu generación</div>
+  <h1>La primera generación<br>con <em>AI real</em><br>en su vida diaria</h1>
+  <p class="sub">No es una app de deberes. No es control parental. Es la herramienta que ninguna generación antes que tú tuvo — y que te cambia el juego si la usas bien.</p>
+</div>
+
+<!-- 2. TU ESPACIO — EL TRATO -->
+<div class="slide">
+  <div class="tag purple">El trato</div>
+  <h2>Tu espacio es <em class="purple">tuyo.</em><br>Sin excepciones.</h2>
+  <div class="trato">
+    <div class="trato-t">Lo que Evolución garantiza</div>
+    <div class="trato-item">Nadie lee tus conversaciones con el asistente — ni tus papás, ni la escuela</div>
+    <div class="trato-item">Puedes preguntar lo que no te atreves a preguntar en otro lado</div>
+    <div class="trato-item">Sin juicios. Sin reportes de contenido. Sin vigilancia de lo que dices</div>
+    <div class="trato-item">Tus aptitudes y talentos se detectan, no se califican</div>
+  </div>
+</div>
+
+<!-- 3. AI OFFLINE — EL SUPERPODER -->
+<div class="slide slide-dark">
+  <div class="tag green">Tecnología real</div>
+  <h2>AI que funciona<br><em>sin internet.</em> En tu teléfono.</h2>
+  <p class="sub">No depende de servidores en Estados Unidos. No depende de tu wifi. Funciona aunque no haya señal — porque el modelo de IA puede correr directo en el dispositivo.</p>
+  <div class="offline-demo">
+    <div class="od-title">Estado del sistema</div>
+    <div class="od-row"><span class="od-k">AI conversacional</span><span class="od-v on">● activo</span></div>
+    <div class="od-row"><span class="od-k">Funciona sin internet</span><span class="od-v on">● sí</span></div>
+    <div class="od-row"><span class="od-k">Datos en México</span><span class="od-v on">● sí, solo aquí</span></div>
+    <div class="od-row"><span class="od-k">ChatGPT, Gemini, Copilot</span><span class="od-v off">● necesitan internet</span></div>
+    <div class="od-row"><span class="od-k">Evolución offline</span><span class="od-v on">● funciona igual</span></div>
+  </div>
+</div>
+
+<!-- 4. USO DEL CELULAR EN ESCUELA -->
+<div class="slide slide-purple">
+  <div class="tag gold">El cambio de reglas</div>
+  <h2>Si la usas, la escuela<br>puede <em class="gold">aprobar tu celular.</em></h2>
+  <p class="sub">No es que te dejen usar TikTok en clase. Es que cuando la escuela ve que usas el celular para algo real — tu avance, tus misiones, tu tutoría — el argumento cambia.</p>
+  <div class="grid">
+    <div class="card"><div class="card-ico">📊</div><div class="card-t">Métricas reales de tu avance</div><div class="card-d">La escuela puede ver que usas Evolución activamente. Tus avances en regularización, tu participación, tu progreso.</div></div>
+    <div class="card"><div class="card-ico">📱</div><div class="card-t">Uso con propósito = acceso</div><div class="card-d">Cuando demuestras que el celular es una herramienta de desarrollo real, la conversación sobre prohibirlo cambia.</div></div>
+    <div class="card"><div class="card-ico">🏆</div><div class="card-t">Datos que hablan por ti</div><div class="card-d">No tienes que argumentar nada. Los números hablan: tiempo de tutoría, materias mejoradas, misiones completadas.</div></div>
+  </div>
+</div>
+
+<!-- 5. LOS PRIVILEGIOS -->
+<div class="slide">
+  <div class="tag green">Lo que ganas</div>
+  <h2>Cada cosa que haces<br><em>desbloquea algo real</em></h2>
+  <div class="priv-list">
+    <div class="priv new"><div class="priv-ico">📵</div><div class="priv-body"><div class="priv-t">AI offline en tu teléfono</div><div class="priv-d">Acceso a inteligencia artificial que funciona sin internet — algo que la mayoría de adultos no sabe ni que existe.</div><div class="priv-badge pb-new">Solo Evolución</div></div></div>
+    <div class="priv new"><div class="priv-ico">📱</div><div class="priv-body"><div class="priv-t">Celular permitido en el plantel</div><div class="priv-d">Si tus métricas de uso son reales, la escuela puede justificar que lo tengas en clase como herramienta educativa.</div><div class="priv-badge pb-gold">Requiere actividad real</div></div></div>
+    <div class="priv"><div class="priv-ico">🧠</div><div class="priv-body"><div class="priv-t">Tu perfil de aptitudes real</div><div class="priv-d">No un test de orientación de 40 preguntas aburridas. Un perfil que construiste conversando y que dice quién eres de verdad.</div><div class="priv-badge pb-purple">Acumulativo</div></div></div>
+    <div class="priv"><div class="priv-ico">🎯</div><div class="priv-body"><div class="priv-t">Materias que ya no reprueban</div><div class="priv-d">El AI sabe exactamente dónde está tu bloqueo — no te repasa todo, trabaja desde ahí.</div><div class="priv-badge pb-new">Personalizado</div></div></div>
+    <div class="priv"><div class="priv-ico">⭐</div><div class="priv-body"><div class="priv-t">Niveles y puntos reales</div><div class="priv-d">Sistema de progreso que refleja lo que haces en tu vida, no solo exámenes. Misiones familiares, metas personales, acuerdos.</div><div class="priv-badge pb-purple">NV 1 → Leyenda</div></div></div>
+  </div>
+</div>
+
+<!-- 6. TU PERFIL DE APTITUDES -->
+<div class="slide slide-dark">
+  <div class="tag purple">Tu perfil</div>
+  <h2>¿En qué eres bueno<br><em class="purple">de verdad?</em></h2>
+  <p class="sub">El asistente no te pregunta qué quieres ser de grande. Te habla, y en la conversación va descubriendo cosas que a veces tú mismo no sabías.</p>
+  <div class="grid">
+    <div class="card"><div class="card-ico">✦</div><div class="card-t">Si procesas rápido</div><div class="card-d">Lo detecta. No te da los mismos ejercicios de todos. Te da retos reales y te conecta con olimpiadas y programas de talento.</div></div>
+    <div class="card"><div class="card-ico">◈</div><div class="card-t">Si tus ideas son "raras"</div><div class="card-d">Si conectas cosas que otros no ven, si te aburre lo que a todos les parece bien — aquí eso se llama visionario, no problema.</div></div>
+    <div class="card"><div class="card-ico">🎨</div><div class="card-t">Sea lo que seas</div><div class="card-d">Musical, atlético, emprendedor, analítico, creativo — el perfil emerge solo. Sin etiquetas negativas. Sin "deberías ser más..."</div></div>
+  </div>
+</div>
+
+<!-- 7. REGULARIZACIÓN SIN DRAMA -->
+<div class="slide">
+  <div class="tag blue">Para el examen de regularización</div>
+  <h2>Reprobaste.<br>El AI sabe <em>exactamente</em><br>dónde está el problema.</h2>
+  <p class="sub">No empieza desde el principio. No te repasa todo el libro. Pregunta, detecta el punto exacto donde perdiste el hilo, y trabaja desde ahí. Solo eso.</p>
+  <div class="metrics">
+    <div class="metric"><div class="m-n">1</div><div class="m-l">Materia a la vez. Sin overwhelm. Sin "tienes que estudiar todo".</div></div>
+    <div class="metric"><div class="m-n purple">Tu</div><div class="m-l">ritmo. Cuando puedes, donde puedes, sin horario fijo.</div></div>
+    <div class="metric"><div class="m-n gold">0</div><div class="m-l">Viajes a academia presencial. Desde tu teléfono, sin perder el verano.</div></div>
+  </div>
+</div>
+
+<!-- 8. LA GENERACIÓN QUE CAMBIA TODO -->
+<div class="slide slide-cover">
+  <div class="gen">Gen EVO</div>
+  <h2>La generación que no esperó<br>a que el sistema cambiara.<br><em>Lo cambió ella.</em></h2>
+  <p class="sub">Cada alumno que adopta Evolución en su escuela genera datos reales de uso. Esos datos son el argumento para que la escuela, la SEP y el gobierno tomen decisiones diferentes.</p>
+  <a href="/app" class="cta-btn">Entrar a Evolución</a>
+</div>
+
+</div><!-- deck -->
+<div id="nav"><button id="prev">‹</button><div id="dots"></div><span id="slide-n">1 / 8</span><button id="next">›</button></div>
+<script>
+const slides=document.querySelectorAll('.slide'),total=slides.length;let cur=0;
+const dots=document.getElementById('dots'),slideN=document.getElementById('slide-n');
+for(let i=0;i<total;i++){const d=document.createElement('div');d.className='nav-dot'+(i===0?' on':'');d.onclick=()=>go(i);dots.appendChild(d);}
+function go(n){slides[cur].classList.remove('active');dots.children[cur].classList.remove('on');cur=(n+total)%total;slides[cur].classList.add('active');dots.children[cur].classList.add('on');slideN.textContent=(cur+1)+' / '+total;}
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(cur+1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(cur-1);});
+let tx=0;document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)go(dx<0?cur+1:cur-1);});
+</script>
+</body>
+</html>

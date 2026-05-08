@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución — SEP y Gobierno</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#030308;--s1:#080814;--s2:#0a0f1e;--border:#1a2040;
+  --blue:#0080ff;--blue2:#0060cc;--blue-dim:rgba(0,128,255,.1);--blue-glow:rgba(0,128,255,.2);
+  --accent:#00e5a0;--accent-dim:rgba(0,229,160,.1);
+  --purple:#7c3aed;--purple-dim:rgba(124,58,237,.12);
+  --gold:#ffab00;--gold-dim:rgba(255,171,0,.1);
+  --danger:#ff4060;--danger-dim:rgba(255,64,96,.1);
+  --text:#eeeef8;--muted:#8888aa;--muted2:#4a4a6a;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;overflow:hidden;}
+#deck{width:100%;height:100%;position:relative;}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;
+  align-items:center;justify-content:center;padding:2.5rem 2rem;text-align:center;}
+.slide.active{display:flex;}
+#nav{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:1rem;z-index:100;
+  background:rgba(3,3,8,.92);backdrop-filter:blur(10px);
+  border:1px solid var(--border);border-radius:99px;padding:.5rem 1.25rem;}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:var(--muted2);cursor:pointer;transition:all .2s;}
+.nav-dot.on{background:var(--blue);box-shadow:0 0 6px var(--blue);}
+#prev,#next{background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:.15rem .4rem;}
+#prev:hover,#next:hover{color:var(--blue);}
+#slide-n{font-size:.7rem;color:var(--muted2);min-width:42px;text-align:center;}
+.logo{font-size:.95rem;font-weight:900;position:fixed;top:1.25rem;left:1.5rem;}
+.logo span{color:var(--accent);}
+.logo-tag{font-size:.6rem;color:var(--muted2);letter-spacing:.06em;position:fixed;top:1.25rem;right:1.5rem;}
+
+.tag{display:inline-block;border-radius:99px;padding:.3rem .9rem;
+  font-size:.72rem;font-weight:700;letter-spacing:.06em;margin-bottom:1.25rem;}
+.tag.blue{background:var(--blue-dim);border:1px solid rgba(0,128,255,.3);color:var(--blue);}
+.tag.gold{background:var(--gold-dim);border:1px solid rgba(255,171,0,.3);color:var(--gold);}
+.tag.green{background:var(--accent-dim);border:1px solid rgba(0,229,160,.25);color:var(--accent);}
+.tag.red{background:var(--danger-dim);border:1px solid rgba(255,64,96,.3);color:var(--danger);}
+
+h1{font-size:clamp(1.9rem,4.5vw,3rem);font-weight:900;line-height:1.1;
+  letter-spacing:-.03em;margin-bottom:1rem;max-width:780px;}
+h1 em{font-style:normal;color:var(--blue);}
+h2{font-size:clamp(1.3rem,3.2vw,2.1rem);font-weight:800;line-height:1.2;
+  letter-spacing:-.02em;margin-bottom:.75rem;max-width:760px;}
+h2 em{font-style:normal;color:var(--blue);}
+h2 em.gold{color:var(--gold);}
+h2 em.green{color:var(--accent);}
+.sub{font-size:clamp(.85rem,1.8vw,1rem);color:var(--muted);max-width:620px;line-height:1.65;margin-bottom:1.25rem;}
+
+.grid{display:flex;flex-wrap:wrap;gap:.85rem;justify-content:center;margin-top:1.25rem;max-width:940px;width:100%;}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.3rem;text-align:left;flex:1;min-width:200px;max-width:270px;}
+.card.blue{border-color:rgba(0,128,255,.2);}
+.card.gold{border-color:rgba(255,171,0,.2);}
+.card.green{border-color:rgba(0,229,160,.2);}
+.card.red{border-color:rgba(255,64,96,.2);}
+.card-ico{font-size:1.5rem;margin-bottom:.5rem;}
+.card-t{font-weight:700;font-size:.88rem;margin-bottom:.3rem;}
+.card-d{font-size:.78rem;color:var(--muted);line-height:1.5;}
+
+/* 4 partes */
+.cuatro{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;max-width:780px;width:100%;margin-top:1.25rem;}
+.ci{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.2rem;text-align:left;}
+.ci.blue{border-color:rgba(0,128,255,.3);background:var(--blue-dim);}
+.ci.gold{border-color:rgba(255,171,0,.3);background:var(--gold-dim);}
+.ci.green{border-color:rgba(0,229,160,.2);}
+.ci.purple{border-color:rgba(124,58,237,.3);background:var(--purple-dim);}
+.ci-rol{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem;}
+.ci-rol.blue{color:var(--blue);}
+.ci-rol.gold{color:var(--gold);}
+.ci-rol.green{color:var(--accent);}
+.ci-rol.purple{color:#a78bfa;}
+.ci-t{font-weight:700;font-size:.88rem;margin-bottom:.3rem;}
+.ci-d{font-size:.75rem;color:var(--muted);line-height:1.45;}
+.ci-gain{font-size:.72rem;margin-top:.5rem;font-style:italic;}
+.ci-gain.blue{color:var(--blue);}
+.ci-gain.gold{color:var(--gold);}
+.ci-gain.green{color:var(--accent);}
+.ci-gain.purple{color:#a78bfa;}
+
+/* Métricas */
+.metrics{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:1.25rem;max-width:840px;}
+.metric{background:var(--s1);border:1px solid var(--border);border-radius:14px;
+  padding:1rem 1.25rem;text-align:center;flex:1;min-width:150px;max-width:200px;}
+.metric.hl{border-color:rgba(0,128,255,.3);}
+.m-n{font-size:clamp(1.6rem,4.5vw,2.6rem);font-weight:900;color:var(--blue);line-height:1;margin-bottom:.3rem;}
+.m-n.gold{color:var(--gold);}
+.m-n.green{color:var(--accent);}
+.m-l{font-size:.7rem;color:var(--muted);line-height:1.4;}
+
+/* Maestros */
+.maestro-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.85rem;
+  max-width:900px;width:100%;margin-top:1.25rem;}
+.mc{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.2rem;text-align:left;}
+.mc-ico{font-size:1.4rem;margin-bottom:.5rem;}
+.mc-t{font-weight:700;font-size:.88rem;margin-bottom:.3rem;}
+.mc-d{font-size:.78rem;color:var(--muted);line-height:1.5;}
+.mc-tag{display:inline-block;margin-top:.5rem;font-size:.62rem;font-weight:700;
+  border-radius:99px;padding:.15rem .55rem;background:var(--blue-dim);
+  color:var(--blue);border:1px solid rgba(0,128,255,.2);}
+.mc-tag.green{background:var(--accent-dim);color:var(--accent);border-color:rgba(0,229,160,.2);}
+.mc-tag.gold{background:var(--gold-dim);color:var(--gold);border-color:rgba(255,171,0,.2);}
+
+/* Sep gana */
+.sep-gana{display:flex;flex-direction:column;gap:.6rem;max-width:660px;width:100%;margin-top:1.25rem;text-align:left;}
+.sg{background:var(--s1);border:1px solid rgba(0,128,255,.2);border-radius:10px;
+  padding:.85rem 1rem;display:flex;gap:.85rem;align-items:flex-start;}
+.sg-ico{font-size:1.2rem;flex-shrink:0;}
+.sg-t{font-weight:700;font-size:.88rem;margin-bottom:.15rem;}
+.sg-d{font-size:.78rem;color:var(--muted);line-height:1.4;}
+
+/* Proyección financiera SEP */
+.pf-table{max-width:680px;width:100%;margin-top:1.25rem;text-align:left;}
+.pf-row{display:flex;justify-content:space-between;align-items:center;
+  padding:.65rem .85rem;border-bottom:1px solid var(--border);font-size:.86rem;}
+.pf-row:last-child{border:none;}
+.pf-row.total{background:var(--blue-dim);border-radius:8px;border:1px solid rgba(0,128,255,.25);margin-top:.5rem;}
+.pf-label{color:var(--muted);}
+.pf-val{color:var(--text);font-weight:600;}
+.pf-val.blue{color:var(--blue);font-size:1rem;}
+.pf-val.gold{color:var(--gold);font-size:1rem;}
+
+.list{list-style:none;text-align:left;max-width:580px;width:100%;margin-top:.85rem;}
+.list li{padding:.55rem 0;border-bottom:1px solid var(--border);
+  font-size:.88rem;display:flex;gap:.75rem;align-items:flex-start;line-height:1.5;}
+.list li:last-child{border:none;}
+.list li::before{content:'▸';color:var(--blue);font-weight:700;flex-shrink:0;}
+
+.cta-btn{background:linear-gradient(135deg,var(--blue),var(--blue2));
+  color:#fff;border:none;padding:.85rem 2.2rem;border-radius:99px;
+  font-weight:700;font-size:1rem;cursor:pointer;text-decoration:none;
+  margin-top:1.5rem;display:inline-block;
+  box-shadow:0 8px 24px var(--blue-glow);}
+.url{font-size:.78rem;color:var(--muted2);margin-top:.65rem;}
+
+.slide-cover{background:radial-gradient(ellipse at 50% 30%,#040c1a 0%,var(--bg) 65%);}
+.slide-dark{background:var(--s1);}
+
+@media(max-width:640px){
+  .cuatro{grid-template-columns:1fr;}
+  .slide{padding:1.75rem 1rem;}
+  .metrics .metric{min-width:130px;}
+}
+</style>
+</head>
+<body>
+<div class="logo">EVO<span>LUCIÓN</span></div>
+<div class="logo-tag">Para SEP y Gobierno del Estado</div>
+<div id="deck">
+
+<!-- 1. PORTADA -->
+<div class="slide slide-cover active">
+  <div class="tag blue">Secretaría de Educación Pública · Gobierno del Estado de Jalisco</div>
+  <h1>La primera herramienta de<br><em>inteligencia educativa</em><br>que México necesita hoy</h1>
+  <p class="sub">No es una promesa tecnológica. Es una plataforma que opera hoy, con familias reales, diseñada para el sistema educativo mexicano — y lista para escalar con respaldo institucional.</p>
+</div>
+
+<!-- 2. CRISIS EDUCATIVA — LOS DATOS -->
+<div class="slide">
+  <div class="tag red">La crisis no espera</div>
+  <h2>El sistema educativo enfrenta<br>una crisis que los datos ya<em> no pueden ignorar</em></h2>
+  <div class="metrics">
+    <div class="metric hl"><div class="m-n" style="color:var(--danger)">3 de 5</div><div class="m-l">Adolescentes mexicanos reportan algún nivel de angustia emocional durante su trayectoria escolar</div></div>
+    <div class="metric"><div class="m-n" style="color:var(--danger)">72%</div><div class="m-l">De alumnos reprueba al menos una materia en secundaria o bachillerato</div></div>
+    <div class="metric"><div class="m-n" style="color:var(--gold)">1:500</div><div class="m-l">Relación orientador/alumnos promedio en escuelas públicas mexicanas</div></div>
+    <div class="metric"><div class="m-n" style="color:var(--danger)">$0</div><div class="m-l">Plataformas con IA conversacional + perfil psicológico activas en el sistema educativo mexicano hoy</div></div>
+  </div>
+</div>
+
+<!-- 3. LAS 4 PARTES -->
+<div class="slide slide-dark">
+  <div class="tag blue">Modelo de 4 partes</div>
+  <h2>Cada parte aporta.<br><em>Cada parte gana.</em></h2>
+  <div class="cuatro">
+    <div class="ci green">
+      <div class="ci-rol green">Alumno</div>
+      <div class="ci-t">Aporta: tiempo y confianza</div>
+      <div class="ci-d">Conversa con el asistente de manera natural. No sabe que está siendo acompañado — simplemente habla.</div>
+      <div class="ci-gain green">Gana: orientación real, apoyo emocional, tutoría académica personalizada</div>
+    </div>
+    <div class="ci blue">
+      <div class="ci-rol blue">Institución educativa</div>
+      <div class="ci-t">Aporta: infraestructura y orientador</div>
+      <div class="ci-d">Integra la plataforma en su oferta educativa. El orientador recibe inteligencia real de su grupo.</div>
+      <div class="ci-gain blue">Gana: diferenciación, mejores indicadores, herramienta concreta para su orientador</div>
+    </div>
+    <div class="ci gold">
+      <div class="ci-rol gold">SEP / Gobierno del Estado</div>
+      <div class="ci-t">Aporta: certificación y respaldo</div>
+      <div class="ci-d">Valida la plataforma como herramienta oficial. Accede a datos anónimos para política pública basada en evidencia.</div>
+      <div class="ci-gain gold">Gana: datos únicos a escala nacional, ingreso por modelo de licencias, política basada en evidencia real</div>
+    </div>
+    <div class="ci purple">
+      <div class="ci-rol purple">Simplex / Evolución</div>
+      <div class="ci-t">Aporta: plataforma y tecnología</div>
+      <div class="ci-d">Desarrolla, mantiene y escala el sistema. Opera bajo los estándares de privacidad más altos.</div>
+      <div class="ci-gain purple">Gana: ingreso por alumno activo alineado al impacto real</div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. HERRAMIENTAS PARA MAESTROS -->
+<div class="slide">
+  <div class="tag green">Módulo docente</div>
+  <h2>El maestro también<br><em class="green">recibe inteligencia</em> — y apoyo</h2>
+  <p class="sub">Evolución no es solo para el alumno. El docente tiene su propio módulo con herramientas que ninguna plataforma le da hoy.</p>
+  <div class="maestro-grid">
+    <div class="mc"><div class="mc-ico">📊</div><div class="mc-t">Panel de clima de clase</div><div class="mc-d">Temperatura emocional anónima del grupo. El maestro sabe si su clase llega estresada antes de iniciar la sesión.</div><div class="mc-tag">Datos anónimos</div></div>
+    <div class="mc"><div class="mc-ico">🚨</div><div class="mc-t">Alertas tempranas de riesgo</div><div class="mc-d">Detecta patrones de angustia, aislamiento o riesgo en alumnos específicos — antes de que sea crisis.</div><div class="mc-tag">Accionable</div></div>
+    <div class="mc"><div class="mc-ico">🧠</div><div class="mc-t">Perfil de inteligencias del grupo</div><div class="mc-d">Qué aptitudes dominan en su clase. Información real para diseñar actividades diferenciadas.</div><div class="mc-tag green">Pedagógico</div></div>
+    <div class="mc"><div class="mc-ico">🧘</div><div class="mc-t">Módulo de bienestar docente</div><div class="mc-d">El maestro también tiene su propio espacio de check-in emocional y manejo de estrés. No solo los alumnos.</div><div class="mc-tag green">Para el maestro</div></div>
+    <div class="mc"><div class="mc-ico">🎯</div><div class="mc-t">Coaching pedagógico con IA</div><div class="mc-d">Planeación de clase asistida, sugerencias de intervención basadas en el perfil del grupo, recursos diferenciados.</div><div class="mc-tag gold">IA + experiencia</div></div>
+    <div class="mc"><div class="mc-ico">📉</div><div class="mc-t">Mapa de rezago por materia</div><div class="mc-d">Qué alumnos están en riesgo académico y en qué punto exacto. El maestro actúa antes del examen, no después.</div><div class="mc-tag">Preventivo</div></div>
+  </div>
+</div>
+
+<!-- 5. LO QUE SEP GANA -->
+<div class="slide slide-dark">
+  <div class="tag gold">Ganancia estratégica de la SEP</div>
+  <h2>Por primera vez, la SEP tendría<br><em class="gold">inteligencia real del sistema</em> educativo</h2>
+  <div class="sep-gana">
+    <div class="sg"><div class="sg-ico">📊</div><div><div class="sg-t">Datos de aptitudes nacionales por región</div><div class="sg-d">¿Qué talentos predominan en Jalisco vs. Oaxaca? Información para política de becas, programas de talento y orientación vocacional a escala nacional.</div></div></div>
+    <div class="sg"><div class="sg-ico">🧠</div><div><div class="sg-t">Termómetro de bienestar adolescente</div><div class="sg-d">Indicadores emocionales anónimos por ciclo escolar, por región y por tipo de escuela. Un dato que hoy no existe en ningún sistema de información educativa.</div></div></div>
+    <div class="sg"><div class="sg-ico">📉</div><div><div class="sg-t">Mapa real del rezago académico</div><div class="sg-d">Qué materias generan más bloqueo y en qué puntos exactos — información accionable para reformas curriculares y distribución de recursos.</div></div></div>
+    <div class="sg"><div class="sg-ico">💰</div><div><div class="sg-t">Reducción del costo de la deserción</div><div class="sg-d">Cada alumno que abandona la escuela representa años de inversión pública perdida. La detección temprana tiene un valor económico directo para el Estado.</div></div></div>
+    <div class="sg"><div class="sg-ico">🏆</div><div><div class="sg-t">Posicionamiento internacional</div><div class="sg-d">México como primer país de LATAM con un sistema de acompañamiento adolescente basado en IA a escala nacional. Un activo de política pública visible globalmente.</div></div></div>
+  </div>
+</div>
+
+<!-- 6. PROYECCIÓN FINANCIERA CON SEP -->
+<div class="slide">
+  <div class="tag blue">Modelo financiero institucional</div>
+  <h2>Lo que representa<br><em>la escala con SEP</em></h2>
+  <div class="pf-table">
+    <div class="pf-row"><span class="pf-label">Fase 1 · Piloto estatal (100 planteles · Jalisco)</span><span class="pf-val">Validación + datos</span></div>
+    <div class="pf-row"><span class="pf-label">Ingreso fase 1 (licencias institucionales)</span><span class="pf-val blue">$2,000,000 MXN/año</span></div>
+    <div class="pf-row"><span class="pf-label">Fase 2 · Expansión nacional (1,000 planteles)</span><span class="pf-val">Certificación SEP</span></div>
+    <div class="pf-row"><span class="pf-label">Ingreso fase 2 (licencias + por alumno)</span><span class="pf-val blue">$15,000,000 MXN/año</span></div>
+    <div class="pf-row"><span class="pf-label">Fase 3 · Modelo por alumno activo (1% del sistema)</span><span class="pf-val">360,000 alumnos</span></div>
+    <div class="pf-row total"><span class="pf-label">Ingreso fase 3 ($12 MXN/alumno/mes)</span><span class="pf-val gold">$51,840,000 MXN/año</span></div>
+  </div>
+  <p style="font-size:.72rem;color:var(--muted2);margin-top:.75rem;">El 1% del sistema educativo nacional ya representa una operación de escala nacional.</p>
+</div>
+
+<!-- 7. PRIVACIDAD Y MARCO LEGAL -->
+<div class="slide slide-dark">
+  <div class="tag blue">Arquitectura de confianza</div>
+  <h2>Construido para pasar<br><em>cualquier auditoría</em> de privacidad</h2>
+  <div class="grid">
+    <div class="card blue"><div class="card-ico">🇲🇽</div><div class="card-t">Soberanía de datos</div><div class="card-d">Todos los datos residen en servidores en México. Ningún dato cruza fronteras. Cumplimiento LFPDPPP desde la arquitectura.</div></div>
+    <div class="card blue"><div class="card-ico">👨‍👩‍👧</div><div class="card-t">Padres como titulares</div><div class="card-d">Consentimiento parental digital, firmado y auditable. El director del plantel es el responsable legal ante la autoridad.</div></div>
+    <div class="card blue"><div class="card-ico">🔒</div><div class="card-t">Cero acceso a conversaciones</div><div class="card-d">Ni maestros, ni directivos, ni SEP acceden al contenido de las conversaciones individuales. Solo tendencias anónimas.</div></div>
+    <div class="card blue"><div class="card-ico">📋</div><div class="card-t">Protocolo de crisis documentado</div><div class="card-d">Cuando el sistema detecta riesgo vital, activa automáticamente a padres, orientador y figura de confianza de la institución.</div></div>
+  </div>
+</div>
+
+<!-- 8. RUTA DE IMPLEMENTACIÓN -->
+<div class="slide">
+  <div class="tag blue">Plan de acción</div>
+  <h2>De piloto a política pública<br><em>en 24 meses</em></h2>
+  <div class="grid" style="max-width:860px">
+    <div class="card blue"><div class="card-ico">📍</div><div class="card-t">Hoy — Plataforma operativa</div><div class="card-d">Sistema en producción con familias reales. La evidencia base ya existe. Podemos iniciar el piloto institucional inmediatamente.</div></div>
+    <div class="card"><div class="card-ico">🏫</div><div class="card-t">Mes 1-3 · Primer plantel piloto</div><div class="card-d">Selección de un colegio representativo en Guadalajara. Implementación, capacitación y recolección de métricas de impacto.</div></div>
+    <div class="card"><div class="card-ico">📊</div><div class="card-t">Mes 6 · Reporte de impacto</div><div class="card-d">Presentación formal de resultados: bienestar, rendimiento académico, detección de riesgo. Datos reales del piloto.</div></div>
+    <div class="card"><div class="card-ico">🚀</div><div class="card-t">Mes 12 · Expansión estatal</div><div class="card-d">Con el respaldo del reporte del piloto: expansión a 100 planteles en Jalisco bajo acuerdo marco con el Gobierno del Estado.</div></div>
+    <div class="card blue"><div class="card-ico">🏛️</div><div class="card-t">Mes 24 · Certificación SEP</div><div class="card-d">Presentación ante SEP con datos reales de 100+ planteles. Propuesta de certificación como herramienta oficial de orientación educativa nacional.</div></div>
+  </div>
+</div>
+
+<!-- 9. POR QUÉ AHORA -->
+<div class="slide slide-dark">
+  <div class="tag red">Urgencia</div>
+  <h2>Cada ciclo escolar sin esta herramienta<br><em class="gold">es información que se pierde para siempre</em></h2>
+  <p class="sub">Los perfiles que Evolución construye son acumulativos. Un alumno que entra en primero de secundaria y llega a tercero de preparatoria tiene tres años de datos de desarrollo. Ese activo no puede reconstruirse retroactivamente.</p>
+  <ul class="list">
+    <li>Cada generación que egresa sin acompañamiento es deserción y talento perdido</li>
+    <li>Cada año sin datos es un año de política pública basada en suposiciones, no en evidencia</li>
+    <li>La ventana de liderazgo regional está abierta — el primero que adopte define el estándar</li>
+    <li>El mercado EdTech en LATAM crece aceleradamente — los actores internacionales ya están mirando México</li>
+  </ul>
+</div>
+
+<!-- 10. CTA -->
+<div class="slide slide-cover">
+  <div class="tag blue">Llamada a la acción</div>
+  <h2>Jalisco puede ser el estado<br>que <em>define el estándar</em> nacional</h2>
+  <p class="sub">Solicitamos una reunión para presentar la plataforma en operación, definir juntos el primer plantel piloto y establecer el marco de colaboración institucional.</p>
+  <a href="/app" class="cta-btn">Ver plataforma en vivo</a>
+  <div class="url">milanmontellanoanuar@gmail.com · Simplex · Guadalajara, Jalisco</div>
+</div>
+
+</div><!-- deck -->
+<div id="nav"><button id="prev">‹</button><div id="dots"></div><span id="slide-n">1 / 10</span><button id="next">›</button></div>
+<script>
+const slides=document.querySelectorAll('.slide'),total=slides.length;let cur=0;
+const dots=document.getElementById('dots'),slideN=document.getElementById('slide-n');
+for(let i=0;i<total;i++){const d=document.createElement('div');d.className='nav-dot'+(i===0?' on':'');d.onclick=()=>go(i);dots.appendChild(d);}
+function go(n){slides[cur].classList.remove('active');dots.children[cur].classList.remove('on');cur=(n+total)%total;slides[cur].classList.add('active');dots.children[cur].classList.add('on');slideN.textContent=(cur+1)+' / '+total;}
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(cur+1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(cur-1);});
+let tx=0;document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)go(dx<0?cur+1:cur-1);});
+</script>
+</body>
+</html>
