@@ -1411,6 +1411,10 @@ class MoodMaestroRequest(BaseModel):
     score: int
     nota: Optional[str] = None
 
+class ChatMaestroRequest(BaseModel):
+    maestro_id: str
+    mensaje: str
+
 @app.post("/api/maestro/mood")
 async def mood_maestro(req: MoodMaestroRequest):
     if not 1 <= req.score <= 5:
@@ -1465,10 +1469,6 @@ async def bienestar_maestro(req: ChatMaestroRequest):
         await db.commit()
 
     return {"ok": True, "respuesta": respuesta, "burnout_detectado": es_burnout}
-
-class ChatMaestroRequest(BaseModel):
-    maestro_id: str
-    mensaje: str
 
 @app.post("/api/maestro/chat")
 async def chat_maestro(req: ChatMaestroRequest):
