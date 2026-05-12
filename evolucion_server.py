@@ -709,7 +709,7 @@ async def registrar_miembro(req: RegistrarMiembro):
     pin_hash = hashlib.sha256(req.pin.encode()).hexdigest() if req.pin else None
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute(
-            "INSERT INTO miembros VALUES (?,?,?,?,?,?,0,'{}','{}',1,?)",
+            "INSERT INTO miembros VALUES (?,?,?,?,?,?,0,'{}',1,?)",
             (mid, req.familia_id, req.nombre, req.rol, req.edad, pin_hash, time.time()))
         await db.commit()
     return {"ok": True, "miembro_id": mid, "nombre": req.nombre, "rol": req.rol}
