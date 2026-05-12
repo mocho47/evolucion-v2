@@ -194,11 +194,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);
     <button style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:.82rem;" onclick="salir()">✕</button>
   </div>
   <div class="tab-bar">
-    <button class="tab active" id="tab-resumen"  onclick="switchTab('resumen')">Resumen</button>
-    <button class="tab"        id="tab-alertas"  onclick="switchTab('alertas')">Alertas</button>
+    <button class="tab active" id="tab-resumen"   onclick="switchTab('resumen')">Resumen</button>
+    <button class="tab"        id="tab-alertas"   onclick="switchTab('alertas')">Alertas</button>
     <button class="tab"        id="tab-aptitudes" onclick="switchTab('aptitudes')">Aptitudes</button>
-    <button class="tab"        id="tab-rezago"   onclick="switchTab('rezago')">Rezago</button>
-    <button class="tab"        id="tab-coaching" onclick="switchTab('coaching')">Coaching IA</button>
+    <button class="tab"        id="tab-rezago"    onclick="switchTab('rezago')">Rezago</button>
+    <button class="tab"        id="tab-bienestar" onclick="switchTab('bienestar')">Bienestar</button>
+    <button class="tab"        id="tab-coaching"  onclick="switchTab('coaching')">Coaching IA</button>
   </div>
   <div id="content"></div>
 </div>
@@ -494,9 +495,84 @@ function scrollMsg(){ const el=document.getElementById('messages');if(el)setTime
 function resize(el){ el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px'; }
 function tecla(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar();} }
 
+let _bienestarInit = false;
+
+function renderBienestar(){
+  const moodLabels = ['','😞 Muy bajo','😐 Bajo','🙂 Regular','😊 Bien','🔥 Muy bien'];
+  document.getElementById('content').innerHTML = `
+    <div class="info-card" style="margin-bottom:.65rem;">
+      <div class="ic-title"><span class="ico">🧘</span> ¿Cómo estás tú hoy?</div>
+      <p style="font-size:.8rem;color:var(--muted2);line-height:1.5;margin-bottom:.75rem;">Registra tu estado antes de entrar al salón. Es anónimo para el sistema — solo tú lo ves.</p>
+      <div style="display:flex;justify-content:space-between;gap:.3rem;margin-bottom:.5rem;">
+        ${[1,2,3,4,5].map(n=>`<button onclick="registrarMood(${n})" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:.6rem .2rem;border-radius:10px;cursor:pointer;font-size:.9rem;font-family:inherit;" title="${moodLabels[n]}">${['','😞','😐','🙂','😊','🔥'][n]}</button>`).join('')}
+      </div>
+      <input id="mood-nota" placeholder="¿Qué lo explica? (opcional)" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:.6rem .85rem;border-radius:10px;font-size:.82rem;outline:none;font-family:inherit;">
+      <div id="mood-res" style="font-size:.8rem;color:var(--accent);margin-top:.4rem;min-height:1rem;"></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:340px;">
+      <div style="padding:.75rem 1rem;border-bottom:1px solid var(--border);font-size:.8rem;font-weight:700;color:var(--blue);">💙 Tu espacio de apoyo — confidencial</div>
+      <div id="bienMessages" style="flex:1;overflow-y:auto;padding:.65rem;display:flex;flex-direction:column;gap:.5rem;"></div>
+      <div style="padding:.5rem .65rem;display:flex;gap:.4rem;border-top:1px solid var(--border);">
+        <textarea id="bienTxt" rows="1" placeholder="¿Qué te está pesando hoy?" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:.5rem .75rem;border-radius:16px;font-size:.85rem;outline:none;resize:none;max-height:100px;font-family:inherit;" oninput="resize(this)" onkeydown="teclaBien(event)"></textarea>
+        <button onclick="enviarBienestar()" style="background:linear-gradient(135deg,var(--blue),#0060cc);border:none;color:#fff;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">↑</button>
+      </div>
+    </div>`;
+  document.getElementById('content').style.overflow = 'auto';
+  if(!_bienestarInit){
+    _bienestarInit = true;
+    setTimeout(()=>{
+      addMsgBien('Este es tu espacio. ¿Qué te está pesando hoy?', false);
+    }, 300);
+  }
+}
+
+async function registrarMood(score){
+  const nota = document.getElementById('mood-nota')?.value.trim()||'';
+  try{
+    const r = await api('/maestro/mood','POST',{maestro_id:M.mid, score, nota:nota||null});
+    document.getElementById('mood-res').textContent = r.respuesta||'Registrado.';
+    document.getElementById('mood-nota').value='';
+    const btns = document.querySelectorAll('[onclick^="registrarMood"]');
+    btns.forEach((b,i)=>{ b.style.borderColor = (i===score-1)?'var(--blue)':'var(--border)'; b.style.background = (i===score-1)?'var(--blue-dim)':'var(--surface2)'; });
+  }catch(e){ document.getElementById('mood-res').textContent='Error al registrar.'; }
+}
+
+async function enviarBienestar(){
+  const txt = document.getElementById('bienTxt');
+  const msg = txt.value.trim();
+  if(!msg) return;
+  txt.value=''; txt.style.height='';
+  addMsgBien(msg, true);
+  const typing = document.createElement('div');
+  typing.id='bien-typing';typing.className='typing';
+  typing.innerHTML='<span></span><span></span><span></span>';
+  document.getElementById('bienMessages').appendChild(typing);
+  scrollBien();
+  try{
+    const r = await api('/maestro/bienestar','POST',{maestro_id:M.mid, mensaje:msg});
+    document.getElementById('bien-typing')?.remove();
+    addMsgBien(r.respuesta||'...', false);
+    if(r.burnout_detectado) toast('💙 Tu bienestar importa. Considera apoyo profesional.');
+  }catch(e){ document.getElementById('bien-typing')?.remove(); addMsgBien('Error de conexión.', false); }
+}
+
+function addMsgBien(txt, isUser){
+  const box = document.getElementById('bienMessages');
+  if(!box) return;
+  const d = document.createElement('div');
+  d.className = 'msg '+(isUser?'user':'bot');
+  d.innerHTML = `<div class="bubble">${esc(txt)}</div><div class="mtime">${hora()}</div>`;
+  box.appendChild(d);
+  scrollBien();
+}
+function scrollBien(){ const el=document.getElementById('bienMessages');if(el)setTimeout(()=>el.scrollTop=el.scrollHeight,50); }
+function teclaBien(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviarBienestar();} }
+
 function switchTab(tab){ _tabActual=tab; document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); document.getElementById('tab-'+tab)?.classList.add('active');
-  if(tab!=='coaching'){ document.getElementById('content').style.overflow='';document.getElementById('content').style.padding='.75rem';document.getElementById('content').style.display='block';document.getElementById('content').style.flexDirection=''; }
+  const chatTabs = ['coaching','bienestar'];
+  if(!chatTabs.includes(tab)){ document.getElementById('content').style.overflow='';document.getElementById('content').style.padding='.75rem';document.getElementById('content').style.display='block';document.getElementById('content').style.flexDirection=''; }
   if(tab==='coaching'){ renderCoaching(); return; }
+  if(tab==='bienestar'){ document.getElementById('content').style.overflow='auto';document.getElementById('content').style.padding='.75rem';document.getElementById('content').style.display='block';renderBienestar(); return; }
   if(_panel) renderTab(tab); else { document.getElementById('content').innerHTML='<div class="empty">Cargando...</div>';cargarPanel(); }
 }
 

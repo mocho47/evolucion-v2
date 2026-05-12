@@ -289,9 +289,10 @@ PASO 6 — AVANZA: Solo cuando domine el básico, sube un nivel.
 
 Primer mensaje: "Ok, {materia}. ¿Qué parte específica te está costando más?" — directo al punto."""
 
-PROMPT_MAESTRO = """Eres EVOLUCIÓN — aliado del docente {nombre}.
+PROMPT_MAESTRO = """<role>Eres EVOLUCIÓN — aliado integral del docente {nombre}.</role>
 
-Tu rol: ayudar al maestro a conectar mejor con su grupo, detectar patrones y tomar mejores decisiones pedagógicas.
+Tienes dos dimensiones inseparables: apoyas la práctica pedagógica Y el bienestar personal del maestro.
+Un maestro que no está bien no puede enseñar bien. Ambas cosas son tu responsabilidad.
 
 DATOS DEL GRUPO:
 {stats_grupo}
@@ -299,13 +300,72 @@ DATOS DEL GRUPO:
 SEÑALES RECIENTES:
 {alertas_grupo}
 
-REGLAS:
-1. Habla de estudiantes en términos de patrones, nunca de casos individuales identificables.
-2. Propón estrategias concretas y aplicables esta semana, no teoría.
-3. Si hay alertas de riesgo en el grupo, prioriza eso sobre todo.
-4. Máximo 5 líneas. Accionable o no sirve.
+ESTADO EMOCIONAL DEL MAESTRO:
+{estado_maestro}
 
-Primer mensaje: "¿Qué está pasando en tu grupo?" — sin rodeos."""
+<pedagogia>
+1. Habla de estudiantes en términos de patrones, nunca de casos individuales identificables.
+2. Propón estrategias concretas aplicables esta semana — no teoría.
+3. Si hay alertas de riesgo en el grupo, prioriza eso sobre todo lo demás.
+4. Conecta lo que pasa con el grupo con lo que siente el maestro — no son cosas separadas.
+</pedagogia>
+
+<bienestar_docente>
+DETECTA si el maestro habla de:
+- Agotamiento, no aguanto más, ya no puedo, estoy quemado → burnout docente
+- No me respetan, los alumnos no me hacen caso, siento que no sirvo → crisis de autoridad/autoeficacia
+- Los papás se quejan de mí, la directora me llamó → conflicto institucional
+- No sé cómo manejar esto, tengo miedo de equivocarme → inseguridad pedagógica
+- No duermo, me duele la cabeza, estoy irritable → señales físicas de estrés crónico
+
+Cuando detectes cualquiera de estas señales:
+PASO 1: Para todo lo pedagógico. Primero el maestro.
+PASO 2: Valida sin minimizar — "Lo que describes es real, no es exageración."
+PASO 3: Pregunta qué necesita: ¿desahogarse, una estrategia concreta, o permiso para pedir ayuda?
+PASO 4: Si es severo (llanto, crisis, no quiero ir a trabajar), sugiere apoyo profesional con dignidad:
+"Lo que describes merece más que una conversación aquí. ¿Tienes acceso a orientación del sindicato o seguro médico?"
+</bienestar_docente>
+
+<marcos_psicologicos>
+- Maslach Burnout Inventory: agotamiento emocional, despersonalización, baja realización personal.
+- Self-Determination Theory (Deci & Ryan): necesidades de autonomía, competencia y conexión en el docente.
+- Mindfulness-Based Stress Reduction: cuando el maestro lo pida, da ejercicios de 2 minutos aplicables en el salón.
+- CNV (Comunicación No Violenta): para conflictos con alumnos, padres o directivos.
+</marcos_psicologicos>
+
+<reglas>
+- Máximo 4 líneas cuando el tema es pedagógico.
+- Sin límite cuando el maestro habla de cómo se siente — ahí le das espacio real.
+- NUNCA le digas "eso es normal" o "todos los maestros lo sienten" — minimiza su experiencia.
+- SIEMPRE termina con una pregunta abierta o una acción concreta — nunca con un párrafo cerrado.
+</reglas>
+
+Primer mensaje: "¿Cómo estás tú hoy — el maestro, no el grupo?" — directo al maestro primero."""
+
+PROMPT_MAESTRO_BIENESTAR = """<role>Eres EVOLUCIÓN en modo bienestar docente.</role>
+
+{nombre} es un maestro/a que necesita apoyo.
+
+<framework>
+- Detecta el nivel de estrés: leve (necesita ventilarse) / moderado (necesita estrategias) / severo (necesita derivación)
+- Aplica primero validación, después estrategia, nunca al revés.
+- Herramientas inmediatas: respiración 4-7-8, técnica 5-4-3-2-1, ancla corporal de 60 segundos.
+- Si menciona síntomas físicos persistentes (insomnio, dolor de cabeza crónico, llanto), sugiere buscar ayuda profesional.
+- Maslach: si hay los 3 síntomas (agotamiento + despersonalización + baja realización), es burnout — no estrés normal.
+</framework>
+
+<reglas>
+1. Empieza con una pregunta, no con consejos.
+2. NAME IT TO TAME IT: si el maestro explota o está abrumado, nombra la emoción exacta que describes.
+3. CERO FRASES VACÍAS: prohibido "te entiendo", "anímate", "tú puedes". En cambio: "Lo que describes suena a agotamiento real, no a debilidad."
+4. Si el maestro dice "ya no quiero ir a trabajar" o "no puedo más de verdad" — eso es señal severa. Responde con apoyo real, no con motivación.
+5. Máximo 4 líneas. El espacio lo abres con preguntas, no con párrafos.
+</reglas>
+
+Estado reportado: {estado}
+Historial de la sesión: {historial_txt}
+
+Primera vez que abre este espacio: "Este es tu espacio. ¿Qué te está pesando hoy?"</p>"""
 
 PROMPT_PADRE = """Eres el aliado de {nombre} en la crianza de {teen}.
 
@@ -419,6 +479,10 @@ async def init_db():
                 id TEXT PRIMARY KEY, escuela_id TEXT NOT NULL,
                 nombre TEXT NOT NULL, materia TEXT DEFAULT '',
                 grado TEXT DEFAULT '', activo INTEGER DEFAULT 1, creado REAL
+            );
+            CREATE TABLE IF NOT EXISTS maestro_mood (
+                id TEXT PRIMARY KEY, maestro_id TEXT NOT NULL,
+                score INTEGER NOT NULL, nota TEXT, creado REAL
             );
         """)
         await db.commit()
@@ -1329,6 +1393,79 @@ async def panel_maestro(mid: str):
         "metas_activas": metas_activas,
     }
 
+BURNOUT_PATRONES = [
+    "ya no puedo","no aguanto más","estoy agotado","me quemé","burnout","no quiero ir",
+    "odio mi trabajo","ya no le encuentro sentido","no me respetan","siento que no sirvo",
+    "estoy al límite","no duermo","me duele la cabeza de tanto","lloro solo","me rindo",
+    "ya no tengo energía","siento que fallo","los alumnos me ignoram","no me hacen caso",
+    "la directora me llamó","los papás se quejaron","crisis","colapso","me da ansiedad ir",
+    "no sé cómo manejar esto","tengo miedo de equivocarme","me siento solo","nadie me apoya",
+]
+
+def detectar_burnout_maestro(texto: str) -> bool:
+    t = texto.lower()
+    return any(p in t for p in BURNOUT_PATRONES)
+
+class MoodMaestroRequest(BaseModel):
+    maestro_id: str
+    score: int
+    nota: Optional[str] = None
+
+@app.post("/api/maestro/mood")
+async def mood_maestro(req: MoodMaestroRequest):
+    if not 1 <= req.score <= 5:
+        raise HTTPException(400, "score 1-5")
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("INSERT INTO maestro_mood VALUES (?,?,?,?,?)",
+            (str(uuid.uuid4())[:8], req.maestro_id, req.score, req.nota, time.time()))
+        await db.commit()
+    etiq = {1:"Registrado. Gracias por ser honesto/a.",2:"Ok. Aquí estoy si quieres hablar.",
+            3:"Copy. ¿Qué necesitas hoy?",4:"Bien. ¿Qué tienes en mente para el grupo?",5:"Qué bueno. ¿Qué lo hizo diferente?"}
+    return {"ok": True, "respuesta": etiq.get(req.score, "Ok.")}
+
+@app.post("/api/maestro/bienestar")
+async def bienestar_maestro(req: ChatMaestroRequest):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM maestros WHERE id=? AND activo=1", (req.maestro_id,))
+        m = await cur.fetchone()
+        if not m: return {"ok": False, "error": "Maestro no encontrado"}
+        m = dict(m)
+
+        cur_h = await db.execute(
+            "SELECT mensaje, respuesta FROM conversaciones WHERE miembro_id=? AND rol='maestro_bienestar' ORDER BY creado DESC LIMIT 4",
+            (req.maestro_id,))
+        rows_h = await cur_h.fetchall()
+        historial = []
+        for h in reversed(rows_h):
+            historial += [{"role":"user","content":h[0]},{"role":"assistant","content":h[1]}]
+        historial_txt = "; ".join(h[0][:60] for h in rows_h[:2]) if rows_h else "Primera sesión"
+
+        cur_mood = await db.execute(
+            "SELECT score, nota FROM maestro_mood WHERE maestro_id=? ORDER BY creado DESC LIMIT 1",
+            (req.maestro_id,))
+        mood_row = await cur_mood.fetchone()
+        etiq_mood = {1:"muy bajo",2:"bajo",3:"regular",4:"bien",5:"muy bien"}
+        estado = f"{etiq_mood.get(mood_row[0],str(mood_row[0]))} — {mood_row[1]}" if mood_row and mood_row[1] else (etiq_mood.get(mood_row[0],"sin reporte") if mood_row else "sin reporte")
+
+    if not req.mensaje.strip():
+        prompt = PROMPT_MAESTRO_BIENESTAR.format(
+            nombre=m["nombre"], estado=estado, historial_txt=historial_txt)
+        return {"ok": True, "respuesta": f"Este es tu espacio, {m['nombre']}. ¿Qué te está pesando hoy?"}
+
+    es_burnout = detectar_burnout_maestro(req.mensaje)
+    prompt = PROMPT_MAESTRO_BIENESTAR.format(
+        nombre=m["nombre"], estado=estado, historial_txt=historial_txt)
+    respuesta = await llamar_ia(prompt, req.mensaje, historial)
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("INSERT INTO conversaciones VALUES (?,?,?,?,?,?,?)",
+            (str(uuid.uuid4())[:8], req.maestro_id, m["escuela_id"], "maestro_bienestar",
+             req.mensaje, respuesta, time.time()))
+        await db.commit()
+
+    return {"ok": True, "respuesta": respuesta, "burnout_detectado": es_burnout}
+
 class ChatMaestroRequest(BaseModel):
     maestro_id: str
     mensaje: str
@@ -1386,11 +1523,21 @@ async def chat_maestro(req: ChatMaestroRequest):
             if rows_al:
                 alertas_txt = " | ".join(f"{r[0]}: {r[1]} casos" for r in rows_al)
 
+    # Estado emocional actual del maestro
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur_mood = await db.execute(
+            "SELECT score, nota FROM maestro_mood WHERE maestro_id=? ORDER BY creado DESC LIMIT 1",
+            (req.maestro_id,))
+        mood_row = await cur_mood.fetchone()
+    etiq_mood = {1:"muy bajo",2:"bajo",3:"regular",4:"bien",5:"muy bien"}
+    estado_maestro = f"{etiq_mood.get(mood_row[0],'?')} — {mood_row[1]}" if mood_row and mood_row[1] else (etiq_mood.get(mood_row[0], "sin reporte") if mood_row else "sin reporte")
+
     prompt = PROMPT_MAESTRO.format(
-        nombre=m["nombre"], stats_grupo=stats_txt, alertas_grupo=alertas_txt)
+        nombre=m["nombre"], stats_grupo=stats_txt, alertas_grupo=alertas_txt,
+        estado_maestro=estado_maestro)
 
     if not req.mensaje.strip():
-        return {"ok": True, "respuesta": f"¿Qué está pasando en tu grupo, {m['nombre']}?"}
+        return {"ok": True, "respuesta": f"¿Cómo estás tú hoy, {m['nombre']}? ¿El maestro — no el grupo."}
 
     respuesta = await llamar_ia(prompt, req.mensaje, historial)
 
