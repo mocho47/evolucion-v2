@@ -590,7 +590,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   <div class="dsec">Mi espacio</div>
   <button class="ditem" onclick="cerrarMenu();verMisiones()">📋 Mis misiones</button>
   <button class="ditem" onclick="cerrarMenu();verMetas()">🎯 Mis metas</button>
+  <button class="ditem" onclick="cerrarMenu();abrirModal('m-meta')">＋ Meta nueva</button>
   <button class="ditem" onclick="cerrarMenu();verDeseos()">✨ Lista de deseos</button>
+  <button class="ditem" onclick="cerrarMenu();abrirModal('m-deseo')">＋ Agregar deseo</button>
   <button class="ditem" onclick="cerrarMenu();verLogros()">⭐ Logros</button>
   <button class="ditem" onclick="cerrarMenu();tutor()">📚 Tutor escolar</button>
   <div style="flex:1"></div>
@@ -752,6 +754,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   </div>
 </div>
 
+<!-- Modal deseo -->
+<div class="modal-bg" id="m-deseo">
+  <div class="modal-box">
+    <h3>Agregar a lista de deseos</h3>
+    <div class="field"><label>¿Qué quieres?</label><input id="deso-desc" placeholder="Ej: Unos tenis nuevos" autocomplete="off"></div>
+    <div class="field"><label>Puntos que cuesta (opcional)</label><input id="deso-pts" type="number" value="0" min="0"></div>
+    <div class="err" id="deso-err"></div>
+    <button class="btn" onclick="agregarDeseo()">Agregar</button>
+    <button class="btn ghost" onclick="cerrarModal('m-deseo')">Cancelar</button>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -880,6 +894,9 @@ async function reentrar(){
       return;
     }
     S.pts = r.puntos_total || 0;
+    S.fid = r.familia_id || S.fid;
+    S.nombre = r.nombre || S.nombre;
+    S.rol = r.rol || S.rol;
     save();
     entrar();
   }catch(e){
@@ -915,13 +932,12 @@ function entrarChat(){
 async function cargarPerfilBadge(){
   if(!S.mid) return;
   try{
-    const r = await api(`/aptitudes/${S.mid}`);
-    const apts = r.aptitudes || [];
+    const r = await api(`/miembros/${S.mid}`);
+    const perfil = r.perfil || 'estandar';
     const labels = {gifted:'✦ Superdotado', visionario:'◈ Visionario', canonico:'† Canónico'};
-    const especial = apts.find(a => labels[a.tipo]);
     const badgeEl = document.getElementById('perfil-badge');
-    if(especial){
-      badgeEl.textContent = labels[especial.tipo];
+    if(labels[perfil]){
+      badgeEl.textContent = labels[perfil];
       badgeEl.classList.remove('hidden');
     } else {
       badgeEl.classList.add('hidden');
@@ -1040,16 +1056,52 @@ function cerrarMenu(){
 
 // Misiones del teen
 async function verMisiones(){
-  const r = await api(`/misiones/${S.fid}`);
-  const mias = (r.misiones||[]).filter(m=>m.asignado_a===S.mid);
-  if(!mias.length){addBot('Sin misiones asignadas por ahora.');return;}
-  const txt = mias.map(m=>`📋 ${m.titulo} — ${m.puntos}pts [${m.estado}]`).join('\n');
-  addBot(txt);
+  try{
+    const r = await api(`/misiones/${S.fid}`);
+    const mias = (r.misiones||[]).filter(m=>m.asignado_a===S.mid);
+    if(!mias.length){addBot('Sin misiones asignadas por ahora.');return;}
+    const pendientes = mias.filter(m=>m.estado==='pendiente');
+    const otras = mias.filter(m=>m.estado!=='pendiente');
+    if(pendientes.length){
+      const box = document.getElementById('messages');
+      pendientes.forEach(m=>{
+        const d = document.createElement('div');
+        d.className = 'msg bot';
+        d.innerHTML = `<div class="bubble">📋 <strong>${esc(m.titulo)}</strong> — ${m.puntos} pts`
+          + (m.descripcion ? `<br><span style="font-size:.8rem;opacity:.7">${esc(m.descripcion)}</span>` : '')
+          + `<br><button class="btn sm success" style="margin-top:.5rem" onclick="completarMision('${m.id}')">✓ Completar</button></div>`
+          + `<div class="mtime">${hora()}</div>`;
+        box.appendChild(d);
+      });
+      scroll();
+    }
+    if(otras.length){
+      const txt = otras.map(m=>`${m.estado==='completada'?'⏳ esperando aprobación':'✅ aprobada'}: ${m.titulo}`).join('\n');
+      addBot(txt);
+    }
+  }catch(e){addBot('Sin conexión.');}
+}
+
+async function completarMision(mid){
+  try{
+    await api(`/misiones/${mid}/completar`,'PUT',{});
+    toast('Misión completada ✓ — esperando aprobación del papá/mamá');
+    verMisiones();
+  }catch(e){toast('Error al completar la misión.');}
 }
 
 // Metas del teen
 async function verMetas(){
-  abrirModal('m-meta');
+  try{
+    const r = await api(`/metas/${S.mid}`);
+    const metas = r.metas || [];
+    if(metas.length){
+      const txt = metas.map(m=>`🎯 ${m.titulo}${m.plazo?' · '+esc(m.plazo):''}  ${m.progreso}%`).join('\n');
+      addBot('Tus metas activas:\n' + txt);
+    } else {
+      addBot('Sin metas activas. Usa "＋ Meta nueva" del menú para agregar una.');
+    }
+  }catch(e){addBot('No pude cargar tus metas.');}
 }
 
 async function crearMeta(){
@@ -1067,10 +1119,27 @@ async function crearMeta(){
 }
 
 async function verDeseos(){
-  const r = await api(`/deseos/${S.mid}`);
-  if(!r.deseos?.length){addBot('Sin deseos en tu lista. Ve al menú → Deseos para agregar uno.');return;}
-  const txt = r.deseos.map(d=>`✨ ${d.descripcion} — ${d.puntos_necesarios}pts (tienes: ${d.puntos_total}pts)`).join('\n');
-  addBot(txt);
+  try{
+    const r = await api(`/deseos/${S.mid}`);
+    if(!r.deseos?.length){addBot('Sin deseos en tu lista. Usa "＋ Agregar deseo" del menú.');return;}
+    const txt = r.deseos.map(d=>`✨ ${esc(d.descripcion)}${d.puntos_necesarios?' — necesitas '+d.puntos_necesarios+'pts':''} · tienes ${d.puntos_total||0}pts`).join('\n');
+    addBot(txt);
+  }catch(e){addBot('Sin conexión.');}
+}
+
+async function agregarDeseo(){
+  const desc = document.getElementById('deso-desc').value.trim();
+  const pts  = parseInt(document.getElementById('deso-pts').value)||0;
+  const errEl = document.getElementById('deso-err');
+  if(!desc){errEl.textContent='Describe lo que quieres.';return;}
+  try{
+    await api('/deseos','POST',{teen_id:S.mid, familia_id:S.fid, descripcion:desc, puntos_necesarios:pts});
+    cerrarModal('m-deseo');
+    document.getElementById('deso-desc').value='';
+    document.getElementById('deso-pts').value='0';
+    toast('Deseo agregado ✓');
+    addBot(`"${esc(desc)}" ya está en tu lista.`);
+  }catch(e){errEl.textContent='Error al agregar.';}
 }
 
 async function verLogros(){
@@ -1106,11 +1175,12 @@ function entrarPanel(){
   document.getElementById('s-padre').classList.add('active');
   document.getElementById('ph-av').textContent = (S.nombre||'P')[0].toUpperCase();
   document.getElementById('ph-nombre').textContent = S.nombre || 'Mi familia';
-  document.getElementById('fab').style.display = 'flex';
+  document.getElementById('fab').style.display = 'none';
+  document.getElementById('padre-chat-wrap').style.display = 'none';
+  document.getElementById('padre-content').style.display = 'block';
+  _tabActual = 'familia';
   cargarTab('familia');
   _refreshTimer = setInterval(()=>cargarTab(_tabActual, true), 30000);
-  // Chat padre abajo — preparar
-  document.getElementById('padre-chat-wrap').style.display = 'flex';
 }
 
 function switchTab(tab){
@@ -1119,9 +1189,15 @@ function switchTab(tab){
   const tabEl = document.getElementById('tab-'+tab);
   if(tabEl) tabEl.classList.add('active');
   document.getElementById('fab').style.display = tab==='misiones' ? 'flex' : 'none';
-  document.getElementById('padre-content').style.display = 'block';
-  document.getElementById('padre-chat-wrap').style.display = tab==='chat' ? 'flex' : 'none';
-  if(tab !== 'chat') cargarTab(tab);
+  if(tab === 'chat'){
+    document.getElementById('padre-content').style.display = 'none';
+    document.getElementById('padre-chat-wrap').style.display = 'flex';
+    abrirChatPadre();
+  } else {
+    document.getElementById('padre-content').style.display = 'block';
+    document.getElementById('padre-chat-wrap').style.display = 'none';
+    cargarTab(tab);
+  }
 }
 
 async function cargarTab(tab, silencioso=false){
@@ -1185,6 +1261,10 @@ async function renderFamilia(){
 
 async function renderMisiones(){
   try{
+    if(!_miembros.length){
+      const rf = await api(`/familia/${S.fid}`);
+      _miembros = rf.miembros||[];
+    }
     const r = await api(`/misiones/${S.fid}`);
     const misiones = r.misiones||[];
     setBadge('b-misiones', misiones.filter(m=>m.estado==='completada').length);
@@ -1242,6 +1322,10 @@ async function renderAlertas(){
 
 async function renderAcuerdos(){
   try{
+    if(!_miembros.length){
+      const rf = await api(`/familia/${S.fid}`);
+      _miembros = rf.miembros||[];
+    }
     const r = await api(`/acuerdos/${S.fid}`);
     let html = '';
     if(!r.acuerdos?.length){
@@ -1263,35 +1347,40 @@ async function renderAcuerdos(){
         </div>`;
       });
     }
-    html += `<div style="margin-top:.5rem"><button class="btn ghost" style="width:100%" onclick="abrirModal('m-acuerdo')">＋ Nuevo acuerdo</button></div>`;
+    html += `<div style="margin-top:.5rem"><button class="btn ghost" style="width:100%" onclick="abrirModalAcuerdo()">＋ Nuevo acuerdo</button></div>`;
     document.getElementById('padre-content').innerHTML = html;
   }catch(e){document.getElementById('padre-content').innerHTML='<div class="empty">Error al cargar.</div>';}
 }
 
 async function renderModulos(){
   const content = document.getElementById('padre-content');
+  // Keys must match exactly what the server stores and returns
   const MODULOS_DEFS = [
-    {key:'soporte_psicologico',   icon:'🧠', name:'Soporte psicológico',     desc:'Apoyo emocional basado en Erikson, CNV y Siegel'},
-    {key:'deteccion_aptitudes',   icon:'🔍', name:'Detección de aptitudes',   desc:'Perfil de inteligencias múltiples (Gardner)'},
-    {key:'orientacion_vocacional',icon:'🧭', name:'Orientación vocacional',   desc:'Exploración de carreras y proyectos de vida'},
-    {key:'proyecto_vida',          icon:'🌱', name:'Proyecto de Vida',         desc:'Módulo canónico para colegios religiosos'},
-    {key:'virtudes',               icon:'✨', name:'Virtudes detectadas',      desc:'Reconocimiento de valores en conversación'},
-    {key:'salud_real',             icon:'💊', name:'Salud sin filtros',        desc:'Información real sin versión sanitizada'},
-    {key:'busqueda_web',           icon:'🌐', name:'Búsqueda web libre',       desc:'SearXNG — sin censura'},
-    {key:'educacion_financiera',   icon:'💰', name:'Educación financiera',     desc:'Bases de dinero, ahorro e inversión'},
-    {key:'materias_escolares',     icon:'📚', name:'Refuerzo de materias',     desc:'Enseña, no hace la tarea'},
-    {key:'regularizacion',         icon:'🎯', name:'Regularización escolar',   desc:'Tutoring AI para materias reprobadas'},
+    {key:'apoyo_psicologico',    icon:'🧠', name:'Soporte psicológico',     desc:'Apoyo emocional basado en Erikson, CNV y Siegel'},
+    {key:'aptitudes',            icon:'🔍', name:'Detección de aptitudes',   desc:'Perfil de inteligencias múltiples (Gardner)'},
+    {key:'orientacion_vocacional',icon:'🧭', name:'Orientación vocacional',  desc:'Exploración de carreras y proyectos de vida'},
+    {key:'modulo_canonico',      icon:'🌱', name:'Proyecto de Vida',         desc:'Módulo canónico para colegios religiosos'},
+    {key:'gestion_emocional',    icon:'✨', name:'Gestión emocional',        desc:'Reconocimiento y regulación de emociones'},
+    {key:'metas',                icon:'💊', name:'Metas personales',         desc:'Seguimiento de objetivos del teen'},
+    {key:'busqueda_web',         icon:'🌐', name:'Búsqueda web libre',       desc:'Acceso a información sin censura'},
+    {key:'tutor_academico',      icon:'📚', name:'Refuerzo de materias',     desc:'Enseña, no hace la tarea'},
+    {key:'regularizacion',       icon:'🎯', name:'Regularización escolar',   desc:'Tutoring AI para materias reprobadas'},
+    {key:'modo_gifted',          icon:'⚡', name:'Modo Gifted',              desc:'Para mentes que van más rápido que su entorno'},
+    {key:'modo_visionario',      icon:'🚀', name:'Modo Visionario',          desc:'Catalizador de ideas que todavía no existen'},
   ];
 
   let modulos = {};
   try{
     const r = await api(`/modulos/${S.fid}`);
-    (r.modulos||[]).forEach(m=>{ modulos[m.clave] = m.activo; });
+    // r.modulos is a dict {key: bool}, not an array
+    if(r.modulos && typeof r.modulos === 'object') modulos = r.modulos;
   }catch(e){}
 
   let html = '<div style="margin-bottom:.75rem;font-size:.78rem;color:var(--muted2);line-height:1.5;">Activa o desactiva módulos para toda la familia. Los cambios aplican inmediatamente.</div>';
   MODULOS_DEFS.forEach(m=>{
-    const activo = modulos[m.key] !== false;
+    // Use the actual value from server, falling back to true for modules that default to true
+    const serverVal = modulos[m.key];
+    const activo = serverVal !== undefined ? serverVal : true;
     html += `<div class="modulo-card">
       <div class="mod-ico">${m.icon}</div>
       <div class="mod-info">
@@ -1319,9 +1408,9 @@ function abrirChatPadre(){
   document.getElementById('padre-content').style.display = 'none';
   document.getElementById('padre-chat-wrap').style.display = 'flex';
   if(!document.getElementById('padre-messages').children.length){
-    addBot('Hola ' + S.nombre + '. ¿Qué quieres revisar?', false, 'padre-messages');
+    addBot('Hola ' + S.nombre + '. ¿Qué quieres revisar hoy?', false, 'padre-messages');
   }
-  document.getElementById('padre-txt').focus();
+  setTimeout(()=>document.getElementById('padre-txt')?.focus(), 100);
 }
 
 async function enviarPadre(){
@@ -1509,6 +1598,9 @@ function toast(msg){
 });
 document.getElementById('pin-input')?.addEventListener('keydown',e=>{
   if(e.key==='Enter'){e.preventDefault();confirmarAprobacion();}
+});
+document.getElementById('deso-desc')?.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();agregarDeseo();}
 });
 </script>
 </body>

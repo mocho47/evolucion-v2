@@ -719,10 +719,17 @@ async def ver_miembro(mid: str):
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         cur = await db.execute(
-            "SELECT id,familia_id,nombre,rol,edad,puntos_total FROM miembros WHERE id=? AND activo=1", (mid,))
+            "SELECT id,familia_id,nombre,rol,edad,puntos_total,active_context FROM miembros WHERE id=? AND activo=1", (mid,))
         row = await cur.fetchone()
     if not row: return {"ok": False, "error": "No encontrado"}
-    return {"ok": True, **dict(row)}
+    d = dict(row)
+    try:
+        ctx = json.loads(d.pop("active_context") or "{}")
+        d["perfil"] = ctx.get("perfil", "estandar")
+    except Exception:
+        d.pop("active_context", None)
+        d["perfil"] = "estandar"
+    return {"ok": True, **d}
 
 @app.get("/api/familia/{fid}")
 async def ver_familia(fid: str):
@@ -907,7 +914,12 @@ async def crear_mision(req: CrearMision):
     return {"ok": True, "id": mid, "mensaje": f"Misión '{req.titulo}' creada — {req.puntos} pts"}
 
 @app.put("/api/misiones/{mid}/completar")
-async def completar_mision(mid: str, req: CompletarMision):
+async def completar_mision(mid: str, request: Request):
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    evidencia_url = body.get("evidencia_url") if body else None
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         cur = await db.execute("SELECT * FROM misiones WHERE id=?", (mid,))
@@ -916,7 +928,7 @@ async def completar_mision(mid: str, req: CompletarMision):
         m = dict(m)
         if m["estado"] != "pendiente": raise HTTPException(400, "No está pendiente")
         await db.execute("UPDATE misiones SET estado='completada', evidencia_url=?, completado=? WHERE id=?",
-            (req.evidencia_url, time.time(), mid))
+            (evidencia_url, time.time(), mid))
         await db.commit()
     await _notificar("mision_completada", {"titulo": m["titulo"]}, canal=f"padres_{m['familia_id']}")
     return {"ok": True, "mensaje": f"'{m['titulo']}' completada — esperando aprobación"}
@@ -981,7 +993,9 @@ async def cumplir_acuerdo(aid: str):
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         cur = await db.execute("SELECT * FROM acuerdos WHERE id=?", (aid,))
-        ac = dict(await cur.fetchone())
+        row = await cur.fetchone()
+        if not row: raise HTTPException(404, "Acuerdo no encontrado")
+        ac = dict(row)
         await db.execute("UPDATE acuerdos SET estado='cumplido', cumplido=? WHERE id=?", (time.time(), aid))
         await db.execute("UPDATE miembros SET puntos_total=puntos_total+50 WHERE id=?", (ac["teen_id"],))
         await db.commit()
