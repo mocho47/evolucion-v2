@@ -415,6 +415,11 @@ async def init_db():
                 escuela_id TEXT NOT NULL, familia_id TEXT NOT NULL,
                 PRIMARY KEY (escuela_id, familia_id)
             );
+            CREATE TABLE IF NOT EXISTS maestros (
+                id TEXT PRIMARY KEY, escuela_id TEXT NOT NULL,
+                nombre TEXT NOT NULL, materia TEXT DEFAULT '',
+                grado TEXT DEFAULT '', activo INTEGER DEFAULT 1, creado REAL
+            );
         """)
         await db.commit()
 
@@ -1212,6 +1217,200 @@ async def eventos(fid: str):
     return StreamingResponse(_sse_gen(cid),
         media_type="text/event-stream",
         headers={"Cache-Control":"no-cache","X-Accel-Buffering":"no"})
+
+# ── Maestros ──────────────────────────────────────────────────────────────────
+class RegistrarMaestro(BaseModel):
+    escuela_id: str
+    nombre: str
+    materia: str = ""
+    grado: str = ""
+
+@app.post("/api/maestros")
+async def registrar_maestro(req: RegistrarMaestro):
+    mid = str(uuid.uuid4())[:8]
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute("SELECT id FROM escuelas WHERE id=?", (req.escuela_id,))
+        if not await cur.fetchone():
+            raise HTTPException(404, "Escuela no encontrada")
+        await db.execute("INSERT INTO maestros VALUES (?,?,?,?,?,1,?)",
+            (mid, req.escuela_id, req.nombre, req.materia, req.grado, time.time()))
+        await db.commit()
+    return {"ok": True, "maestro_id": mid, "nombre": req.nombre}
+
+@app.get("/api/maestros/{mid}")
+async def ver_maestro(mid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT m.*, e.nombre as escuela_nombre FROM maestros m JOIN escuelas e ON m.escuela_id=e.id WHERE m.id=? AND m.activo=1", (mid,))
+        row = await cur.fetchone()
+    if not row: return {"ok": False, "error": "No encontrado"}
+    return {"ok": True, **dict(row)}
+
+@app.get("/api/maestro/{mid}/panel")
+async def panel_maestro(mid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM maestros WHERE id=? AND activo=1", (mid,))
+        m = await cur.fetchone()
+        if not m: raise HTTPException(404, "Maestro no encontrado")
+        m = dict(m)
+        eid = m["escuela_id"]
+
+        # Teens en la escuela
+        cur2 = await db.execute(
+            """SELECT mb.id, mb.nombre, mb.familia_id FROM miembros mb
+               JOIN escuela_familias ef ON mb.familia_id=ef.familia_id
+               WHERE ef.escuela_id=? AND mb.rol IN ('teen','hermano') AND mb.activo=1""", (eid,))
+        teens = [dict(r) for r in await cur2.fetchall()]
+        total_teens = len(teens)
+        teen_ids = [t["id"] for t in teens]
+
+        # Clima — promedio de mood últimos 7 días
+        clima = 0.0
+        if teen_ids:
+            placeholders = ",".join("?" * len(teen_ids))
+            corte = time.time() - 7 * 86400
+            cur3 = await db.execute(
+                f"SELECT AVG(score) FROM mood_history WHERE miembro_id IN ({placeholders}) AND creado>?",
+                (*teen_ids, corte))
+            val = (await cur3.fetchone())[0]
+            clima = round(val or 0, 1)
+
+        # Alertas recientes (sin revelar quién)
+        fam_ids = list({t["familia_id"] for t in teens})
+        alertas_stats = {"riesgo_alto": 0, "emocional": 0, "bullying": 0, "riesgo_medio": 0, "relaciones": 0}
+        if fam_ids:
+            corte_al = time.time() - 14 * 86400
+            ph = ",".join("?" * len(fam_ids))
+            cur4 = await db.execute(
+                f"SELECT tipo, COUNT(*) FROM alertas WHERE familia_id IN ({ph}) AND creado>? GROUP BY tipo",
+                (*fam_ids, corte_al))
+            for row in await cur4.fetchall():
+                alertas_stats[row[0]] = (alertas_stats.get(row[0], 0) + row[1])
+
+        # Aptitudes top del grupo
+        aptitudes_grupo = []
+        if teen_ids:
+            ph = ",".join("?" * len(teen_ids))
+            cur5 = await db.execute(
+                f"SELECT tipo, COUNT(*) as total FROM aptitudes WHERE teen_id IN ({ph}) GROUP BY tipo ORDER BY total DESC LIMIT 6",
+                teen_ids)
+            aptitudes_grupo = [{"tipo": r[0], "total": r[1]} for r in await cur5.fetchall()]
+
+        # Rezago por materia
+        rezago = []
+        if teen_ids:
+            ph = ",".join("?" * len(teen_ids))
+            cur6 = await db.execute(
+                f"SELECT materia, COUNT(*) as casos FROM regularizacion WHERE teen_id IN ({ph}) AND estado='activa' GROUP BY materia ORDER BY casos DESC",
+                teen_ids)
+            rezago = [{"materia": r[0], "casos": r[1]} for r in await cur6.fetchall()]
+
+        # Metas activas (engagement)
+        metas_activas = 0
+        if teen_ids:
+            ph = ",".join("?" * len(teen_ids))
+            cur7 = await db.execute(
+                f"SELECT COUNT(*) FROM metas WHERE teen_id IN ({ph}) AND estado='activa'", teen_ids)
+            metas_activas = (await cur7.fetchone())[0]
+
+    return {
+        "ok": True,
+        "maestro": m,
+        "total_teens": total_teens,
+        "clima_score": clima,
+        "clima_label": "Sin datos" if clima == 0 else (
+            "Muy bien" if clima >= 4.5 else "Bien" if clima >= 3.5 else
+            "Regular" if clima >= 2.5 else "Bajo" if clima >= 1.5 else "Crítico"),
+        "alertas": alertas_stats,
+        "aptitudes_top": aptitudes_grupo,
+        "rezago": rezago,
+        "metas_activas": metas_activas,
+    }
+
+class ChatMaestroRequest(BaseModel):
+    maestro_id: str
+    mensaje: str
+
+@app.post("/api/maestro/chat")
+async def chat_maestro(req: ChatMaestroRequest):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM maestros WHERE id=? AND activo=1", (req.maestro_id,))
+        m = await cur.fetchone()
+        if not m: return {"ok": False, "error": "Maestro no encontrado"}
+        m = dict(m)
+        eid = m["escuela_id"]
+
+        # Historial de conversación del maestro (guardado en tabla propia)
+        cur_h = await db.execute(
+            "SELECT mensaje, respuesta FROM conversaciones WHERE miembro_id=? ORDER BY creado DESC LIMIT 4",
+            (req.maestro_id,))
+        rows_h = await cur_h.fetchall()
+        historial = []
+        for h in reversed(rows_h):
+            historial += [{"role":"user","content":h[0]},{"role":"assistant","content":h[1]}]
+
+        # Stats del grupo para el prompt
+        teen_ids_cur = await db.execute(
+            """SELECT mb.id FROM miembros mb JOIN escuela_familias ef ON mb.familia_id=ef.familia_id
+               WHERE ef.escuela_id=? AND mb.rol IN ('teen','hermano') AND mb.activo=1""", (eid,))
+        teen_ids = [r[0] for r in await teen_ids_cur.fetchall()]
+        total_teens = len(teen_ids)
+
+        clima = 0.0
+        if teen_ids:
+            ph = ",".join("?" * len(teen_ids))
+            corte = time.time() - 7 * 86400
+            c = await db.execute(
+                f"SELECT AVG(score) FROM mood_history WHERE miembro_id IN ({ph}) AND creado>?",
+                (*teen_ids, corte))
+            val = (await c.fetchone())[0]
+            clima = round(val or 0, 1)
+
+        stats_txt = f"{total_teens} alumnos activos. Clima emocional promedio: {clima}/5."
+
+        fam_ids_cur = await db.execute(
+            """SELECT DISTINCT mb.familia_id FROM miembros mb JOIN escuela_familias ef ON mb.familia_id=ef.familia_id
+               WHERE ef.escuela_id=?""", (eid,))
+        fam_ids = [r[0] for r in await fam_ids_cur.fetchall()]
+        alertas_txt = "Sin alertas recientes."
+        if fam_ids:
+            corte_al = time.time() - 7 * 86400
+            ph = ",".join("?" * len(fam_ids))
+            c2 = await db.execute(
+                f"SELECT tipo, COUNT(*) FROM alertas WHERE familia_id IN ({ph}) AND creado>? GROUP BY tipo ORDER BY COUNT(*) DESC LIMIT 4",
+                (*fam_ids, corte_al))
+            rows_al = await c2.fetchall()
+            if rows_al:
+                alertas_txt = " | ".join(f"{r[0]}: {r[1]} casos" for r in rows_al)
+
+    prompt = PROMPT_MAESTRO.format(
+        nombre=m["nombre"], stats_grupo=stats_txt, alertas_grupo=alertas_txt)
+
+    if not req.mensaje.strip():
+        return {"ok": True, "respuesta": f"¿Qué está pasando en tu grupo, {m['nombre']}?"}
+
+    respuesta = await llamar_ia(prompt, req.mensaje, historial)
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("INSERT INTO conversaciones VALUES (?,?,?,?,?,?,?)",
+            (str(uuid.uuid4())[:8], req.maestro_id, eid, "maestro",
+             req.mensaje, respuesta, time.time()))
+        await db.commit()
+
+    return {"ok": True, "respuesta": respuesta}
+
+@app.get("/maestro", response_class=HTMLResponse)
+async def panel_maestro_ui():
+    with open(os.path.join(os.path.dirname(__file__), "maestro.html"), encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/jorge", response_class=HTMLResponse)
+async def jorge_landing():
+    with open(os.path.join(os.path.dirname(__file__), "jorge.html"), encoding="utf-8") as f:
+        return f.read()
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":

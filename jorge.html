@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución — Evaluación de Negocio</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#030308;--s1:#08080f;--s2:#0d0d1a;--border:#1a1a30;
+  --gold:#d4a017;--gold2:#b8860b;--gold-dim:rgba(212,160,23,.1);--gold-glow:rgba(212,160,23,.2);
+  --accent:#00e5a0;--accent-dim:rgba(0,229,160,.1);
+  --blue:#4a9eff;--blue-dim:rgba(74,158,255,.1);
+  --text:#eeeef8;--muted:#8888aa;--muted2:#4a4a6a;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);
+  font-family:Georgia,'Times New Roman',serif;font-size:16px;line-height:1.7;overflow-x:hidden;}
+.sans{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+
+/* HEADER */
+header{
+  background:rgba(3,3,8,.97);border-bottom:1px solid var(--border);
+  padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);
+}
+.logo-h{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-size:1.1rem;font-weight:900;letter-spacing:-.01em;}
+.logo-h span{color:var(--accent);}
+.header-tag{font-family:-apple-system,sans-serif;font-size:.72rem;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.12em;}
+
+/* HERO */
+.hero{
+  padding:5rem 2rem 4rem;max-width:860px;margin:0 auto;text-align:center;
+  background:radial-gradient(ellipse at 50% -10%,rgba(212,160,23,.06) 0%,transparent 60%);
+}
+.hero-tag{
+  display:inline-block;background:var(--gold-dim);border:1px solid rgba(212,160,23,.3);
+  color:var(--gold);border-radius:99px;padding:.35rem 1.1rem;
+  font-family:-apple-system,sans-serif;font-size:.72rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.1em;margin-bottom:2rem;
+}
+.hero h1{
+  font-size:clamp(2rem,5vw,3.2rem);font-weight:400;line-height:1.2;
+  letter-spacing:-.01em;margin-bottom:1.25rem;
+}
+.hero h1 strong{font-weight:700;color:var(--gold);}
+.hero-sub{font-size:1.05rem;color:var(--muted);max-width:620px;margin:0 auto 2.5rem;line-height:1.75;}
+.hero-cta{
+  display:inline-block;background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#030308;font-family:-apple-system,sans-serif;font-weight:700;
+  padding:1rem 2.5rem;border-radius:6px;font-size:1rem;cursor:pointer;
+  text-decoration:none;letter-spacing:.02em;
+  box-shadow:0 8px 32px var(--gold-glow);transition:all .2s;
+}
+.hero-cta:hover{transform:translateY(-2px);box-shadow:0 12px 40px var(--gold-glow);}
+.hero-note{font-family:-apple-system,sans-serif;font-size:.75rem;color:var(--muted2);margin-top:1rem;}
+
+/* DIVIDER */
+hr{border:none;border-top:1px solid var(--border);margin:0;}
+
+/* SECTIONS */
+section{max-width:860px;margin:0 auto;padding:4rem 2rem;}
+section h2{font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:700;margin-bottom:1.5rem;line-height:1.25;}
+section h2 span{color:var(--gold);}
+section p{color:var(--muted);margin-bottom:1rem;font-size:.97rem;}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin:2rem 0;}
+.metric{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:1.25rem;text-align:center;}
+.metric.hl{border-color:rgba(212,160,23,.3);background:var(--gold-dim);}
+.m-n{font-family:-apple-system,sans-serif;font-size:clamp(1.8rem,5vw,2.8rem);font-weight:900;
+  color:var(--gold);line-height:1;margin-bottom:.35rem;}
+.m-l{font-family:-apple-system,sans-serif;font-size:.72rem;color:var(--muted);line-height:1.4;}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-family:-apple-system,sans-serif;font-size:.9rem;margin:1.5rem 0;}
+th{text-align:left;font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;
+  padding:.65rem .85rem;border-bottom:1px solid var(--border);}
+td{padding:.75rem .85rem;border-bottom:1px solid var(--s2);color:var(--muted);}
+td:first-child{color:var(--text);font-weight:500;}
+tr.total td{color:var(--gold);font-weight:700;border-top:1px solid rgba(212,160,23,.3);border-bottom:none;}
+
+/* FEATURE GRID */
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin:1.5rem 0;}
+.feat{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:1.25rem;}
+.feat-ico{font-size:1.4rem;margin-bottom:.6rem;}
+.feat-t{font-family:-apple-system,sans-serif;font-weight:700;font-size:.9rem;margin-bottom:.35rem;}
+.feat-d{font-family:-apple-system,sans-serif;font-size:.78rem;color:var(--muted);line-height:1.5;}
+
+/* QUOTE */
+.blockq{border-left:3px solid var(--gold);padding:.75rem 1.25rem;margin:2rem 0;
+  background:var(--gold-dim);border-radius:0 8px 8px 0;}
+.blockq p{color:var(--text);font-style:italic;margin:0;font-size:.97rem;}
+.blockq cite{font-family:-apple-system,sans-serif;font-size:.72rem;color:var(--muted);
+  display:block;margin-top:.5rem;font-style:normal;}
+
+/* TECH */
+.tech-list{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0;}
+.tech-chip{background:var(--s2);border:1px solid var(--border);border-radius:4px;
+  font-family:-apple-system,sans-serif;padding:.3rem .75rem;font-size:.75rem;color:var(--muted);}
+
+/* STEPS */
+.steps{margin:1.5rem 0;}
+.step{display:flex;gap:1rem;margin-bottom:1.25rem;align-items:flex-start;}
+.step-n{font-family:-apple-system,sans-serif;width:28px;height:28px;border-radius:50%;
+  background:var(--gold-dim);border:1px solid rgba(212,160,23,.3);
+  color:var(--gold);font-weight:700;font-size:.8rem;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;margin-top:.2rem;}
+.step-t{font-family:-apple-system,sans-serif;font-weight:700;font-size:.9rem;margin-bottom:.2rem;}
+.step-d{font-family:-apple-system,sans-serif;font-size:.82rem;color:var(--muted);line-height:1.5;}
+
+/* DEMO BOX */
+.demo-box{background:var(--s1);border:1px solid rgba(212,160,23,.25);border-radius:10px;
+  padding:1.5rem;margin:1.5rem 0;}
+.demo-box h3{font-family:-apple-system,sans-serif;font-size:.88rem;font-weight:700;
+  color:var(--gold);margin-bottom:1rem;text-transform:uppercase;letter-spacing:.06em;}
+.demo-row{display:flex;justify-content:space-between;padding:.4rem 0;
+  border-bottom:1px solid var(--border);font-family:-apple-system,sans-serif;font-size:.85rem;}
+.demo-row:last-child{border:none;}
+.demo-k{color:var(--muted);}
+.demo-v{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums;}
+
+/* SUMMARY BOX */
+.summary{background:linear-gradient(135deg,rgba(212,160,23,.08),rgba(212,160,23,.04));
+  border:1px solid rgba(212,160,23,.2);border-radius:10px;padding:2rem;margin:2.5rem 0;}
+.summary h3{font-size:1.15rem;font-weight:700;margin-bottom:1rem;color:var(--gold);}
+.summary ul{list-style:none;padding:0;}
+.summary li{font-family:-apple-system,sans-serif;font-size:.9rem;color:var(--muted);
+  padding:.4rem 0;border-bottom:1px solid rgba(212,160,23,.1);display:flex;gap:.75rem;}
+.summary li:last-child{border:none;}
+.summary li::before{content:'✓';color:var(--gold);font-weight:700;flex-shrink:0;}
+
+/* FOOTER */
+footer{background:var(--s1);border-top:1px solid var(--border);padding:2.5rem 2rem;text-align:center;}
+footer p{font-family:-apple-system,sans-serif;font-size:.8rem;color:var(--muted2);}
+
+@media(max-width:640px){
+  header{padding:1rem 1.25rem;}
+  .hero{padding:3.5rem 1.25rem 3rem;}
+  section{padding:3rem 1.25rem;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-h">EVO<span>LUCIÓN</span></div>
+  <div class="header-tag sans">Evaluación confidencial de negocio</div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-tag">Documento de evaluación · Mayo 2026</div>
+  <h1>Una plataforma real.<br>Un mercado sin competencia.<br><strong>Una decisión de negocio.</strong></h1>
+  <p class="hero-sub">Evolución es el primer sistema de acompañamiento adolescente con inteligencia artificial activo en México. No es una promesa ni un prototipo — opera hoy con familias reales y ha superado las pruebas técnicas iniciales.</p>
+  <a href="/app" class="hero-cta">Entrar a la plataforma en vivo →</a>
+  <div class="hero-note sans">La plataforma es totalmente funcional. Puede crear una familia y usarla en este momento.</div>
+</section>
+<hr>
+
+<!-- LA OPORTUNIDAD -->
+<section>
+  <h2>El mercado que nadie <span>ha tomado todavía</span></h2>
+  <p>México tiene 36 millones de adolescentes entre 12 y 22 años. El sistema educativo público tiene una relación orientador-alumno de 1 a 500. La demanda de acompañamiento emocional y académico personalizado es masiva — y la oferta es prácticamente cero.</p>
+
+  <div class="blockq">
+    <p>"3 de cada 5 adolescentes mexicanos reportan angustia emocional durante su trayectoria escolar. El 72% reprueba al menos una materia. Ninguna plataforma con IA conversacional y perfil psicológico está activa en el sistema educativo mexicano hoy."</p>
+    <cite>— Datos del Sistema Educativo Nacional y UNICEF México 2024</cite>
+  </div>
+
+  <div class="metrics">
+    <div class="metric hl"><div class="m-n">36M</div><div class="m-l">Adolescentes en México como mercado objetivo</div></div>
+    <div class="metric"><div class="m-n">$0</div><div class="m-l">Competidores directos activos en México hoy</div></div>
+    <div class="metric"><div class="m-n">72%</div><div class="m-l">De alumnos reprueba al menos una materia en secundaria</div></div>
+    <div class="metric"><div class="m-n">$12 B</div><div class="m-l">Mercado EdTech LATAM proyectado para 2027 (USD)</div></div>
+  </div>
+</section>
+<hr>
+
+<!-- QUÉ ES -->
+<section>
+  <h2>Qué es <span>Evolución</span> exactamente</h2>
+  <p>Una aplicación web que funciona como asistente personal de desarrollo humano para adolescentes. El teen conversa con una IA psicológicamente entrenada. Los padres tienen un panel para crear misiones, acuerdos y recibir señales de lo que pasa con sus hijos — sin leer sus conversaciones.</p>
+
+  <div class="feat-grid">
+    <div class="feat"><div class="feat-ico">🧠</div><div class="feat-t">Acompañamiento psicológico</div><div class="feat-d">IA entrenada con Erikson, Siegel y CNV. Detecta riesgo vital y notifica automáticamente a los padres.</div></div>
+    <div class="feat"><div class="feat-ico">📚</div><div class="feat-t">Tutoría académica</div><div class="feat-d">Método socrático. Nunca hace la tarea — guía al alumno para que entienda. Detecta materias en rezago.</div></div>
+    <div class="feat"><div class="feat-ico">🎯</div><div class="feat-t">Misiones y acuerdos</div><div class="feat-d">Sistema de gamificación entre padres e hijos. Construye confianza con evidencia real, no promesas.</div></div>
+    <div class="feat"><div class="feat-ico">👨‍🏫</div><div class="feat-t">Panel docente</div><div class="feat-d">El maestro recibe el clima emocional anónimo del grupo, alertas tempranas y perfil de aptitudes.</div></div>
+    <div class="feat"><div class="feat-ico">🧭</div><div class="feat-t">Orientación vocacional</div><div class="feat-d">Detecta aptitudes en cada conversación. Construye el perfil de inteligencias múltiples del alumno.</div></div>
+    <div class="feat"><div class="feat-ico">🏫</div><div class="feat-t">Módulo para escuelas</div><div class="feat-d">Colegios se registran, vinculan familias y acceden a datos anónimos de todo su alumnado.</div></div>
+  </div>
+</section>
+<hr>
+
+<!-- ESTADO ACTUAL -->
+<section>
+  <h2>Estado actual del <span>negocio</span></h2>
+  <p>Esto no es una idea en papel. Es código funcionando en producción, alojado en infraestructura profesional, accesible 24 horas desde cualquier dispositivo del mundo.</p>
+
+  <div class="demo-box">
+    <h3>Estado técnico verificable hoy</h3>
+    <div class="demo-row"><span class="demo-k">Plataforma en producción</span><span class="demo-v">✓ Activa 24/7</span></div>
+    <div class="demo-row"><span class="demo-k">URL pública</span><span class="demo-v">evolucion-v2.onrender.com</span></div>
+    <div class="demo-row"><span class="demo-k">Infraestructura</span><span class="demo-v">Render.com (nube profesional)</span></div>
+    <div class="demo-row"><span class="demo-k">Base de datos persistente</span><span class="demo-v">✓ Disk 1 GB</span></div>
+    <div class="demo-row"><span class="demo-k">IA activa</span><span class="demo-v">GLM-4 → Llama 3.3 70B (3 fallbacks)</span></div>
+    <div class="demo-row"><span class="demo-k">Módulos psicológicos</span><span class="demo-v">7 perfiles independientes</span></div>
+    <div class="demo-row"><span class="demo-k">Panel familiar</span><span class="demo-v">✓ Misiones, acuerdos, alertas, módulos</span></div>
+    <div class="demo-row"><span class="demo-k">Panel docente</span><span class="demo-v">✓ Clima, alertas, aptitudes, rezago, coaching</span></div>
+    <div class="demo-row"><span class="demo-k">Repositorio de código</span><span class="demo-v">GitHub (historial completo)</span></div>
+  </div>
+
+  <div class="tech-list">
+    <span class="tech-chip">Python / FastAPI</span>
+    <span class="tech-chip">SQLite WAL</span>
+    <span class="tech-chip">Progressive Web App</span>
+    <span class="tech-chip">API Z.ai (GLM-4-flash)</span>
+    <span class="tech-chip">API Groq (Llama 3.3 70B)</span>
+    <span class="tech-chip">Server-Sent Events</span>
+    <span class="tech-chip">Render.com Cloud</span>
+    <span class="tech-chip">GitHub CI/CD</span>
+  </div>
+</section>
+<hr>
+
+<!-- MODELO FINANCIERO -->
+<section>
+  <h2>El modelo financiero <span>tiene tres niveles</span></h2>
+  <p>La plataforma puede generar ingresos en tres modelos simultáneos. El camino más corto es directo al consumidor — familias pagando una suscripción mensual por un servicio que reemplaza tutores, orientadores y terapeutas escolares.</p>
+
+  <table>
+    <tr><th>Modelo</th><th>Unidad</th><th>Precio</th><th>Ingreso mensual</th></tr>
+    <tr><td>Familias — suscripción</td><td>100 familias activas</td><td>$199 MXN/mes</td><td>$19,900 MXN</td></tr>
+    <tr><td>Escuelas privadas — licencia</td><td>1 colegio × 200 alumnos</td><td>$15 MXN/alumno</td><td>$36,000 MXN</td></tr>
+    <tr><td>SEP / Gobierno — institucional</td><td>100 planteles piloto</td><td>$20,000 MXN/plantel</td><td>$166,666 MXN</td></tr>
+    <tr class="total"><td colspan="3">Meta 12 meses (modelo mixto)</td><td>$200,000+ MXN/mes</td></tr>
+  </table>
+
+  <p style="font-size:.82rem;color:var(--muted2);font-family:-apple-system,sans-serif;">El costo operativo actual es inferior a $500 USD/mes. El margen es estructuralmente alto desde el primer peso de ingreso.</p>
+</section>
+<hr>
+
+<!-- USO DEL CAPITAL -->
+<section>
+  <h2>Uso específico del <span>capital solicitado</span></h2>
+  <p>El monto solicitado es $30,000–$50,000 MXN. No es para construir la plataforma — ya está construida. Es para los primeros 90 días de operación comercial real.</p>
+
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div><div class="step-t">Infraestructura garantizada — $1,500 MXN</div><div class="step-d">Upgrade del servidor a plan pagado ($7 USD/mes). Elimina el tiempo de inactividad del plan gratuito. La plataforma estará activa 100% del tiempo para demos y primeros clientes.</div></div></div>
+    <div class="step"><div class="step-n">2</div><div><div class="step-t">Primer colegio piloto — $8,000 MXN</div><div class="step-d">Gestión de acceso con 1 colegio privado en Guadalajara. Capacitación de orientador. Registro de las primeras 50 familias. Datos reales del primer ciclo escolar.</div></div></div>
+    <div class="step"><div class="step-n">3</div><div><div class="step-t">Materiales de presentación profesionales — $5,000 MXN</div><div class="step-d">Dominio propio (evolucion.mx), materiales impresos para escuelas, presentación ejecutiva para reunión con Secretaría de Educación Jalisco.</div></div></div>
+    <div class="step"><div class="step-n">4</div><div><div class="step-t">Reserva operativa 90 días — resto del capital</div><div class="step-d">Tiempo real para cerrar los primeros contratos sin presión. El capital no se consume — se convierte en los primeros ingresos recurrentes.</div></div></div>
+  </div>
+</section>
+<hr>
+
+<!-- DEMO ACCESO -->
+<section>
+  <h2>Acceso al <span>demo funcional</span></h2>
+  <p>Puede explorar la plataforma ahora mismo. Hay una familia de demostración pre-configurada o puede crear la suya propia.</p>
+
+  <div class="demo-box">
+    <h3>Datos de acceso al demo</h3>
+    <div class="demo-row"><span class="demo-k">URL de la aplicación</span><span class="demo-v">evolucion-v2.onrender.com/app</span></div>
+    <div class="demo-row"><span class="demo-k">Opción 1 — Ya tengo cuenta</span><span class="demo-v">Código de familia: DEMO01</span></div>
+    <div class="demo-row"><span class="demo-k">Código para el teen</span><span class="demo-v">DEMO01 (mismo código)</span></div>
+    <div class="demo-row"><span class="demo-k">PIN del padre</span><span class="demo-v">1234</span></div>
+    <div class="demo-row"><span class="demo-k">Opción 2</span><span class="demo-v">Crear su propia familia desde cero</span></div>
+  </div>
+
+  <div style="text-align:center;margin-top:2.5rem;">
+    <a href="/app" class="hero-cta">Entrar a Evolución →</a>
+    <div class="hero-note sans" style="margin-top:.75rem;">Primera carga puede tomar 20–30 segundos (servidor plan gratuito en espera)</div>
+  </div>
+</section>
+<hr>
+
+<!-- RESUMEN EJECUTIVO -->
+<section>
+  <h2>Resumen para el <span>evaluador</span></h2>
+  <div class="summary">
+    <h3>Lo que está sobre la mesa</h3>
+    <ul>
+      <li>Plataforma 100% funcional y en producción — no hay riesgo tecnológico</li>
+      <li>Mercado de 36 millones de adolescentes sin competidor directo en México</li>
+      <li>Modelo de ingresos recurrentes con margen estructuralmente alto desde el primer cliente</li>
+      <li>Capital requerido: $30,000–$50,000 MXN — retorno esperado en 12–18 meses</li>
+      <li>Fase actual: validación comercial con primeros 3 colegios en Guadalajara</li>
+      <li>Próximo hito: reunión con Secretaría de Educación Jalisco (primer trimestre escolar)</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p>Evolución v2 · Simplex · Guadalajara, Jalisco · Mayo 2026</p>
+  <p style="margin-top:.4rem;">milanmontellanoanuar@gmail.com · Documento confidencial para evaluación de inversión</p>
+</footer>
+
+</body>
+</html>

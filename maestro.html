@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Evolución — Panel Docente</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#030308;--surface:#0c0c18;--surface2:#14142a;--border:#1e1e3a;
+  --accent:#00e5a0;--accent2:#00b87a;--accent-dim:rgba(0,229,160,.12);
+  --blue:#0080ff;--blue-dim:rgba(0,128,255,.1);--blue-glow:rgba(0,128,255,.2);
+  --purple:#7c3aed;--purple-dim:rgba(124,58,237,.12);
+  --gold:#ffab00;--gold-dim:rgba(255,171,0,.1);
+  --danger:#ff4060;--danger-dim:rgba(255,64,96,.12);
+  --warn:#ffab00;--warn-dim:rgba(255,171,0,.1);
+  --text:#eeeef8;--muted:#4a4a6a;--muted2:#6a6a8a;
+  --r:14px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  overflow:hidden;}
+.screen{display:none;position:fixed;inset:0;flex-direction:column;}
+.screen.active{display:flex;}
+.hidden{display:none!important;}
+.btn{background:var(--accent);color:#030308;border:none;padding:.85rem 1.2rem;
+  border-radius:var(--r);font-size:.95rem;font-weight:700;cursor:pointer;
+  transition:all .2s;width:100%;}
+.btn:hover{background:var(--accent2);transform:translateY(-1px);}
+.btn.blue{background:var(--blue);color:#fff;}
+.btn.blue:hover{background:#0060cc;}
+.btn.ghost{background:transparent;color:var(--muted2);border:1px solid var(--border);}
+.btn.ghost:hover{border-color:var(--accent);color:var(--text);}
+.field{display:flex;flex-direction:column;gap:.4rem;}
+.field label{font-size:.7rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+.field input,.field select{background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);padding:.75rem 1rem;border-radius:10px;font-size:.95rem;
+  outline:none;transition:border .2s;font-family:inherit;appearance:none;}
+.field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-dim);}
+.err{color:var(--danger);font-size:.8rem;min-height:1rem;text-align:center;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  padding:1.5rem;width:100%;max-width:420px;display:flex;flex-direction:column;gap:1rem;}
+.card h2{font-size:1rem;font-weight:700;}
+
+/* LOGIN */
+#s-login{align-items:center;justify-content:flex-start;padding:2rem 1.5rem;overflow-y:auto;
+  background:radial-gradient(ellipse at 50% 0%,#030a1a 0%,var(--bg) 60%);}
+.login-logo{font-size:1.8rem;font-weight:900;padding-top:2rem;padding-bottom:.25rem;}
+.login-logo span{color:var(--blue);}
+.login-sub{color:var(--muted2);font-size:.82rem;margin-bottom:2rem;}
+
+/* TOP BAR */
+.top-bar{background:var(--surface);border-bottom:1px solid var(--border);
+  padding:.8rem 1rem;display:flex;align-items:center;gap:.75rem;flex-shrink:0;}
+.av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0;
+  background:linear-gradient(135deg,var(--blue),#00b0ff);color:#fff;}
+.hinfo{flex:1;min-width:0;}
+.hname{font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hstatus{font-size:.68rem;color:var(--blue);margin-top:.05rem;}
+
+/* TABS */
+.tab-bar{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface);}
+.tab{flex:1;padding:.65rem .25rem;border:none;background:none;color:var(--muted2);
+  font-size:.68rem;cursor:pointer;border-bottom:2px solid transparent;
+  transition:all .15s;font-weight:600;letter-spacing:.02em;}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+/* CONTENT */
+#content{flex:1;overflow-y:auto;padding:.75rem;}
+#content::-webkit-scrollbar{width:2px;}
+#content::-webkit-scrollbar-thumb{background:var(--border);}
+
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.75rem;}
+.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:.75rem;text-align:center;}
+.stat-n{font-size:1.5rem;font-weight:900;line-height:1;}
+.stat-n.blue{color:var(--blue);}
+.stat-n.green{color:var(--accent);}
+.stat-n.red{color:var(--danger);}
+.stat-n.gold{color:var(--gold);}
+.stat-l{font-size:.58rem;color:var(--muted2);margin-top:.15rem;text-transform:uppercase;letter-spacing:.04em;}
+
+/* CLIMA BAR */
+.clima-bar{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:1rem;margin-bottom:.75rem;}
+.clima-label{font-size:.7rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;}
+.clima-val{font-size:1.4rem;font-weight:900;margin-bottom:.4rem;}
+.bar-track{height:8px;background:var(--border);border-radius:99px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:99px;transition:width .6s;}
+
+/* CARDS */
+.info-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:.9rem 1rem;margin-bottom:.65rem;}
+.ic-title{font-weight:700;font-size:.88rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem;}
+.ic-title .ico{font-size:1.1rem;}
+.alert-row{display:flex;justify-content:space-between;align-items:center;
+  padding:.35rem 0;border-bottom:1px solid var(--border);font-size:.82rem;}
+.alert-row:last-child{border:none;}
+.alert-tipo{color:var(--muted2);text-transform:capitalize;}
+.alert-n{font-weight:700;}
+.alert-n.red{color:var(--danger);}
+.alert-n.yellow{color:var(--gold);}
+.alert-n.green{color:var(--accent);}
+
+/* APT CHIPS */
+.apt-list{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.4rem;}
+.apt-chip{background:var(--blue-dim);border:1px solid rgba(0,128,255,.2);
+  border-radius:99px;padding:.2rem .65rem;font-size:.72rem;color:var(--blue);font-weight:600;}
+
+/* REZAGO */
+.rez-row{display:flex;justify-content:space-between;align-items:center;
+  padding:.4rem 0;border-bottom:1px solid var(--border);font-size:.82rem;}
+.rez-row:last-child{border:none;}
+.rez-mat{color:var(--text);text-transform:capitalize;}
+.rez-n{font-weight:700;color:var(--gold);}
+
+/* CHAT */
+#s-chat{background:var(--bg);}
+#messages{flex:1;overflow-y:auto;padding:.75rem;display:flex;flex-direction:column;gap:.55rem;}
+.msg{max-width:84%;display:flex;flex-direction:column;gap:.14rem;}
+.msg.user{align-self:flex-end;align-items:flex-end;}
+.msg.bot{align-self:flex-start;align-items:flex-start;}
+.bubble{padding:.65rem .95rem;border-radius:18px;font-size:.93rem;line-height:1.52;white-space:pre-wrap;word-break:break-word;}
+.msg.user .bubble{background:linear-gradient(135deg,#0060cc,var(--blue));color:#fff;border-bottom-right-radius:4px;}
+.msg.bot .bubble{background:var(--surface);border:1px solid var(--border);border-bottom-left-radius:4px;}
+.mtime{font-size:.6rem;color:var(--muted);}
+.typing{display:flex;gap:5px;align-items:center;padding:.65rem .95rem;
+  background:var(--surface);border:1px solid var(--border);border-radius:18px;
+  border-bottom-left-radius:4px;width:fit-content;}
+.typing span{width:5px;height:5px;background:var(--blue);border-radius:50%;animation:pulse .9s infinite;}
+.typing span:nth-child(2){animation-delay:.18s;}
+.typing span:nth-child(3){animation-delay:.36s;}
+@keyframes pulse{0%,60%,100%{transform:translateY(0);opacity:.4;}30%{transform:translateY(-5px);opacity:1;}}
+#input-area{background:var(--surface);border-top:1px solid var(--border);
+  padding:.65rem .75rem;display:flex;align-items:flex-end;gap:.5rem;flex-shrink:0;}
+#txt{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  padding:.65rem .95rem;border-radius:20px;font-size:.92rem;outline:none;
+  resize:none;max-height:120px;line-height:1.45;font-family:inherit;}
+#txt:focus{border-color:var(--blue);}
+#sbtn{background:linear-gradient(135deg,var(--blue),#0060cc);border:none;color:#fff;
+  width:42px;height:42px;border-radius:50%;cursor:pointer;font-size:1.1rem;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;}
+#sbtn:hover{transform:scale(1.08);}
+#sbtn:disabled{background:var(--border);cursor:not-allowed;}
+
+.empty{text-align:center;color:var(--muted2);padding:2.5rem 1rem;font-size:.88rem;line-height:1.6;}
+
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+  background:var(--surface2);border:1px solid var(--blue);color:var(--blue);
+  padding:.5rem 1.2rem;border-radius:99px;font-size:.82rem;font-weight:600;
+  opacity:0;transition:opacity .25s;pointer-events:none;z-index:500;white-space:nowrap;}
+#toast.on{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="s-login" class="screen active">
+  <div class="login-logo">EVO<span>LUCIÓN</span></div>
+  <div class="login-sub">Panel Docente</div>
+  <div class="card" id="c-acceso">
+    <h2>Acceder como docente</h2>
+    <div class="field"><label>Tu ID de maestro</label>
+      <input id="l-mid" placeholder="Ej: a1b2c3d4" autocomplete="off"></div>
+    <div class="err" id="l-err"></div>
+    <button class="btn blue" onclick="acceder()">Entrar al panel</button>
+  </div>
+  <div class="card" id="c-nuevo" style="margin-top:0;">
+    <h2>Primera vez</h2>
+    <p style="font-size:.82rem;color:var(--muted2);margin-top:-.25rem;line-height:1.5;">Pide a tu coordinador el código de escuela para registrarte.</p>
+    <div class="field"><label>Código de escuela</label>
+      <input id="n-eid" placeholder="Código de 8 caracteres" autocomplete="off" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
+    <div class="field"><label>Tu nombre</label>
+      <input id="n-nombre" placeholder="Prof. García" autocomplete="off"></div>
+    <div class="field"><label>Materia que impartes</label>
+      <input id="n-materia" placeholder="Ej: Matemáticas" autocomplete="off"></div>
+    <div class="field"><label>Grado / grupo</label>
+      <input id="n-grado" placeholder="Ej: 2° B Secundaria" autocomplete="off"></div>
+    <div class="err" id="n-err"></div>
+    <button class="btn ghost" onclick="registrar()">Registrarme</button>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div id="s-panel" class="screen">
+  <div class="top-bar">
+    <div class="av" id="p-av">M</div>
+    <div class="hinfo">
+      <div class="hname" id="p-nombre">Docente</div>
+      <div class="hstatus" id="p-escuela">● panel docente</div>
+    </div>
+    <button style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:.82rem;" onclick="salir()">✕</button>
+  </div>
+  <div class="tab-bar">
+    <button class="tab active" id="tab-resumen"  onclick="switchTab('resumen')">Resumen</button>
+    <button class="tab"        id="tab-alertas"  onclick="switchTab('alertas')">Alertas</button>
+    <button class="tab"        id="tab-aptitudes" onclick="switchTab('aptitudes')">Aptitudes</button>
+    <button class="tab"        id="tab-rezago"   onclick="switchTab('rezago')">Rezago</button>
+    <button class="tab"        id="tab-coaching" onclick="switchTab('coaching')">Coaching IA</button>
+  </div>
+  <div id="content"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+const BASE = '';
+let M = {mid:'', nombre:'', escuela_nombre:'', materia:'', grado:''};
+let _panel = null;
+let _tabActual = 'resumen';
+let _chatInit = false;
+
+function save(){ localStorage.setItem('evo_maestro', JSON.stringify(M)); }
+function load(){
+  try{ const d = JSON.parse(localStorage.getItem('evo_maestro')||'{}'); if(d.mid) M={...M,...d}; }catch(e){}
+}
+
+async function api(path, method='GET', body=null){
+  const o={method,headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'}};
+  if(body) o.body=JSON.stringify(body);
+  const r=await fetch(BASE+'/api'+path,o);
+  if(!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+window.addEventListener('load',()=>{
+  load();
+  if(M.mid) accederConId(M.mid);
+});
+
+async function acceder(){
+  const mid = document.getElementById('l-mid').value.trim();
+  if(!mid){document.getElementById('l-err').textContent='Ingresa tu ID.';return;}
+  accederConId(mid);
+}
+
+async function accederConId(mid){
+  document.getElementById('l-err').textContent='Verificando...';
+  try{
+    const r = await api(`/maestros/${mid}`);
+    if(!r.ok){document.getElementById('l-err').textContent='ID no válido.';return;}
+    M={mid:r.id, nombre:r.nombre, escuela_nombre:r.escuela_nombre||'', materia:r.materia||'', grado:r.grado||''};
+    save();
+    entrarPanel();
+  }catch(e){document.getElementById('l-err').textContent='Sin conexión.';}
+}
+
+async function registrar(){
+  const eid    = document.getElementById('n-eid').value.trim();
+  const nombre = document.getElementById('n-nombre').value.trim();
+  const mat    = document.getElementById('n-materia').value.trim();
+  const grado  = document.getElementById('n-grado').value.trim();
+  const errEl  = document.getElementById('n-err');
+  if(!eid||!nombre){errEl.textContent='Completa código y nombre.';return;}
+  errEl.textContent='Registrando...';
+  try{
+    const r = await api('/maestros','POST',{escuela_id:eid, nombre, materia:mat, grado});
+    if(!r.ok){errEl.textContent='Código de escuela no válido.';return;}
+    document.getElementById('l-mid').value = r.maestro_id;
+    document.getElementById('l-err').textContent='';
+    toast('Registrado. Tu ID: '+r.maestro_id+' — guárdalo.');
+    accederConId(r.maestro_id);
+  }catch(e){errEl.textContent='Error al registrar.';}
+}
+
+function entrarPanel(){
+  document.getElementById('s-login').classList.remove('active');
+  document.getElementById('s-panel').classList.add('active');
+  document.getElementById('p-av').textContent = (M.nombre||'M')[0].toUpperCase();
+  document.getElementById('p-nombre').textContent = M.nombre||'Docente';
+  document.getElementById('p-escuela').textContent = '● '+(M.escuela_nombre||'panel docente')+(M.grado?' · '+M.grado:'');
+  _tabActual = 'resumen';
+  cargarPanel();
+  setInterval(()=>{ if(_tabActual!=='coaching') cargarPanel(true); }, 60000);
+}
+
+async function cargarPanel(silencioso=false){
+  try{
+    const r = await api(`/maestro/${M.mid}/panel`);
+    _panel = r;
+    if(_tabActual !== 'coaching') renderTab(_tabActual, silencioso);
+  }catch(e){ if(!silencioso) document.getElementById('content').innerHTML='<div class="empty">Sin conexión.</div>'; }
+}
+
+function switchTab(tab){
+  _tabActual = tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+tab)?.classList.add('active');
+  if(tab==='coaching'){ renderCoaching(); return; }
+  if(_panel) renderTab(tab);
+  else { document.getElementById('content').innerHTML='<div class="empty">Cargando...</div>'; cargarPanel(); }
+}
+
+function renderTab(tab, silencioso=false){
+  const p = _panel;
+  if(!p) return;
+  switch(tab){
+    case 'resumen':   renderResumen(p); break;
+    case 'alertas':   renderAlertas(p); break;
+    case 'aptitudes': renderAptitudes(p); break;
+    case 'rezago':    renderRezago(p); break;
+  }
+}
+
+function renderResumen(p){
+  const climaColor = p.clima_score>=4?'var(--accent)':p.clima_score>=3?'var(--blue)':p.clima_score>=2?'var(--gold)':'var(--danger)';
+  const climaPct = Math.round((p.clima_score/5)*100);
+  const totalAlertas = Object.values(p.alertas||{}).reduce((a,b)=>a+b,0);
+  const riesgoAlto = (p.alertas?.riesgo_alto||0);
+  document.getElementById('content').innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-n blue">${p.total_teens||0}</div><div class="stat-l">Alumnos</div></div>
+      <div class="stat-box"><div class="stat-n ${riesgoAlto>0?'red':'green'}">${riesgoAlto}</div><div class="stat-l">Riesgo alto</div></div>
+      <div class="stat-box"><div class="stat-n gold">${p.metas_activas||0}</div><div class="stat-l">Metas activas</div></div>
+    </div>
+    <div class="clima-bar">
+      <div class="clima-label">Clima emocional del grupo — últimos 7 días</div>
+      <div class="clima-val" style="color:${climaColor}">${p.clima_score>0?p.clima_score+' / 5':p.clima_label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${climaPct}%;background:${climaColor}"></div></div>
+      <div style="font-size:.72rem;color:var(--muted2);margin-top:.4rem">${p.clima_label} ${p.clima_score>0?'— promedio de estados de ánimo reportados':''}</div>
+    </div>
+    <div class="info-card">
+      <div class="ic-title"><span class="ico">🚨</span> Señales de la semana</div>
+      ${totalAlertas===0
+        ? '<div style="font-size:.82rem;color:var(--muted2)">Sin señales esta semana. Grupo tranquilo. 🟢</div>'
+        : Object.entries(p.alertas||{}).filter(([,v])=>v>0).map(([k,v])=>`
+          <div class="alert-row">
+            <span class="alert-tipo">${k.replace(/_/g,' ')}</span>
+            <span class="alert-n ${v>=3?'red':v>=2?'yellow':'green'}">${v}</span>
+          </div>`).join('')}
+    </div>
+    <div class="info-card">
+      <div class="ic-title"><span class="ico">🧠</span> Aptitudes principales del grupo</div>
+      ${(p.aptitudes_top||[]).length===0
+        ? '<div style="font-size:.82rem;color:var(--muted2)">Sin datos de aptitudes todavía.</div>'
+        : '<div class="apt-list">'+p.aptitudes_top.map(a=>`<div class="apt-chip">${esc(a.tipo)} ×${a.total}</div>`).join('')+'</div>'}
+    </div>
+    ${(p.rezago||[]).length>0?`
+    <div class="info-card">
+      <div class="ic-title"><span class="ico">📉</span> Materias con rezago activo</div>
+      ${p.rezago.map(r=>`<div class="rez-row"><span class="rez-mat">${esc(r.materia)}</span><span class="rez-n">${r.casos} alumnos</span></div>`).join('')}
+    </div>`:''}
+  `;
+}
+
+function renderAlertas(p){
+  const al = p.alertas||{};
+  const total = Object.values(al).reduce((a,b)=>a+b,0);
+  let html = `<div class="info-card">
+    <div class="ic-title"><span class="ico">ℹ️</span> Privacidad garantizada</div>
+    <p style="font-size:.78rem;color:var(--muted2);line-height:1.5;">Las alertas son anónimas. No puedes ver qué alumno emitió cada señal — solo la frecuencia del tipo de situación en el grupo. Esto protege la confianza de los alumnos con la plataforma.</p>
+  </div>`;
+  if(total===0){
+    html += '<div class="empty">Sin alertas en los últimos 14 días.<br>El grupo está tranquilo. 🟢</div>';
+  } else {
+    const detalles = {
+      riesgo_alto:  {label:'Riesgo vital', color:'red', desc:'Mensajes que activan protocolo de seguridad. Notificaron a padres automáticamente.'},
+      riesgo_medio: {label:'Riesgo medio', color:'yellow', desc:'Presión de grupo, sustancias u otros temas de preocupación moderada.'},
+      emocional:    {label:'Emocional', color:'yellow', desc:'Expresiones de autoestima baja, llanto o aislamiento detectadas.'},
+      bullying:     {label:'Bullying', color:'red', desc:'Señales de agresión social, exclusión o intimidación.'},
+      relaciones:   {label:'Relaciones / sexualidad', color:'yellow', desc:'Temas de relaciones, primera vez, solicitudes de fotos u otros.'},
+    };
+    Object.entries(al).filter(([,v])=>v>0).forEach(([k,v])=>{
+      const d = detalles[k]||{label:k.replace(/_/g,' '),color:'green',desc:''};
+      html += `<div class="info-card">
+        <div class="ic-title"><span class="ico">${d.color==='red'?'🔴':d.color==='yellow'?'🟡':'🟢'}</span>${d.label} — <strong style="color:${d.color==='red'?'var(--danger)':d.color==='yellow'?'var(--gold)':'var(--accent)'}>${v} ${v===1?'caso':'casos'}</strong></div>
+        <p style="font-size:.78rem;color:var(--muted2);line-height:1.5;">${d.desc}</p>
+      </div>`;
+    });
+  }
+  document.getElementById('content').innerHTML = html;
+}
+
+function renderAptitudes(p){
+  const apts = p.aptitudes_top||[];
+  const maxVal = apts.length>0?apts[0].total:1;
+  const colores = ['var(--blue)','var(--accent)','var(--gold)','var(--purple)','#ff6b35','#e040fb'];
+  let html = `<div class="info-card">
+    <div class="ic-title"><span class="ico">🧠</span> Perfil de inteligencias múltiples del grupo</div>
+    <p style="font-size:.78rem;color:var(--muted2);margin-bottom:.75rem;line-height:1.5;">Basado en conversaciones anónimas. Muestra qué tipos de inteligencia son más frecuentes en tu grupo — útil para diseñar actividades diferenciadas.</p>`;
+  if(apts.length===0){
+    html += '<div class="empty">Sin datos de aptitudes todavía.<br>Se construyen conforme los alumnos conversan.</div>';
+  } else {
+    apts.forEach((a,i)=>{
+      const pct = Math.round((a.total/maxVal)*100);
+      const color = colores[i%colores.length];
+      html += `<div style="margin-bottom:.65rem;">
+        <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:.25rem;">
+          <span style="text-transform:capitalize;font-weight:600">${esc(a.tipo.replace(/_/g,' '))}</span>
+          <span style="color:var(--muted2)">${a.total} detecciones</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      </div>`;
+    });
+  }
+  html += '</div>';
+  document.getElementById('content').innerHTML = html;
+}
+
+function renderRezago(p){
+  const rez = p.rezago||[];
+  let html = `<div class="info-card">
+    <div class="ic-title"><span class="ico">📉</span> Mapa de rezago académico activo</div>
+    <p style="font-size:.78rem;color:var(--muted2);margin-bottom:.75rem;line-height:1.5;">Alumnos que iniciaron sesiones de regularización. Están trabajando activamente en ponerse al corriente — cada número es un alumno que tomó la iniciativa.</p>`;
+  if(rez.length===0){
+    html += '<div class="empty">Sin sesiones de rezago activas.<br>Todos al corriente — o nadie ha iniciado todavía.</div>';
+  } else {
+    rez.forEach(r=>{
+      html += `<div class="rez-row">
+        <div>
+          <div class="rez-mat" style="font-weight:600">${esc(r.materia)}</div>
+        </div>
+        <div class="rez-n">${r.casos} ${r.casos===1?'alumno':'alumnos'}</div>
+      </div>`;
+    });
+  }
+  html += `</div>
+  <div class="info-card" style="margin-top:.65rem;">
+    <div class="ic-title"><span class="ico">💡</span> Cómo actuar</div>
+    <ul style="list-style:none;padding:0;font-size:.8rem;color:var(--muted2);line-height:1.8;">
+      <li>▸ Los alumnos con sesiones activas ya están haciendo el trabajo — refuerza, no presiones</li>
+      <li>▸ Las materias con más casos pueden necesitar una revisión de método, no solo más tarea</li>
+      <li>▸ Usa el tab <strong style="color:var(--blue)">Coaching IA</strong> para pedirme estrategias de intervención concretas</li>
+    </ul>
+  </div>`;
+  document.getElementById('content').innerHTML = html;
+}
+
+function renderCoaching(){
+  document.getElementById('content').innerHTML = `
+    <div style="height:100%;display:flex;flex-direction:column;padding:0;">
+      <div id="messages" style="flex:1;overflow-y:auto;padding:.75rem;display:flex;flex-direction:column;gap:.55rem;"></div>
+      <div id="input-area">
+        <textarea id="txt" rows="1" placeholder="Pregunta algo sobre tu grupo..." oninput="resize(this)" onkeydown="tecla(event)"></textarea>
+        <button id="sbtn" onclick="enviar()">↑</button>
+      </div>
+    </div>`;
+  document.getElementById('content').style.overflow = 'hidden';
+  document.getElementById('content').style.padding = '0';
+  document.getElementById('content').style.display = 'flex';
+  document.getElementById('content').style.flexDirection = 'column';
+  if(!_chatInit){
+    _chatInit = true;
+    primerMensajeCoaching();
+  }
+}
+
+async function primerMensajeCoaching(){
+  showTyping();
+  try{
+    const r = await api('/maestro/chat','POST',{maestro_id:M.mid, mensaje:''});
+    removeTyping(); addBot(r.respuesta||'¿Qué está pasando en tu grupo?');
+  }catch(e){ removeTyping(); addBot('¿Qué está pasando en tu grupo?'); }
+}
+
+async function enviar(){
+  const txt = document.getElementById('txt');
+  const msg = txt.value.trim();
+  if(!msg) return;
+  txt.value=''; txt.style.height='';
+  document.getElementById('sbtn').disabled=true;
+  addUser(msg); showTyping();
+  try{
+    const r = await api('/maestro/chat','POST',{maestro_id:M.mid, mensaje:msg});
+    removeTyping(); addBot(r.respuesta||'...');
+  }catch(e){ removeTyping(); addBot('Error de conexión.'); }
+  document.getElementById('sbtn').disabled=false;
+}
+
+function addUser(txt){
+  const box=document.getElementById('messages');
+  const d=document.createElement('div');d.className='msg user';
+  d.innerHTML=`<div class="bubble">${esc(txt)}</div><div class="mtime">${hora()}</div>`;
+  box.appendChild(d);scrollMsg();
+}
+function addBot(txt){
+  const box=document.getElementById('messages');
+  const d=document.createElement('div');d.className='msg bot';
+  d.innerHTML=`<div class="bubble">${esc(txt)}</div><div class="mtime">${hora()}</div>`;
+  box.appendChild(d);scrollMsg();
+}
+function showTyping(){
+  const box=document.getElementById('messages');
+  if(!box) return;
+  const d=document.createElement('div');d.id='typing-dot';d.className='typing';
+  d.innerHTML='<span></span><span></span><span></span>';
+  box.appendChild(d);scrollMsg();
+}
+function removeTyping(){ document.getElementById('typing-dot')?.remove(); }
+function scrollMsg(){ const el=document.getElementById('messages');if(el)setTimeout(()=>el.scrollTop=el.scrollHeight,50); }
+function resize(el){ el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px'; }
+function tecla(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar();} }
+
+function switchTab(tab){ _tabActual=tab; document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); document.getElementById('tab-'+tab)?.classList.add('active');
+  if(tab!=='coaching'){ document.getElementById('content').style.overflow='';document.getElementById('content').style.padding='.75rem';document.getElementById('content').style.display='block';document.getElementById('content').style.flexDirection=''; }
+  if(tab==='coaching'){ renderCoaching(); return; }
+  if(_panel) renderTab(tab); else { document.getElementById('content').innerHTML='<div class="empty">Cargando...</div>';cargarPanel(); }
+}
+
+function salir(){ M={mid:'',nombre:'',escuela_nombre:'',materia:'',grado:''};localStorage.removeItem('evo_maestro');document.getElementById('s-panel').classList.remove('active');document.getElementById('s-login').classList.add('active');document.getElementById('l-mid').value='';document.getElementById('l-err').textContent=''; }
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function hora(){ const d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
+
+let _tt;
+function toast(msg){ const el=document.getElementById('toast');el.textContent=msg;el.classList.add('on');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('on'),3000); }
+
+['l-mid','n-eid','n-nombre'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){e.preventDefault(); id.startsWith('l-')?acceder():registrar();}
+  });
+});
+</script>
+</body>
+</html>
