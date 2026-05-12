@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución — Números del Proyecto</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:#030308;color:#eeeef8;line-height:1.65;font-size:15px;}
+.wrap{max-width:820px;margin:0 auto;padding:2.5rem 1.5rem;}
+header{background:rgba(3,3,8,.97);border-bottom:1px solid #1e1e3a;padding:1rem 1.5rem;
+  position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-size:1rem;font-weight:900;}.logo span{color:#00e5a0;}
+.badge{background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.25);color:#00e5a0;
+  border-radius:99px;padding:.2rem .75rem;font-size:.68rem;font-weight:700;letter-spacing:.06em;}
+h1{font-size:2rem;font-weight:900;color:#00e5a0;margin-bottom:.35rem;}
+.sub{color:#6a6a8a;font-size:.9rem;margin-bottom:2.5rem;}
+h2{font-size:1.1rem;font-weight:800;color:#00e5a0;margin:2rem 0 .75rem;
+  border-left:3px solid #00e5a0;padding-left:.8rem;}
+h3{font-size:.95rem;font-weight:700;color:#a78bfa;margin:1rem 0 .4rem;}
+p,li{font-size:.88rem;color:#ccccdd;margin-bottom:.45rem;}
+ul,ol{padding-left:1.3rem;margin-bottom:.8rem;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin:.75rem 0 1.5rem;}
+.stat{background:#0c0c18;border:1px solid #1e1e3a;border-radius:12px;padding:1rem;text-align:center;}
+.stat-n{font-size:2rem;font-weight:900;color:#00e5a0;line-height:1;}
+.stat-l{font-size:.72rem;color:#6a6a8a;margin-top:.3rem;text-transform:uppercase;letter-spacing:.05em;}
+.card{background:#0c0c18;border:1px solid #1e1e3a;border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:.85rem;}
+table{width:100%;border-collapse:collapse;font-size:.84rem;margin:.75rem 0;}
+th{color:#6a6a8a;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;
+  padding:.45rem .75rem;border-bottom:1px solid #1e1e3a;text-align:left;}
+td{padding:.55rem .75rem;border-bottom:1px solid #0d0d20;color:#ccccdd;}
+td:first-child{color:#00e5a0;font-weight:600;}
+.bar{background:#0d0d20;border-radius:99px;height:8px;margin-top:.3rem;overflow:hidden;}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#00e5a0,#7c3aed);}
+.fin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:.75rem 0;}
+.fin-card{background:#0c0c18;border:1px solid #1e1e3a;border-radius:12px;padding:1rem;}
+.fin-title{font-size:.72rem;color:#6a6a8a;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;}
+.fin-val{font-size:1.4rem;font-weight:900;color:#00e5a0;}
+.fin-sub{font-size:.75rem;color:#8888aa;margin-top:.2rem;}
+footer{text-align:center;padding:2.5rem 1.5rem;border-top:1px solid #1e1e3a;
+  color:#4a4a6a;font-size:.75rem;}
+@media print{body{background:#fff;color:#111;} h1,h2{color:#006644;}
+  .stat{background:#f0fdf8;border-color:#ddd;} .stat-n{color:#006644;}
+  .card{background:#f8f8ff;border-color:#ddd;} .fin-card{background:#f8f8ff;border-color:#ddd;}
+  .fin-val{color:#006644;}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">EVO<span>LUCIÓN</span></div>
+  <div class="badge">Números del Proyecto</div>
+</header>
+<div class="wrap">
+<h1>Evolución v2 — Números</h1>
+<p class="sub">Estado técnico, métricas de mercado y proyección financiera · Mayo 2026</p>
+
+<h2>Estado del sistema (en vivo)</h2>
+<div class="stat-grid">
+  <div class="stat"><div class="stat-n">8</div><div class="stat-l">Módulos activos</div></div>
+  <div class="stat"><div class="stat-n">6</div><div class="stat-l">Tablas en DB</div></div>
+  <div class="stat"><div class="stat-n">40+</div><div class="stat-l">Endpoints API</div></div>
+  <div class="stat"><div class="stat-n">3</div><div class="stat-l">Motores IA</div></div>
+  <div class="stat"><div class="stat-n">15</div><div class="stat-l">Marcos psicológicos</div></div>
+  <div class="stat"><div class="stat-n">28</div><div class="stat-l">Patrones burnout</div></div>
+  <div class="stat"><div class="stat-n">5</div><div class="stat-l">Tipos de usuario</div></div>
+  <div class="stat"><div class="stat-n">100%</div><div class="stat-l">Sin instalación</div></div>
+</div>
+
+<h2>Stack tecnológico</h2>
+<div class="card">
+  <table>
+    <tr><th>Capa</th><th>Tecnología</th><th>Función</th></tr>
+    <tr><td>Backend</td><td>FastAPI + Python 3.12</td><td>API REST + rutas HTML</td></tr>
+    <tr><td>Base de datos</td><td>SQLite WAL + aiosqlite</td><td>Persistencia async de alto rendimiento</td></tr>
+    <tr><td>IA primaria</td><td>Z.ai GLM-4-flash</td><td>Respuestas principales (rápido, económico)</td></tr>
+    <tr><td>IA secundaria</td><td>Groq llama-3.3-70b</td><td>Fallback automático</td></tr>
+    <tr><td>IA terciaria</td><td>Ollama dolphin-mistral:7b</td><td>Fallback local (sin internet)</td></tr>
+    <tr><td>Frontend</td><td>HTML5 + CSS + JS vanilla</td><td>PWA sin frameworks</td></tr>
+    <tr><td>Tiempo real</td><td>SSE (Server-Sent Events)</td><td>Notificaciones sin polling</td></tr>
+    <tr><td>Nube</td><td>Render.com</td><td>Deploy automático desde GitHub</td></tr>
+    <tr><td>Repo</td><td>GitHub (mocho47)</td><td>CI/CD — push = deploy</td></tr>
+  </table>
+</div>
+
+<h2>Módulos del sistema</h2>
+<div class="card">
+  <table>
+    <tr><th>Módulo</th><th>Usuarios</th><th>Marcos psicológicos</th></tr>
+    <tr><td>apoyo_psicologico</td><td>Teens</td><td>Erikson, Siegel, CNV, Faber &amp; Mazlish</td></tr>
+    <tr><td>tutor_academico</td><td>Teens</td><td>Bloom, Vygotsky, Zona de desarrollo próximo</td></tr>
+    <tr><td>regularizacion</td><td>Teens</td><td>Bloom revisado, aprendizaje activo</td></tr>
+    <tr><td>aptitudes</td><td>Teens</td><td>Inteligencias múltiples (Gardner)</td></tr>
+    <tr><td>orientacion_vocacional</td><td>Teens</td><td>Ikigai, Frankl, Design Thinking</td></tr>
+    <tr><td>modo_gifted</td><td>Teens</td><td>Dabrowski, Dweck (Mindset)</td></tr>
+    <tr><td>modo_visionario</td><td>Teens</td><td>Frankl, PERMA, liderazgo emergente</td></tr>
+    <tr><td>modulo_canonico</td><td>Teens</td><td>Marco valoral según carisma institucional</td></tr>
+    <tr><td>chat_padres</td><td>Padres</td><td>Faber &amp; Mazlish, CNV</td></tr>
+    <tr><td>coaching_maestros</td><td>Maestros</td><td>Bloom, Vygotsky, Design Thinking</td></tr>
+    <tr><td>bienestar_maestros</td><td>Maestros</td><td>Maslach Burnout Inventory, SDT, MBSR</td></tr>
+  </table>
+</div>
+
+<h2>Tablas de base de datos</h2>
+<div class="card">
+  <table>
+    <tr><th>Tabla</th><th>Registros</th><th>Descripción</th></tr>
+    <tr><td>familias</td><td>—</td><td>Código único, nombre, escuela vinculada</td></tr>
+    <tr><td>miembros</td><td>—</td><td>Todos los usuarios: teens y padres. Rol, puntos, active_context</td></tr>
+    <tr><td>misiones</td><td>—</td><td>Tareas asignadas por padres, estado, puntos</td></tr>
+    <tr><td>acuerdos</td><td>—</td><td>Pactos familia, propuesto/activo/cumplido</td></tr>
+    <tr><td>maestros</td><td>—</td><td>Docentes registrados, escuela, materias</td></tr>
+    <tr><td>maestro_mood</td><td>—</td><td>Estados de ánimo registrados por maestros</td></tr>
+    <tr><td>escuelas</td><td>—</td><td>Planteles registrados, tipo, carisma</td></tr>
+    <tr><td>metas</td><td>—</td><td>Metas personales del teen</td></tr>
+    <tr><td>deseos</td><td>—</td><td>Deseos/aspiraciones del teen</td></tr>
+    <tr><td>aptitudes</td><td>—</td><td>Perfil de inteligencias múltiples detectado</td></tr>
+    <tr><td>senales</td><td>—</td><td>Alertas psicológicas detectadas en chat</td></tr>
+    <tr><td>conversaciones</td><td>—</td><td>Historial de chat por miembro</td></tr>
+  </table>
+</div>
+
+<h2>Mercado objetivo</h2>
+<div class="stat-grid">
+  <div class="stat"><div class="stat-n">36M</div><div class="stat-l">Adolescentes en México</div></div>
+  <div class="stat"><div class="stat-n">260K</div><div class="stat-l">Escuelas privadas MX</div></div>
+  <div class="stat"><div class="stat-n">$0</div><div class="stat-l">Competidores directos</div></div>
+  <div class="stat"><div class="stat-n">3</div><div class="stat-l">Segmentos simultáneos</div></div>
+</div>
+<div class="card">
+  <p><strong>Ventaja competitiva principal:</strong> Ningún competidor cubre los cuatro actores simultáneamente (teen + padre + maestro + plantel) con IA psicológica real y módulo de regularización escolar. El espacio está vacío.</p>
+  <p style="margin-top:.5rem;"><strong>Primer mercado:</strong> Colegios religiosos de Guadalajara. Requieren módulo canónico que ningún competidor ofrece. Demanda específica + vacío competitivo = tracción inmediata.</p>
+</div>
+
+<h2>Proyección financiera</h2>
+<div class="fin-grid">
+  <div class="fin-card">
+    <div class="fin-title">Nivel 1 — Familia directa</div>
+    <div class="fin-val">$199</div>
+    <div class="fin-sub">MXN/mes por familia</div>
+  </div>
+  <div class="fin-card">
+    <div class="fin-title">Nivel 2 — Plantel piloto</div>
+    <div class="fin-val">$8,900</div>
+    <div class="fin-sub">MXN/mes · hasta 3 grupos</div>
+  </div>
+  <div class="fin-card">
+    <div class="fin-title">Nivel 3 — Licencia escolar</div>
+    <div class="fin-val">$24,900</div>
+    <div class="fin-sub">MXN/mes · plantel completo</div>
+  </div>
+</div>
+<div class="card">
+  <table>
+    <tr><th>Escenario</th><th>Escuelas</th><th>Ingresos anuales</th></tr>
+    <tr><td>Conservador</td><td>5 planteles piloto</td><td>~$534,000 MXN</td></tr>
+    <tr><td>Moderado</td><td>20 planteles (mix)</td><td>~$3,588,000 MXN</td></tr>
+    <tr><td>Optimista</td><td>50 planteles + familias directas</td><td>~$12,000,000 MXN</td></tr>
+  </table>
+</div>
+
+<h2>Costo operativo actual</h2>
+<div class="card">
+  <table>
+    <tr><th>Rubro</th><th>Costo actual</th><th>Con escala</th></tr>
+    <tr><td>Servidor Render (nube)</td><td>$0 (plan gratis)</td><td>$7 USD/mes (Starter)</td></tr>
+    <tr><td>Z.ai (IA primaria)</td><td>~$0.001 / mensaje</td><td>Volumen negociable</td></tr>
+    <tr><td>Groq (IA fallback)</td><td>~$0.0008 / mensaje</td><td>500K tokens/día gratis</td></tr>
+    <tr><td>Dominio propio</td><td>Pendiente</td><td>~$500 MXN/año</td></tr>
+    <tr><td>Desarrollo</td><td>En curso</td><td>—</td></tr>
+  </table>
+</div>
+
+<h2>Estado actual del proyecto</h2>
+<div class="card">
+  <p>✅ <strong>Servidor en nube:</strong> evolucion-v2.onrender.com — 24/7 (plan gratis, se duerme)</p>
+  <p>✅ <strong>GitHub:</strong> deploy automático en cada push</p>
+  <p>✅ <strong>Demo DEMO01:</strong> funcional — código familia + PIN padre</p>
+  <p>✅ <strong>Panel teen</strong> — chat, misiones, metas, deseos, tutor, orientación</p>
+  <p>✅ <strong>Panel padre</strong> — 5 tabs: familia, misiones, señales, acuerdos, módulos</p>
+  <p>✅ <strong>Panel maestro</strong> — 6 tabs: resumen, alertas, aptitudes, rezago, bienestar, coaching</p>
+  <p>✅ <strong>Manuales</strong> — padres, maestros, teens, plantel</p>
+  <p>✅ <strong>Decks</strong> — familias, SEP, inversores, teens</p>
+  <p>⏳ <strong>Render $7/mes</strong> — pendiente (elimina el "sleep")</p>
+  <p>⏳ <strong>Dominio propio</strong> — evolucion.mx pendiente</p>
+  <p>⏳ <strong>Pruebas en dispositivos reales</strong> — pendiente</p>
+</div>
+
+</div>
+<footer>
+  <p>Evolución v2 · Simplex · Guadalajara, Jalisco · Mayo 2026</p>
+  <p style="margin-top:.3rem;">Confidencial — uso interno y para evaluadores autorizados</p>
+</footer>
+</body>
+</html>

@@ -1559,6 +1559,23 @@ async def jorge_landing():
     with open(os.path.join(os.path.dirname(__file__), "jorge.html"), encoding="utf-8") as f:
         return f.read()
 
+# ── Manuales ──────────────────────────────────────────────────────────────────
+_MANUALES_DIR = os.path.join(os.path.dirname(__file__), "manuales")
+
+@app.get("/manuales", response_class=HTMLResponse)
+async def manuales_index():
+    with open(os.path.join(_MANUALES_DIR, "index.html"), encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/manuales/{nombre}", response_class=HTMLResponse)
+async def manual_page(nombre: str):
+    nombre = os.path.basename(nombre)  # prevent path traversal
+    path = os.path.join(_MANUALES_DIR, nombre)
+    if not os.path.isfile(path):
+        raise HTTPException(404, "Documento no encontrado")
+    with open(path, encoding="utf-8") as f:
+        return f.read()
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn

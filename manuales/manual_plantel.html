@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución — Manual para Planteles</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:#030308;color:#eeeef8;line-height:1.65;font-size:15px;}
+.wrap{max-width:760px;margin:0 auto;padding:2.5rem 1.5rem;}
+header{background:rgba(3,3,8,.97);border-bottom:1px solid #1a1535;padding:1rem 1.5rem;
+  position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-size:1rem;font-weight:900;}.logo span{color:#00e5a0;}
+.badge{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);color:#fbbf24;
+  border-radius:99px;padding:.2rem .75rem;font-size:.68rem;font-weight:700;letter-spacing:.06em;}
+h1{font-size:2rem;font-weight:900;color:#fbbf24;margin-bottom:.35rem;}
+.sub{color:#6a6a8a;font-size:.9rem;margin-bottom:2.5rem;}
+h2{font-size:1.1rem;font-weight:800;color:#fbbf24;margin:2rem 0 .75rem;
+  border-left:3px solid #d97706;padding-left:.8rem;}
+h3{font-size:.95rem;font-weight:700;color:#eeeef8;margin:1.1rem 0 .4rem;}
+p,li{font-size:.88rem;color:#ccccdd;margin-bottom:.45rem;}
+ul,ol{padding-left:1.3rem;margin-bottom:.8rem;}
+.card{background:#0c0c18;border:1px solid #1a1535;border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:.85rem;}
+.step{display:flex;gap:.85rem;margin-bottom:.85rem;}
+.step-n{width:26px;height:26px;border-radius:50%;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);
+  color:#fbbf24;font-weight:700;font-size:.78rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.1rem;}
+.step-body{flex:1;}
+.step-t{font-weight:700;font-size:.88rem;margin-bottom:.25rem;}
+.step-d{font-size:.8rem;color:#8888aa;line-height:1.5;}
+.code{font-family:monospace;background:#030308;border:1px solid #fbbf24;color:#fbbf24;
+  border-radius:6px;padding:.2rem .55rem;font-size:.85rem;}
+.tip{background:rgba(251,191,36,.05);border:1px solid rgba(251,191,36,.18);border-radius:10px;
+  padding:.8rem 1rem;margin:.75rem 0;}
+.tip p{color:#fbbf24;margin:0;font-size:.82rem;}
+.warn{background:rgba(255,100,0,.06);border:1px solid rgba(255,100,0,.2);border-radius:10px;
+  padding:.8rem 1rem;margin:.75rem 0;}
+.warn p{color:#ff8844;margin:0;font-size:.82rem;}
+.ok{background:rgba(0,229,160,.05);border:1px solid rgba(0,229,160,.18);border-radius:10px;
+  padding:.8rem 1rem;margin:.75rem 0;}
+.ok p{color:#00e5a0;margin:0;font-size:.82rem;}
+.api-block{background:#030308;border:1px solid #2a2a4a;border-radius:8px;padding:.7rem 1rem;font-family:monospace;font-size:.82rem;color:#a78bfa;margin:.5rem 0;}
+table{width:100%;border-collapse:collapse;font-size:.84rem;margin:.75rem 0;}
+th{color:#6a6a8a;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;
+  padding:.45rem .75rem;border-bottom:1px solid #1a1535;text-align:left;}
+td{padding:.55rem .75rem;border-bottom:1px solid #0d0d20;color:#ccccdd;}
+td:first-child{color:#fbbf24;font-weight:600;}
+footer{text-align:center;padding:2.5rem 1.5rem;border-top:1px solid #1a1535;
+  color:#4a4a6a;font-size:.75rem;}
+@media print{body{background:#fff;color:#111;}
+  header{background:#fff;border-color:#ddd;}
+  h1,h2{color:#d97706;}
+  .card{background:#fffbf0;border-color:#ddd;}
+  .code{background:#f0f0f0;color:#d97706;}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">EVO<span>LUCIÓN</span></div>
+  <div class="badge">Manual para Planteles</div>
+</header>
+<div class="wrap">
+<h1>Manual para Directivos y Administración</h1>
+<p class="sub">Registro, vinculación de familias, maestros e integración institucional · Mayo 2026</p>
+
+<h2>¿Qué es Evolución para el plantel?</h2>
+<p>Evolución es una plataforma de acompañamiento integral que conecta tres actores:</p>
+<div class="card">
+  <table>
+    <tr><th>Actor</th><th>Qué obtiene</th></tr>
+    <tr><td>Alumnos (teens)</td><td>Apoyo psicológico IA, tutor académico, orientación vocacional, detección de aptitudes</td></tr>
+    <tr><td>Padres de familia</td><td>Panel de seguimiento, misiones, señales de bienestar, chat de consejo parental</td></tr>
+    <tr><td>Maestros</td><td>Clima del grupo, alertas anónimas, mapa de rezago, coaching pedagógico IA, módulo de bienestar docente</td></tr>
+    <tr><td>Plantel</td><td>Código de escuela para vincular familias, módulos configurables (laico / canónico), reportes agregados</td></tr>
+  </table>
+</div>
+
+<h2>Registrar el plantel</h2>
+<div class="card">
+  <p>Enviar solicitud de registro al administrador del sistema:</p>
+  <p style="margin-top:.5rem;"><strong>Contacto:</strong> <span class="code">milanmontellanoanuar@gmail.com</span></p>
+  <p style="margin-top:.35rem;">Información requerida:</p>
+  <ul style="margin-top:.35rem;">
+    <li>Nombre oficial del plantel</li>
+    <li>Tipo: laico / religioso (carisma si aplica: ignaciano, marista, salesiano, etc.)</li>
+    <li>Nombre del responsable técnico de la institución</li>
+    <li>Número de grupos y alumnos aproximados</li>
+  </ul>
+  <p style="margin-top:.75rem;">Se le asignará un <strong>código de escuela</strong> de 6 caracteres que compartirá con maestros y padres de familia.</p>
+</div>
+<div class="tip"><p>💡 El registro técnico también puede hacerse vía API: POST /api/escuelas con los campos nombre, tipo y carisma.</p></div>
+
+<h2>API — Registro técnico directo</h2>
+<div class="card">
+  <h3>Registrar escuela</h3>
+  <div class="api-block">POST https://evolucion-v2.onrender.com/api/escuelas<br>{"nombre":"Colegio San Ignacio","tipo":"religioso","carisma":"ignaciano"}</div>
+  <p style="margin-top:.5rem;">Respuesta: código de escuela + ID interno</p>
+
+  <h3>Vincular familia al plantel</h3>
+  <div class="api-block">POST /api/escuelas/{eid}/vincular/{fid}</div>
+
+  <h3>Ver familias vinculadas</h3>
+  <div class="api-block">GET /api/escuelas/{eid}/familias</div>
+</div>
+
+<h2>Registrar maestros</h2>
+<div class="step"><div class="step-n">1</div><div class="step-body">
+  <div class="step-t">Comparte el código de escuela con el cuerpo docente</div>
+  <div class="step-d">Cada maestro entra a evolucion-v2.onrender.com/maestro → "Registrarme" → ingresa el código.</div>
+</div></div>
+<div class="step"><div class="step-n">2</div><div class="step-body">
+  <div class="step-t">El maestro llena su perfil</div>
+  <div class="step-d">Nombre, materia(s), grado(s) que imparte. El sistema le asigna un ID de maestro.</div>
+</div></div>
+<div class="step"><div class="step-n">3</div><div class="step-body">
+  <div class="step-t">Acceso inmediato a su panel</div>
+  <div class="step-d">Sin aprobación adicional — el código de escuela actúa como llave de acceso controlada.</div>
+</div></div>
+
+<h2>Registrar familias</h2>
+<div class="step"><div class="step-n">1</div><div class="step-body">
+  <div class="step-t">Comparte el código de escuela con los padres de familia</div>
+  <div class="step-d">En junta de padres, circular, o WhatsApp. El código es el mismo para toda la institución.</div>
+</div></div>
+<div class="step"><div class="step-n">2</div><div class="step-body">
+  <div class="step-t">El padre crea su familia</div>
+  <div class="step-d">Entra a /app → Crear familia → ingresa el código de escuela al final del registro. Su familia queda vinculada automáticamente al plantel.</div>
+</div></div>
+<div class="step"><div class="step-n">3</div><div class="step-body">
+  <div class="step-t">Los hijos se unen</div>
+  <div class="step-d">El padre comparte su código de familia (6 letras) con sus hijos. Cada hijo crea su perfil.</div>
+</div></div>
+
+<h2>Módulos disponibles por tipo de institución</h2>
+<div class="card">
+  <table>
+    <tr><th>Módulo</th><th>Laico</th><th>Canónico</th><th>Descripción</th></tr>
+    <tr><td>apoyo_psicologico</td><td>✅</td><td>✅</td><td>Chat emocional con el alumno</td></tr>
+    <tr><td>tutor_academico</td><td>✅</td><td>✅</td><td>Soporte escolar por materia</td></tr>
+    <tr><td>regularizacion</td><td>✅</td><td>✅</td><td>Plan de recuperación de materias</td></tr>
+    <tr><td>aptitudes</td><td>✅</td><td>✅</td><td>Detección de inteligencias múltiples</td></tr>
+    <tr><td>orientacion_vocacional</td><td>✅</td><td>✅</td><td>Guía de carrera y proyecto de vida</td></tr>
+    <tr><td>modo_gifted</td><td>Opcional</td><td>Opcional</td><td>Modo superdotado (padres activan)</td></tr>
+    <tr><td>modulo_canonico</td><td>—</td><td>✅</td><td>Marco valoral del carisma institucional</td></tr>
+  </table>
+</div>
+
+<h2>Privacidad y protección de datos</h2>
+<div class="ok"><p>✅ El plantel nunca accede al contenido de conversaciones de alumnos o padres. Solo recibe datos agregados: clima emocional del grupo, distribución de aptitudes, materias con rezago — todos anónimos y sin identificar alumnos específicos.</p></div>
+<div class="warn"><p>⚠ El módulo de bienestar docente es completamente privado. La dirección del plantel no tiene acceso a lo que los maestros escriben en ese módulo.</p></div>
+
+<h2>Modelo de licenciamiento</h2>
+<div class="card">
+  <table>
+    <tr><th>Nivel</th><th>Alcance</th><th>Precio referencia</th></tr>
+    <tr><td>Demo</td><td>1 familia piloto, 30 días, funciones completas</td><td>Gratuito</td></tr>
+    <tr><td>Plantel piloto</td><td>1 plantel, hasta 3 grupos, 90 días</td><td>A convenir</td></tr>
+    <tr><td>Licencia escolar</td><td>Plantel completo, todos los módulos, 1 ciclo escolar</td><td>A convenir</td></tr>
+    <tr><td>Red de planteles</td><td>Varios planteles, administración centralizada</td><td>A convenir</td></tr>
+  </table>
+</div>
+
+<h2>Contacto y soporte</h2>
+<div class="card">
+  <p><strong>Responsable del proyecto:</strong> Anuar Milán Montellano</p>
+  <p><strong>Email:</strong> <span class="code">milanmontellanoanuar@gmail.com</span></p>
+  <p><strong>Plataforma:</strong> <span class="code">evolucion-v2.onrender.com</span></p>
+  <p><strong>Empresa:</strong> Simplex · Guadalajara, Jalisco</p>
+</div>
+
+</div>
+<footer>
+  <p>Evolución v2 · Simplex · Guadalajara, Jalisco · Mayo 2026</p>
+  <p style="margin-top:.3rem;">evolucion-v2.onrender.com · milanmontellanoanuar@gmail.com</p>
+</footer>
+</body>
+</html>

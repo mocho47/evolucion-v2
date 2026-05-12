@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución — Manual para Maestros</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:#030308;color:#eeeef8;line-height:1.65;font-size:15px;}
+.wrap{max-width:760px;margin:0 auto;padding:2.5rem 1.5rem;}
+header{background:rgba(3,3,8,.97);border-bottom:1px solid #1e2a1e;padding:1rem 1.5rem;
+  position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-size:1rem;font-weight:900;}.logo span{color:#00e5a0;}
+.badge{background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.25);color:#00e5a0;
+  border-radius:99px;padding:.2rem .75rem;font-size:.68rem;font-weight:700;letter-spacing:.06em;}
+h1{font-size:2rem;font-weight:900;color:#00e5a0;margin-bottom:.35rem;}
+.sub{color:#6a6a8a;font-size:.9rem;margin-bottom:2.5rem;}
+h2{font-size:1.1rem;font-weight:800;color:#00e5a0;margin:2rem 0 .75rem;
+  border-left:3px solid #00e5a0;padding-left:.8rem;}
+h3{font-size:.95rem;font-weight:700;color:#eeeef8;margin:1.1rem 0 .4rem;}
+p,li{font-size:.88rem;color:#ccccdd;margin-bottom:.45rem;}
+ul,ol{padding-left:1.3rem;margin-bottom:.8rem;}
+.card{background:#0c0c18;border:1px solid #1e2a1e;border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:.85rem;}
+.step{display:flex;gap:.85rem;margin-bottom:.85rem;}
+.step-n{width:26px;height:26px;border-radius:50%;background:rgba(0,229,160,.15);border:1px solid rgba(0,229,160,.3);
+  color:#00e5a0;font-weight:700;font-size:.78rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.1rem;}
+.step-body{flex:1;}
+.step-t{font-weight:700;font-size:.88rem;margin-bottom:.25rem;}
+.step-d{font-size:.8rem;color:#8888aa;line-height:1.5;}
+.code{font-family:monospace;background:#030308;border:1px solid #00e5a0;color:#00e5a0;
+  border-radius:6px;padding:.2rem .55rem;font-size:.85rem;}
+.tip{background:rgba(0,229,160,.05);border:1px solid rgba(0,229,160,.18);border-radius:10px;
+  padding:.8rem 1rem;margin:.75rem 0;}
+.tip p{color:#00e5a0;margin:0;font-size:.82rem;}
+.warn{background:rgba(255,171,0,.06);border:1px solid rgba(255,171,0,.2);border-radius:10px;
+  padding:.8rem 1rem;margin:.75rem 0;}
+.warn p{color:#ffab00;margin:0;font-size:.82rem;}
+.priv{background:rgba(124,58,237,.05);border:1px solid rgba(124,58,237,.2);border-radius:10px;
+  padding:.8rem 1rem;margin:.75rem 0;}
+.priv p{color:#a78bfa;margin:0;font-size:.82rem;}
+.tab-list{list-style:none;padding:0;}
+.tab-list li{padding:.55rem 0;border-bottom:1px solid #0d0d20;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem;}
+.tab-list li:last-child{border:none;}
+.tab-ico{font-size:1.1rem;flex-shrink:0;}
+.tab-info strong{color:#00e5a0;}
+table{width:100%;border-collapse:collapse;font-size:.84rem;margin:.75rem 0;}
+th{color:#6a6a8a;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;
+  padding:.45rem .75rem;border-bottom:1px solid #1e2a1e;text-align:left;}
+td{padding:.55rem .75rem;border-bottom:1px solid #0d0d20;color:#ccccdd;}
+td:first-child{color:#00e5a0;font-weight:600;}
+footer{text-align:center;padding:2.5rem 1.5rem;border-top:1px solid #1e2a1e;
+  color:#4a4a6a;font-size:.75rem;}
+@media print{body{background:#fff;color:#111;}
+  header{background:#fff;border-color:#ddd;}
+  .logo span{color:#006644;} h1,h2{color:#006644;}
+  .card{background:#f8fff8;border-color:#ddd;}
+  .code{background:#f0f0f0;color:#006644;}
+  .tip{background:#f0fdf8;border-color:#aaa;}
+  .warn{background:#fffbeb;border-color:#aaa;}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">EVO<span>LUCIÓN</span></div>
+  <div class="badge">Manual para Maestros</div>
+</header>
+<div class="wrap">
+<h1>Manual para Maestros</h1>
+<p class="sub">Guía completa del Panel Docente — Clima, Alertas, Aptitudes, Rezago, Bienestar y Coaching · Mayo 2026</p>
+
+<h2>Acceso al panel docente</h2>
+<div class="card">
+  <p>Desde cualquier dispositivo, sin instalar nada:</p>
+  <div style="background:#030308;border:1px solid #00e5a0;border-radius:8px;padding:.65rem 1rem;font-family:monospace;font-size:.9rem;color:#00e5a0;margin:.5rem 0;">https://evolucion-v2.onrender.com/maestro</div>
+  <div class="warn"><p>⚠ Primera carga puede tardar 20–30 segundos si el servidor estuvo inactivo. Normal — solo la primera vez del día.</p></div>
+</div>
+
+<h2>Registro por primera vez</h2>
+<div class="step"><div class="step-n">1</div><div class="step-body">
+  <div class="step-t">Toca "Registrarme con código de escuela"</div>
+  <div class="step-d">La directiva o administrador escolar te proporcionará el código de 6 letras de tu institución (ej: <span class="code">ESC001</span>).</div>
+</div></div>
+<div class="step"><div class="step-n">2</div><div class="step-body">
+  <div class="step-t">Llena tu perfil</div>
+  <div class="step-d">Nombre completo, materia(s) que impartes, y el código de escuela. El sistema te asigna un ID de maestro automáticamente.</div>
+</div></div>
+<div class="step"><div class="step-n">3</div><div class="step-body">
+  <div class="step-t">Guarda tu ID de maestro</div>
+  <div class="step-d">Se mostrará un código tipo <span class="code">M-4839</span>. Guárdalo — lo necesitarás para ingresar desde otro dispositivo.</div>
+</div></div>
+<div class="tip"><p>💡 La próxima vez que entres desde el mismo dispositivo, la app te reconoce automáticamente. En dispositivo nuevo: "Ya tengo cuenta" → ingresa tu ID de maestro.</p></div>
+
+<h2>Las 6 pestañas de tu panel</h2>
+<ul class="tab-list">
+  <li><div class="tab-ico">📊</div><div class="tab-info"><strong>Resumen</strong> — Vista panorámica del grupo: número de alumnos activos, alertas de riesgo alto, metas activas. Incluye barra de clima emocional del grupo (porcentaje positivo/neutro/negativo) y las 3 principales aptitudes detectadas en tus alumnos.</div></li>
+  <li><div class="tab-ico">🚨</div><div class="tab-info"><strong>Alertas</strong> — Alertas anónimas generadas por el sistema cuando detecta patrones en las conversaciones de los alumnos. Solo muestra el tipo (emocional, bullying, riesgo_alto) y una guía de intervención — nunca el contenido exacto ni el nombre del alumno.</div></li>
+  <li><div class="tab-ico">🧠</div><div class="tab-info"><strong>Aptitudes</strong> — Perfil colectivo de inteligencias múltiples del grupo. Barras proporcionales que muestran dónde están las fortalezas del grupo: lógico-matemática, lingüística, kinestésica, musical, espacial, etc.</div></li>
+  <li><div class="tab-ico">📚</div><div class="tab-info"><strong>Rezago</strong> — Mapa de riesgo académico por materia. Identifica en qué asignaturas hay mayor concentración de alumnos en riesgo, con sugerencias pedagógicas concretas para cada área.</div></li>
+  <li><div class="tab-ico">💚</div><div class="tab-info"><strong>Bienestar</strong> — Tu espacio privado. Registra cómo te sientes hoy (5 niveles) y accede a chat psicológico confidencial. El asistente usa el enfoque Maslach + SDT para detección de burnout y apoyo. <em>Nadie más ve este tab.</em></div></li>
+  <li><div class="tab-ico">🤖</div><div class="tab-info"><strong>Coaching IA</strong> — Chat pedagógico para ti. Consulta estrategias didácticas, cómo abordar un tema difícil con el grupo, cómo manejar situaciones de aula, adaptar contenidos, o cualquier duda académica.</div></li>
+</ul>
+
+<h2>Interpretar las Alertas</h2>
+<div class="card">
+  <table>
+    <tr><th>Tipo de alerta</th><th>Qué indica</th><th>Cómo actuar</th></tr>
+    <tr><td>riesgo_alto</td><td>Patrón relacionado con autolesión o daño</td><td>Notifica al orientador/psicólogo escolar ese mismo día</td></tr>
+    <tr><td>emocional</td><td>El alumno expresó angustia o tristeza profunda</td><td>Crea un momento de conexión en clase, sin señalar</td></tr>
+    <tr><td>bullying</td><td>Patrones de exclusión o agresión social</td><td>Observa dinámica de grupo. Habla con orientación</td></tr>
+    <tr><td>relaciones</td><td>Surgió tema de relaciones afectivas o identidad</td><td>Ambiente de respeto en aula, sin juicios</td></tr>
+    <tr><td>riesgo_medio</td><td>Presión de pares, posible exposición a riesgos</td><td>Actividades de reflexión grupal sin señalar</td></tr>
+  </table>
+</div>
+<div class="priv"><p>🔒 Las alertas son anónimas. No sabes qué alumno específico generó cada alerta — así protegemos la privacidad del menor mientras te damos la señal para actuar.</p></div>
+
+<h2>Rezago académico — cómo leerlo</h2>
+<div class="card">
+  <p>La pestaña Rezago muestra un mapa de materias ordenadas por nivel de riesgo:</p>
+  <ul>
+    <li><strong style="color:#ff4060;">Riesgo alto</strong> — Más del 30% del grupo en esa materia tiene señales de rezago activo</li>
+    <li><strong style="color:#ffab00;">Riesgo medio</strong> — Entre 15–30%. Requiere atención antes de que escale</li>
+    <li><strong style="color:#00e5a0;">Estable</strong> — Menos del 15%. El grupo avanza bien</li>
+  </ul>
+  <p style="margin-top:.5rem;">El sistema sugiere estrategias pedagógicas específicas para cada materia en riesgo (Bloom, Vygotsky, aprendizaje activo).</p>
+</div>
+
+<h2>Tu espacio de Bienestar</h2>
+<div class="card">
+  <p>La pestaña Bienestar es completamente <strong>privada y confidencial</strong>. Ni la dirección ni los padres tienen acceso.</p>
+  <h3>Registrar tu estado</h3>
+  <p>Cinco niveles: 😔 Agotado · 😐 Neutral · 🙂 Bien · 😊 Muy bien · 🌟 Excelente. Puedes añadir una nota breve opcional.</p>
+  <h3>Chat de apoyo psicológico</h3>
+  <p>El asistente detecta patrones de estrés y burnout en lo que escribes. Si identifica señales importantes, te sugerirá recursos profesionales — siempre con respeto, nunca con alarmismo.</p>
+</div>
+<div class="tip"><p>💡 El asistente usa los enfoques Maslach Burnout Inventory, Teoría de Autodeterminación (SDT) y MBSR. No es un psicólogo, pero sí un primer espacio seguro para hablar.</p></div>
+
+<h2>Coaching IA pedagógico</h2>
+<p>En la pestaña Coaching puedes preguntar:</p>
+<ul>
+  <li>"¿Cómo explico fracciones a alumnos que aprendieron de forma visual?"</li>
+  <li>"Tengo 3 alumnos que interrumpen constantemente, ¿cómo manejo eso?"</li>
+  <li>"¿Qué actividad sirve para reforzar comprensión lectora en 30 minutos?"</li>
+  <li>"Mi grupo está muy disperso después de vacaciones, ¿qué hago?"</li>
+</ul>
+<div class="tip"><p>💡 El coaching usa marcos de Bloom, Vygotsky y Design Thinking. Las respuestas son específicas, prácticas y adaptadas al nivel escolar que declares.</p></div>
+
+<h2>Privacidad — qué ve el sistema y qué no</h2>
+<div class="card">
+  <table>
+    <tr><th>El sistema te muestra</th><th>El sistema NUNCA revela</th></tr>
+    <tr><td>Tipo de alerta (anónima)</td><td>Qué escribió el alumno exactamente</td></tr>
+    <tr><td>Porcentaje de clima emocional</td><td>Nombre del alumno que generó cada alerta</td></tr>
+    <tr><td>Aptitudes del grupo (agregado)</td><td>Conversaciones privadas de ningún alumno</td></tr>
+    <tr><td>Materias con riesgo de rezago</td><td>Tu espacio de bienestar (nadie más lo ve)</td></tr>
+  </table>
+</div>
+
+<h2>Si cambiaste de dispositivo</h2>
+<p>Entra al panel docente → "Ya tengo cuenta" → ingresa tu ID de maestro (tipo <span class="code">M-4839</span>). Tu información está guardada en el servidor.</p>
+
+</div>
+<footer>
+  <p>Evolución v2 · Simplex · Guadalajara, Jalisco · Mayo 2026</p>
+  <p style="margin-top:.3rem;">evolucion-v2.onrender.com/maestro · milanmontellanoanuar@gmail.com</p>
+</footer>
+</body>
+</html>

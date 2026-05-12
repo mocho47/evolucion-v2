@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución — Descripción Completa de Funciones</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:#030308;color:#eeeef8;line-height:1.65;font-size:15px;}
+.wrap{max-width:820px;margin:0 auto;padding:2.5rem 1.5rem;}
+header{background:rgba(3,3,8,.97);border-bottom:1px solid #1e1e3a;padding:1rem 1.5rem;
+  position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-size:1rem;font-weight:900;}.logo span{color:#00e5a0;}
+.badge{background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.25);color:#00e5a0;
+  border-radius:99px;padding:.2rem .75rem;font-size:.68rem;font-weight:700;letter-spacing:.06em;}
+h1{font-size:2rem;font-weight:900;color:#eeeef8;margin-bottom:.35rem;}
+.sub{color:#6a6a8a;font-size:.9rem;margin-bottom:2.5rem;}
+h2{font-size:1.1rem;font-weight:800;color:#00e5a0;margin:2.5rem 0 1rem;
+  border-left:3px solid #00e5a0;padding-left:.8rem;padding-top:.2rem;padding-bottom:.2rem;}
+h3{font-size:.95rem;font-weight:700;color:#a78bfa;margin:1.5rem 0 .5rem;
+  border-left:2px solid rgba(124,58,237,.4);padding-left:.6rem;}
+h4{font-size:.88rem;font-weight:700;color:#eeeef8;margin:.75rem 0 .25rem;}
+p,li{font-size:.85rem;color:#ccccdd;margin-bottom:.4rem;}
+ul,ol{padding-left:1.3rem;margin-bottom:.75rem;}
+.card{background:#0c0c18;border:1px solid #1e1e3a;border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:.85rem;}
+.fn{background:#0c0c18;border:1px solid #1e1e3a;border-radius:10px;padding:.85rem 1rem;margin:.6rem 0;}
+.fn-name{font-family:monospace;color:#00e5a0;font-size:.9rem;font-weight:700;}
+.fn-method{display:inline-block;font-size:.68rem;font-weight:700;border-radius:4px;
+  padding:.1rem .4rem;margin-left:.5rem;vertical-align:middle;}
+.get{background:rgba(0,229,160,.15);color:#00e5a0;}
+.post{background:rgba(124,58,237,.2);color:#a78bfa;}
+.put{background:rgba(251,191,36,.15);color:#fbbf24;}
+.del{background:rgba(239,68,68,.15);color:#f87171;}
+.fn-desc{font-size:.82rem;color:#ccccdd;margin-top:.3rem;}
+.fn-detail{font-size:.78rem;color:#8888aa;margin-top:.2rem;}
+.panel-badge{display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .75rem;
+  border-radius:99px;font-size:.72rem;font-weight:700;margin-bottom:.5rem;}
+.teen-b{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.25);color:#60a5fa;}
+.padre-b{background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.25);color:#a78bfa;}
+.maestro-b{background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.25);color:#00e5a0;}
+.toc{background:#0c0c18;border:1px solid #1e1e3a;border-radius:12px;padding:1rem 1.25rem;margin-bottom:2rem;}
+.toc a{color:#6a6a8a;font-size:.82rem;text-decoration:none;display:block;padding:.2rem 0;}
+.toc a:hover{color:#00e5a0;}
+.toc .section{color:#a78bfa;font-size:.78rem;font-weight:700;margin-top:.5rem;text-transform:uppercase;letter-spacing:.05em;}
+footer{text-align:center;padding:2.5rem 1.5rem;border-top:1px solid #1e1e3a;
+  color:#4a4a6a;font-size:.75rem;}
+@media print{body{background:#fff;color:#111;} h2{color:#006644;} h3{color:#6d28d9;}
+  .card,.fn,.toc{background:#f9f9f9;border-color:#ddd;} .fn-name{color:#006644;}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">EVO<span>LUCIÓN</span></div>
+  <div class="badge">Auditoría de Funciones</div>
+</header>
+<div class="wrap">
+<h1>Descripción Completa de Funciones</h1>
+<p class="sub">Todos los paneles, pestañas, funciones y endpoints de Evolución v2 — sin omitir nada · Mayo 2026</p>
+
+<div class="toc">
+  <div class="section">Índice</div>
+  <a href="#panel-teen">1. Panel Teen (evolucion.html)</a>
+  <a href="#panel-padre">2. Panel Padre/Madre (evolucion.html)</a>
+  <a href="#panel-maestro">3. Panel Maestro (maestro.html)</a>
+  <a href="#api-rest">4. API REST completa (evolucion_server.py)</a>
+  <a href="#motor-ia">5. Motor IA y prompts</a>
+  <a href="#deteccion">6. Detección de señales y burnout</a>
+  <a href="#db">7. Esquema de base de datos</a>
+</div>
+
+<!-- ======================== PANEL TEEN ======================== -->
+<h2 id="panel-teen">1. Panel Teen</h2>
+<div class="panel-badge teen-b">👤 Teen — evolucion.html</div>
+<p>Acceso vía <code>/app</code>. Se activa cuando el usuario tiene rol <strong>teen</strong> o <strong>hijo</strong>. El panel principal es un chat IA con menú lateral (drawer) y accesos rápidos.</p>
+
+<h3>Onboarding y acceso</h3>
+<div class="fn"><div class="fn-name">Pantalla de inicio</div>
+<div class="fn-desc">Dos opciones: "Soy papá o mamá" (crea familia) y "Tengo un código" (une al teen a familia existente). También "Ya tengo cuenta" para sesiones previas.</div></div>
+
+<div class="fn"><div class="fn-name">reentrar()</div>
+<div class="fn-desc">Al cargar la app, detecta si hay sesión guardada en localStorage (mid, fid, nombre, rol). Si existe, salta el onboarding y carga directamente el panel correspondiente. Sincroniza datos con el servidor.</div></div>
+
+<div class="fn"><div class="fn-name">unirseConCodigo()</div>
+<div class="fn-desc">Valida el código de familia ingresado contra el servidor. Si es válido, muestra el formulario de registro de perfil del teen.</div></div>
+
+<div class="fn"><div class="fn-name">registrarTeen()</div>
+<div class="fn-desc">POST /api/miembros — crea el miembro con rol "teen", nombre y edad. Guarda el ID en localStorage y abre el panel teen.</div></div>
+
+<h3>Chat principal</h3>
+<div class="fn"><div class="fn-name">sendMsg()</div>
+<div class="fn-desc">Envía mensaje al chat. Llama POST /api/chat/{mid} con el texto. La respuesta llega con texto IA + señales detectadas + aptitudes detectadas. El mensaje y la respuesta se renderizan en la interfaz.</div></div>
+
+<div class="fn"><div class="fn-name">renderBubble(text, side)</div>
+<div class="fn-desc">Renderiza burbujas de chat (izquierda para IA, derecha para usuario). Soporta markdown básico: **negrita**, listas.</div></div>
+
+<div class="fn"><div class="fn-name">cargarPerfilBadge()</div>
+<div class="fn-desc">Consulta GET /api/miembros/{mid} para obtener el perfil (estándar, gifted, visionario, canónico). Muestra un badge de color en el header si el perfil es especial.</div></div>
+
+<h3>Menú lateral (Drawer)</h3>
+<div class="fn"><div class="fn-name">openDrawer() / closeDrawer()</div>
+<div class="fn-desc">Abre/cierra el panel lateral con las opciones del menú. Animación con transform translateX.</div></div>
+
+<div class="fn"><div class="fn-name">registrarHumor(nivel)</div>
+<div class="fn-desc">Abre el modal de estado de ánimo. El teen selecciona entre 5 niveles (1=muy bajo, 5=excelente). Llama POST /api/humor/{mid} con el nivel seleccionado. La IA ajusta su tono en conversaciones subsecuentes.</div></div>
+
+<div class="fn"><div class="fn-name">verMisiones()</div>
+<div class="fn-desc">GET /api/misiones/pendientes/{mid} — obtiene misiones asignadas al teen con estado "pendiente". Las muestra en el chat como tarjetas con botón "✓ Completar" para cada una.</div></div>
+
+<div class="fn"><div class="fn-name">completarMision(misionId)</div>
+<div class="fn-desc">PUT /api/misiones/{id}/completar — marca la misión como completada. El servidor envía notificación al padre vía SSE. Muestra confirmación al teen.</div></div>
+
+<div class="fn"><div class="fn-name">verMetas()</div>
+<div class="fn-desc">GET /api/metas/{mid} — obtiene las metas personales activas del teen. Las renderiza en el chat como lista. Si no hay metas, invita a crear una.</div></div>
+
+<div class="fn"><div class="fn-name">abrirModalMeta()</div>
+<div class="fn-desc">Abre modal m-meta para crear una nueva meta personal. Campos: título, descripción, fecha objetivo opcional.</div></div>
+
+<div class="fn"><div class="fn-name">guardarMeta()</div>
+<div class="fn-desc">POST /api/metas — crea la meta en la BD. Confirma al teen con mensaje en el chat.</div></div>
+
+<div class="fn"><div class="fn-name">verDeseos()</div>
+<div class="fn-desc">GET /api/deseos/{mid} — obtiene la lista de deseos/aspiraciones del teen. Los renderiza en el chat.</div></div>
+
+<div class="fn"><div class="fn-name">abrirModalDeseo()</div>
+<div class="fn-desc">Abre modal m-deseo para agregar un nuevo deseo. Campo único: texto libre del deseo.</div></div>
+
+<div class="fn"><div class="fn-name">agregarDeseo()</div>
+<div class="fn-desc">POST /api/deseos — guarda el deseo en la BD. Confirma en el chat.</div></div>
+
+<div class="fn"><div class="fn-name">verLogros()</div>
+<div class="fn-desc">GET /api/miembros/{mid} — obtiene puntos totales y misiones completadas. Los muestra en el chat como panel de logros con nivel calculado.</div></div>
+
+<div class="fn"><div class="fn-name">activarTutor()</div>
+<div class="fn-desc">Cambia el contexto del chat a modo tutor académico. Inyecta instrucción de sistema al siguiente mensaje para que la IA responda con enfoque pedagógico (Bloom, Vygotsky).</div></div>
+
+<div class="fn"><div class="fn-name">activarOrientacion()</div>
+<div class="fn-desc">Cambia el contexto del chat a modo orientación vocacional. Inyecta instrucción para explorar carreras e intereses con el enfoque Ikigai y Design Thinking.</div></div>
+
+<!-- ======================== PANEL PADRE ======================== -->
+<h2 id="panel-padre">2. Panel Padre/Madre</h2>
+<div class="panel-badge padre-b">👨‍👩‍👧 Padre — evolucion.html</div>
+<p>Se activa cuando el usuario tiene rol <strong>padre</strong> o <strong>madre</strong>. 5 pestañas: Familia, Misiones, Señales, Acuerdos, Módulos.</p>
+
+<h3>Creación de familia</h3>
+<div class="fn"><div class="fn-name">crearFamilia()</div>
+<div class="fn-desc">POST /api/familias — crea la familia con nombre, rol del padre (padre/madre), PIN de 4 dígitos y escuela opcional. Retorna código de familia de 6 caracteres. El código se muestra en pantalla para compartir con los hijos.</div></div>
+
+<div class="fn"><div class="fn-name">entrarPanel()</div>
+<div class="fn-desc">Carga el panel padre después del login. Inicializa estado: oculta el FAB, oculta el chat-wrap, activa la pestaña Familia.</div></div>
+
+<h3>Pestaña Familia</h3>
+<div class="fn"><div class="fn-name">renderFamilia()</div>
+<div class="fn-desc">GET /api/familias/{fid}/miembros — carga todos los miembros de la familia. Muestra tarjetas por cada miembro con nombre, rol, puntos y nivel. Incluye el código de familia para compartir.</div></div>
+
+<div class="fn"><div class="fn-name">abrirChatPadre()</div>
+<div class="fn-desc">Activa el chat de consejo parental. Muestra el panel de chat con el contexto del padre. El botón "💬 Consejo" en la pestaña Familia es el punto de entrada.</div></div>
+
+<div class="fn"><div class="fn-name">sendMsgPadre()</div>
+<div class="fn-desc">POST /api/chat/padre/{mid} — envía mensaje al asistente de crianza. El asistente usa el enfoque Faber & Mazlish (comunicación sin humillación). Historial de conversación preservado por sesión.</div></div>
+
+<h3>Pestaña Misiones</h3>
+<div class="fn"><div class="fn-name">renderMisiones()</div>
+<div class="fn-desc">GET /api/misiones/{fid} — carga todas las misiones de la familia. Las ordena por estado: pendiente_aprobacion → pendiente → completada. Muestra tarjeta por misión con nombre del teen asignado.</div></div>
+
+<div class="fn"><div class="fn-name">abrirModalMision()</div>
+<div class="fn-desc">Abre modal m-mision para crear nueva misión. Campos: título, descripción, puntos de recompensa, dropdown de selección del teen asignado.</div></div>
+
+<div class="fn"><div class="fn-name">guardarMision()</div>
+<div class="fn-desc">POST /api/misiones — crea la misión en la BD. Asigna al teen seleccionado. El teen ve la misión en su próximo login.</div></div>
+
+<div class="fn"><div class="fn-name">aprobarMision(misionId)</div>
+<div class="fn-desc">POST /api/misiones/{id}/aprobar — requiere PIN del padre. Si el PIN es correcto, cambia el estado a "completada" y suma los puntos al teen. Si el PIN es incorrecto, muestra error.</div></div>
+
+<h3>Pestaña Señales</h3>
+<div class="fn"><div class="fn-name">renderSenales()</div>
+<div class="fn-desc">GET /api/senales/{fid} — obtiene todas las señales/alertas de la familia. Muestra tipo de alerta (emocional, bullying, riesgo_alto, relaciones, riesgo_medio), fecha y texto sugerido de intervención. NUNCA muestra el contenido exacto de la conversación.</div></div>
+
+<h3>Pestaña Acuerdos</h3>
+<div class="fn"><div class="fn-name">renderAcuerdos()</div>
+<div class="fn-desc">GET /api/acuerdos/{fid} — carga los acuerdos de la familia. Estados: propuesto, activo, cumplido. Muestra tarjeta por acuerdo con teen asignado y puntos prometidos (+50 por default).</div></div>
+
+<div class="fn"><div class="fn-name">abrirModalAcuerdo()</div>
+<div class="fn-desc">Abre modal m-acuerdo. Campos: título del acuerdo, descripción, teen participante. Los puntos son fijos en +50.</div></div>
+
+<div class="fn"><div class="fn-name">guardarAcuerdo()</div>
+<div class="fn-desc">POST /api/acuerdos — crea el acuerdo con estado "propuesto". El teen recibe notificación para activarlo.</div></div>
+
+<div class="fn"><div class="fn-name">cumplirAcuerdo(acuerdoId)</div>
+<div class="fn-desc">POST /api/acuerdos/{id}/cumplir — requiere PIN del padre. Cambia estado a "cumplido" y suma +50 puntos al teen. Valida que el acuerdo exista antes de procesar.</div></div>
+
+<h3>Pestaña Módulos</h3>
+<div class="fn"><div class="fn-name">renderModulos()</div>
+<div class="fn-desc">GET /api/familias/{fid}/modulos — carga el estado actual de cada módulo (activo/inactivo). Renderiza toggle switches para: apoyo_psicologico, tutor_academico, regularizacion, aptitudes, orientacion_vocacional, modo_gifted, modo_visionario, modulo_canonico.</div></div>
+
+<div class="fn"><div class="fn-name">toggleModulo(key)</div>
+<div class="fn-desc">PUT /api/familias/{fid}/modulos — actualiza el estado del módulo especificado. Cambio inmediato en DB, sin recarga de página.</div></div>
+
+<!-- ======================== PANEL MAESTRO ======================== -->
+<h2 id="panel-maestro">3. Panel Maestro</h2>
+<div class="panel-badge maestro-b">👩‍🏫 Maestro — maestro.html</div>
+<p>Acceso vía <code>/maestro</code>. Registro con código de escuela o login con ID de maestro. 6 pestañas.</p>
+
+<h3>Registro y acceso</h3>
+<div class="fn"><div class="fn-name">registrarMaestro()</div>
+<div class="fn-desc">POST /api/maestros — crea el perfil del maestro con nombre, materia y código de escuela. Retorna ID de maestro. Guardado en localStorage para sesiones futuras.</div></div>
+
+<div class="fn"><div class="fn-name">loginMaestro()</div>
+<div class="fn-desc">GET /api/maestros/{mid} — carga el perfil del maestro con ID guardado. Valida que el ID exista y abre el panel.</div></div>
+
+<h3>Pestaña Resumen</h3>
+<div class="fn"><div class="fn-name">cargarResumen()</div>
+<div class="fn-desc">GET /api/maestro/{mid}/panel — obtiene: total de alumnos activos en la escuela, alertas de riesgo_alto no atendidas, metas activas del grupo, índice de clima emocional (% positivo/neutro/negativo), top 3 aptitudes detectadas en el grupo, preview de materias con rezago.</div></div>
+
+<h3>Pestaña Alertas</h3>
+<div class="fn"><div class="fn-name">cargarAlertas()</div>
+<div class="fn-desc">GET /api/maestro/{mid}/panel — filtra la sección de señales. Muestra distribución de alertas por tipo con conteo. Para cada tipo muestra guía de intervención pedagógica. Las alertas son completamente anónimas — sin nombre de alumno ni texto de conversación.</div></div>
+
+<h3>Pestaña Aptitudes</h3>
+<div class="fn"><div class="fn-name">cargarAptitudes()</div>
+<div class="fn-desc">GET /api/maestro/{mid}/panel — carga el perfil colectivo de inteligencias múltiples del grupo. Renderiza barras proporcionales para: lógico-matemática, lingüística, kinestésica, musical, espacial, interpersonal, intrapersonal, naturalista. Los datos son agregados del grupo, no individuales.</div></div>
+
+<h3>Pestaña Rezago</h3>
+<div class="fn"><div class="fn-name">cargarRezago()</div>
+<div class="fn-desc">GET /api/maestro/{mid}/panel — carga el mapa de riesgo académico por materia. Ordena materias por porcentaje de alumnos en riesgo. Para cada materia con riesgo alto o medio, muestra sugerencias pedagógicas concretas basadas en Bloom y aprendizaje activo.</div></div>
+
+<h3>Pestaña Bienestar</h3>
+<div class="fn"><div class="fn-name">registrarHumorMaestro(nivel)</div>
+<div class="fn-desc">POST /api/maestro/mood — registra el nivel de ánimo del maestro (1–5) con nota opcional. Guarda en tabla maestro_mood con timestamp. El historial permite al sistema detectar tendencias de desgaste.</div></div>
+
+<div class="fn"><div class="fn-name">sendMsgBienestar()</div>
+<div class="fn-desc">POST /api/maestro/bienestar — envía mensaje al chat de apoyo psicológico confidencial. El servidor analiza el texto con detectar_burnout_maestro() antes de generar la respuesta IA. Si burnout_detectado=true, la respuesta incluye sugerencia de apoyo profesional. El historial de este chat es estrictamente confidencial.</div></div>
+
+<h3>Pestaña Coaching IA</h3>
+<div class="fn"><div class="fn-name">sendMsgCoaching()</div>
+<div class="fn-desc">POST /api/maestro/chat — chat pedagógico. El prompt PROMPT_MAESTRO incluye el estado emocional actual del maestro (último humor registrado) para adaptar el tono. Frameworks: Bloom, Vygotsky, Design Thinking, aprendizaje activo.</div></div>
+
+<!-- ======================== API REST ======================== -->
+<h2 id="api-rest">4. API REST completa</h2>
+
+<h3>Familias</h3>
+<div class="fn"><div class="fn-name">POST /api/familias <span class="fn-method post">POST</span></div>
+<div class="fn-desc">Crea familia nueva. Body: nombre, rol_padre, pin (4 dígitos), escuela_id opcional. Retorna: familia_id, codigo (6 chars), created.</div></div>
+
+<div class="fn"><div class="fn-name">GET /api/familias/{fid}/miembros <span class="fn-method get">GET</span></div>
+<div class="fn-desc">Lista todos los miembros activos de la familia con puntos, nivel y rol.</div></div>
+
+<div class="fn"><div class="fn-name">GET /api/familias/{fid}/modulos <span class="fn-method get">GET</span></div>
+<div class="fn-desc">Retorna mapa clave→booleano de módulos habilitados para esta familia.</div></div>
+
+<div class="fn"><div class="fn-name">PUT /api/familias/{fid}/modulos <span class="fn-method put">PUT</span></div>
+<div class="fn-desc">Actualiza estado de uno o más módulos. Body: {key: bool}.</div></div>
+
+<h3>Miembros</h3>
+<div class="fn"><div class="fn-name">POST /api/miembros <span class="fn-method post">POST</span></div>
+<div class="fn-desc">Crea miembro (teen o padre). Body: familia_id, nombre, rol, edad, pin opcional.</div></div>
+
+<div class="fn"><div class="fn-name">GET /api/miembros/{mid} <span class="fn-method get">GET</span></div>
+<div class="fn-desc">Retorna datos del miembro incluyendo perfil (estándar/gifted/visionario/canónico) parseado desde active_context.</div></div>
+
+<div class="fn"><div class="fn-name">POST /api/humor/{mid} <span class="fn-method post">POST</span></div>
+<div class="fn-desc">Registra estado de ánimo del teen. Body: nivel (1–5). Actualiza active_context con ultimo_humor.</div></div>
+
+<h3>Chat</h3>
+<div class="fn"><div class="fn-name">POST /api/chat/{mid} <span class="fn-method post">POST</span></div>
+<div class="fn-desc">Chat teen. Guarda mensaje, construye prompt con perfil + módulos activos + historial, llama ai_query(), detecta señales, detecta aptitudes, retorna: respuesta, señales_detectadas, aptitudes_detectadas.</div></div>
+
+<div class="fn"><div class="fn-name">POST /api/chat/padre/{mid} <span class="fn-method post">POST</span></div>
+<div class="fn-desc">Chat de consejo parental. Prompt PROMPT_PADRE con enfoque Faber & Mazlish. Solo accesible para miembros con rol padre/madre.</div></div>
+
+<h3>Misiones</h3>
+<div class="fn"><div class="fn-name">POST /api/misiones <span class="fn-method post">POST</span></div>
+<div class="fn-desc">Crea misión. Body: familia_id, titulo, descripcion, puntos, asignado_a (mid del teen).</div></div>
+
+<div class="fn"><div class="fn-name">GET /api/misiones/{fid} <span class="fn-method get">GET</span></div>
+<div class="fn-desc">Lista misiones de la familia. Incluye nombre del teen asignado, estado, puntos.</div></div>
+
+<div class="fn"><div class="fn-name">GET /api/misiones/pendientes/{mid} <span class="fn-method get">GET</span></div>
+<div class="fn-desc">Misiones pendientes del teen específico.</div></div>
+
+<div class="fn"><div class="fn-name">PUT /api/misiones/{id}/completar <span class="fn-method put">PUT</span></div>
+<div class="fn-desc">Teen marca misión como completada. Cambia estado a "pendiente_aprobacion". Dispara notificación SSE al padre.</div></div>
+
+<div class="fn"><div class="fn-name">POST /api/misiones/{id}/aprobar <span class="fn-method post">POST</span></div>
+<div class="fn-desc">Padre aprueba misión. Body: mid (del padre), pin. Valida PIN, suma puntos al teen, cambia estado a "completada".</div></div>
+
+<h3>Acuerdos</h3>
+<div class="fn"><div class="fn-name">POST /api/acuerdos <span class="fn-method post">POST</span></div>
+<div class="fn-desc">Crea acuerdo. Body: familia_id, titulo, descripcion, teen_id. Estado inicial: "propuesto".</div></div>
+
+<div class="fn"><div class="fn-name">GET /api/acuerdos/{fid} <span class="fn-method get">GET</span></div>
+<div class="fn-desc">Lista acuerdos de la familia con estado y teen involucrado.</div></div>
+
+<div class="fn"><div class="fn-name">POST /api/acuerdos/{id}/cumplir <span class="fn-method post">POST</span></div>
+<div class="fn-desc">Padre marca acuerdo como cumplido. Requiere PIN. Suma +50 puntos al teen. Valida existencia del acuerdo antes de procesar.</div></div>
+
+<h3>Metas y Deseos</h3>
+<div class="fn"><div class="fn-name">POST /api/metas <span class="fn-method post">POST</span></div>
+<div class="fn-desc">Crea meta personal del teen. Body: miembro_id, titulo, descripcion, fecha_objetivo opcional.</div></div>
+
+<div class="fn"><div class="fn-name">GET /api/metas/{mid} <span class="fn-method get">GET</span></div>
+<div class="fn-desc">Lista metas activas del teen.</div></div>
+
+<div class="fn"><div class="fn-name">POST /api/deseos <span class="fn-method post">POST</span></div>
+<div class="fn-desc">Crea deseo/aspiración. Body: miembro_id, texto.</div></div>
+
+<div class="fn"><div class="fn-name">GET /api/deseos/{mid} <span class="fn-method get">GET</span></div>
+<div class="fn-desc">Lista deseos del teen.</div></div>
+
+<h3>Señales</h3>
+<div class="fn"><div class="fn-name">GET /api/senales/{fid} <span class="fn-method get">GET</span></div>
+<div class="fn-desc">Alertas psicológicas de la familia. Retorna: tipo, fecha, consejo de intervención. NUNCA el contenido del mensaje original.</div></div>
+
+<h3>Maestros</h3>
+<div class="fn"><div class="fn-name">POST /api/maestros <span class="fn-method post">POST</span></div>
+<div class="fn-desc">Registra maestro. Body: nombre, materia, escuela_codigo. Retorna ID de maestro.</div></div>
+
+<div class="fn"><div class="fn-name">GET /api/maestros/{mid} <span class="fn-method get">GET</span></div>
+<div class="fn-desc">Perfil del maestro: nombre, materia, escuela vinculada.</div></div>
+
+<div class="fn"><div class="fn-name">GET /api/maestro/{mid}/panel <span class="fn-method get">GET</span></div>
+<div class="fn-desc">Dashboard completo: alumnos, riesgo_alto count, metas count, clima emocional, aptitudes colectivas, mapa de rezago.</div></div>
+
+<div class="fn"><div class="fn-name">POST /api/maestro/chat <span class="fn-method post">POST</span></div>
+<div class="fn-desc">Chat pedagógico. Body: mid, mensaje. Usa PROMPT_MAESTRO con estado emocional actual incluido.</div></div>
+
+<div class="fn"><div class="fn-name">POST /api/maestro/mood <span class="fn-method post">POST</span></div>
+<div class="fn-desc">Registra estado de ánimo del maestro. Body: mid, nivel (1–5), nota opcional.</div></div>
+
+<div class="fn"><div class="fn-name">POST /api/maestro/bienestar <span class="fn-method post">POST</span></div>
+<div class="fn-desc">Chat de bienestar confidencial. Detecta burnout, incluye estado_maestro en prompt, retorna respuesta + burnout_detectado boolean.</div></div>
+
+<h3>Escuelas</h3>
+<div class="fn"><div class="fn-name">POST /api/escuelas <span class="fn-method post">POST</span></div>
+<div class="fn-desc">Registra plantel. Body: nombre, tipo (laico/religioso), carisma. Retorna código de escuela.</div></div>
+
+<div class="fn"><div class="fn-name">POST /api/escuelas/{eid}/vincular/{fid} <span class="fn-method post">POST</span></div>
+<div class="fn-desc">Vincula familia al plantel.</div></div>
+
+<!-- ======================== MOTOR IA ======================== -->
+<h2 id="motor-ia">5. Motor IA y Prompts</h2>
+
+<div class="fn"><div class="fn-name">ai_query(prompt, mensaje, historial)</div>
+<div class="fn-desc">Motor principal de IA. Intenta en orden: Z.ai GLM-4-flash → Groq llama-3.3-70b → Ollama dolphin-mistral:7b local. Si todos fallan, retorna mensaje de error amigable. Historial incluye últimas N conversaciones para contexto.</div></div>
+
+<div class="fn"><div class="fn-name">PROMPT_TEEN</div>
+<div class="fn-desc">Prompt de sistema para chat teen. Incluye: nombre, edad, perfil (estándar/gifted/visionario), módulos activos, último humor, frameworks Erikson + Siegel + CNV. Adapta profundidad según perfil.</div></div>
+
+<div class="fn"><div class="fn-name">PROMPT_PADRE</div>
+<div class="fn-desc">Prompt para chat de consejo parental. Framework Faber &amp; Mazlish exclusivamente. Siempre da opciones, nunca órdenes. Valida emociones del padre antes de sugerir.</div></div>
+
+<div class="fn"><div class="fn-name">PROMPT_MAESTRO</div>
+<div class="fn-desc">Prompt para coaching pedagógico. Incluye estado emocional actual del maestro ({estado_maestro}). Dual: pedagógico + bienestar. Frameworks: Bloom, Vygotsky, Design Thinking.</div></div>
+
+<div class="fn"><div class="fn-name">PROMPT_MAESTRO_BIENESTAR</div>
+<div class="fn-desc">Prompt específico para el módulo de bienestar docente. Frameworks: Maslach Burnout Inventory, Self-Determination Theory (SDT), MBSR. Detecta las 3 dimensiones del burnout: agotamiento emocional, despersonalización, realización personal reducida.</div></div>
+
+<!-- ======================== DETECCIÓN ======================== -->
+<h2 id="deteccion">6. Detección de señales y burnout</h2>
+
+<div class="fn"><div class="fn-name">detectar_senales(texto)</div>
+<div class="fn-desc">Análisis de mensajes de teens. Pattern matching en español para 5 tipos: riesgo_alto (autolesión, suicidio), emocional (tristeza, ansiedad), bullying (exclusión, agresión), relaciones (novio, sexualidad), riesgo_medio (drogas, presión grupal). No usa IA — reglas deterministas para garantizar detección incluso sin conexión.</div></div>
+
+<div class="fn"><div class="fn-name">detectar_burnout_maestro(texto)</div>
+<div class="fn-desc">Analiza mensajes de maestros en el chat de bienestar. 28 patrones en español (p.ej.: "ya no puedo más", "odio ir a trabajar", "los alumnos me agotan", "siento que nada vale"). Retorna True si detecta 1+ patrones. Si True, el endpoint /api/maestro/bienestar incluye burnout_detectado=true en la respuesta y el frontend muestra toast con sugerencia de apoyo profesional.</div></div>
+
+<!-- ======================== DB ======================== -->
+<h2 id="db">7. Esquema de base de datos</h2>
+<div class="card">
+  <div style="font-family:monospace;font-size:.8rem;color:#8888aa;line-height:2;background:#030308;padding:1rem;border-radius:8px;overflow-x:auto;">
+familias(id, codigo TEXT UNIQUE, nombre, pin_hash, escuela_id, modulos JSON, created)<br>
+miembros(id, familia_id, nombre, rol, edad, pin_hash, puntos_total, activo, active_context JSON, created)<br>
+misiones(id, familia_id, titulo, descripcion, puntos, asignado_a, creada_por, estado, created)<br>
+acuerdos(id, familia_id, titulo, descripcion, teen_id, estado, created)<br>
+metas(id, miembro_id, titulo, descripcion, fecha_objetivo, completada, created)<br>
+deseos(id, miembro_id, texto, created)<br>
+aptitudes(id, miembro_id, tipo, nivel, evidencia, created)<br>
+senales(id, familia_id, miembro_id, tipo, consejo, atendida, created)<br>
+conversaciones(id, miembro_id, rol, contenido, created)<br>
+escuelas(id, codigo TEXT UNIQUE, nombre, tipo, carisma, created)<br>
+maestros(id, escuela_id, nombre, materia, created)<br>
+maestro_mood(id, maestro_id, nivel, nota, created)
+  </div>
+</div>
+<p style="font-size:.8rem;color:#8888aa;">SQLite con WAL mode habilitado. Queries parametrizadas en todos los endpoints (sin riesgo de SQL injection). Base de datos local en C:\evolucion\evolucion.db; en nube en /data/evolucion.db (Render persistent disk).</p>
+
+</div>
+<footer>
+  <p>Evolución v2 · Simplex · Guadalajara, Jalisco · Mayo 2026</p>
+  <p style="margin-top:.3rem;">Documento técnico para auditoría — Mayo 2026</p>
+</footer>
+</body>
+</html>

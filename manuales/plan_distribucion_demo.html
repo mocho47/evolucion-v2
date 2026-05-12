@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución — Plan de Distribución Demo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:#030308;color:#eeeef8;line-height:1.65;font-size:15px;}
+.wrap{max-width:820px;margin:0 auto;padding:2.5rem 1.5rem;}
+header{background:rgba(3,3,8,.97);border-bottom:1px solid #1e1e3a;padding:1rem 1.5rem;
+  position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-size:1rem;font-weight:900;}.logo span{color:#00e5a0;}
+.badge{background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.3);color:#a78bfa;
+  border-radius:99px;padding:.2rem .75rem;font-size:.68rem;font-weight:700;letter-spacing:.06em;}
+h1{font-size:2rem;font-weight:900;color:#a78bfa;margin-bottom:.35rem;}
+.sub{color:#6a6a8a;font-size:.9rem;margin-bottom:2.5rem;}
+h2{font-size:1.1rem;font-weight:800;color:#a78bfa;margin:2rem 0 .75rem;
+  border-left:3px solid #7c3aed;padding-left:.8rem;}
+h3{font-size:.95rem;font-weight:700;color:#eeeef8;margin:1rem 0 .4rem;}
+p,li{font-size:.88rem;color:#ccccdd;margin-bottom:.45rem;}
+ul,ol{padding-left:1.3rem;margin-bottom:.8rem;}
+.card{background:#0c0c18;border:1px solid #1e1e3a;border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:.85rem;}
+.demo-box{background:rgba(0,229,160,.04);border:2px solid rgba(0,229,160,.3);border-radius:16px;
+  padding:1.5rem;margin:1rem 0;text-align:center;}
+.demo-code{font-size:3rem;font-weight:900;color:#00e5a0;font-family:monospace;letter-spacing:.2em;}
+.demo-label{color:#6a6a8a;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;}
+.demo-detail{display:flex;justify-content:center;gap:2rem;margin-top:.75rem;}
+.demo-d{text-align:center;}
+.demo-d .val{font-size:1.2rem;font-weight:700;color:#a78bfa;}
+.demo-d .lbl{font-size:.7rem;color:#6a6a8a;}
+.week{background:#0c0c18;border:1px solid #1e1e3a;border-radius:12px;margin-bottom:1rem;overflow:hidden;}
+.week-head{background:rgba(124,58,237,.15);padding:.75rem 1.25rem;display:flex;align-items:center;gap:.75rem;}
+.week-n{width:30px;height:30px;border-radius:50%;background:#7c3aed;color:#fff;font-weight:800;font-size:.85rem;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.week-title{font-weight:700;font-size:.95rem;}
+.week-dates{font-size:.75rem;color:#8888aa;margin-left:auto;}
+.week-body{padding:.9rem 1.25rem;}
+.week-body ul{margin:0;}
+.week-body li{font-size:.85rem;color:#ccccdd;margin-bottom:.3rem;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin:.75rem 0 1.5rem;}
+.kpi{background:#0c0c18;border:1px solid #1e1e3a;border-radius:12px;padding:.9rem;text-align:center;}
+.kpi-n{font-size:1.8rem;font-weight:900;color:#a78bfa;line-height:1;}
+.kpi-l{font-size:.7rem;color:#6a6a8a;margin-top:.25rem;text-transform:uppercase;letter-spacing:.05em;}
+.tip{background:rgba(0,229,160,.05);border:1px solid rgba(0,229,160,.18);border-radius:10px;
+  padding:.8rem 1rem;margin:.75rem 0;}
+.tip p{color:#00e5a0;margin:0;font-size:.82rem;}
+.warn{background:rgba(255,171,0,.06);border:1px solid rgba(255,171,0,.2);border-radius:10px;
+  padding:.8rem 1rem;margin:.75rem 0;}
+.warn p{color:#ffab00;margin:0;font-size:.82rem;}
+.msg-box{background:#030308;border:1px solid #2a2a4a;border-radius:10px;padding:.85rem 1rem;
+  font-size:.82rem;color:#ccccdd;white-space:pre-line;line-height:1.6;margin:.5rem 0;}
+table{width:100%;border-collapse:collapse;font-size:.84rem;margin:.75rem 0;}
+th{color:#6a6a8a;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;
+  padding:.45rem .75rem;border-bottom:1px solid #1e1e3a;text-align:left;}
+td{padding:.55rem .75rem;border-bottom:1px solid #0d0d20;color:#ccccdd;}
+td:first-child{color:#a78bfa;font-weight:600;}
+footer{text-align:center;padding:2.5rem 1.5rem;border-top:1px solid #1e1e3a;
+  color:#4a4a6a;font-size:.75rem;}
+@media print{body{background:#fff;color:#111;} h1,h2{color:#6d28d9;}
+  .card{background:#f8f8ff;border-color:#ddd;} .week{background:#f8f8ff;border-color:#ddd;}
+  .week-head{background:#ede9fe;} .demo-code{color:#6d28d9;}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">EVO<span>LUCIÓN</span></div>
+  <div class="badge">Plan Demo 1 Mes</div>
+</header>
+<div class="wrap">
+<h1>Plan de Distribución Demo</h1>
+<p class="sub">Estrategia de piloto de 1 mes · 12 Mayo — 12 Junio 2026</p>
+
+<h2>Acceso demo</h2>
+<div class="demo-box">
+  <div class="demo-label">Código de familia demo</div>
+  <div class="demo-code">DEMO01</div>
+  <div class="demo-detail">
+    <div class="demo-d"><div class="val">1234</div><div class="lbl">PIN del padre</div></div>
+    <div class="demo-d"><div class="val">12 Jun 2026</div><div class="lbl">Vigencia hasta</div></div>
+    <div class="demo-d"><div class="val">evolucion-v2.onrender.com/app</div><div class="lbl">URL de acceso</div></div>
+  </div>
+</div>
+<div class="warn"><p>⚠ El código DEMO01 es para distribución controlada — demos presenciales y piloto familiar. No publicar en redes sociales públicas durante la fase demo.</p></div>
+
+<h2>Objetivo del mes</h2>
+<div class="card">
+  <p><strong>Meta principal:</strong> Validar el producto con familias reales antes de una presentación formal a planteles.</p>
+  <ul>
+    <li>Conseguir al menos <strong>5 familias activas</strong> que usen la app durante 2+ semanas</li>
+    <li>Obtener retroalimentación de al menos 1 maestro real</li>
+    <li>Documentar 3+ casos de uso concretos para el pitch a escuelas</li>
+    <li>Identificar los 2–3 puntos de fricción más comunes en el flujo de onboarding</li>
+  </ul>
+</div>
+
+<h2>Plan semana a semana</h2>
+
+<div class="week">
+  <div class="week-head">
+    <div class="week-n">1</div>
+    <div class="week-title">Semana 1 — Círculo cercano</div>
+    <div class="week-dates">12–18 Mayo</div>
+  </div>
+  <div class="week-body">
+    <ul>
+      <li>Invitar a las 3 familias más cercanas: Samantha, Alexx, esposa + hija(s)</li>
+      <li>Demo presencial en casa — mostrar flujo completo: papá crea familia → hijo entra → misión → aprobación</li>
+      <li>Pedir que lo usen por su cuenta al menos 3 días seguidos</li>
+      <li>Recoger feedback por WhatsApp (preguntas: ¿qué confundió? ¿qué gustó?)</li>
+      <li>Corregir los 2 bugs o fricciones que reporten</li>
+    </ul>
+  </div>
+</div>
+
+<div class="week">
+  <div class="week-head">
+    <div class="week-n">2</div>
+    <div class="week-title">Semana 2 — Primeras escuelas</div>
+    <div class="week-dates">19–25 Mayo</div>
+  </div>
+  <div class="week-body">
+    <ul>
+      <li>Contactar 2 colegios privados de Guadalajara (empezar con los que ya tienen relación)</li>
+      <li>Demo a directivo o coordinador académico — usar deck /deck/sep2</li>
+      <li>Entregar manual del plantel impreso o vía PDF</li>
+      <li>Ofrecer piloto gratuito de 30 días a cambio de retroalimentación documentada</li>
+      <li>Compartir código DEMO01 con 1 maestro voluntario para prueba</li>
+    </ul>
+  </div>
+</div>
+
+<div class="week">
+  <div class="week-head">
+    <div class="week-n">3</div>
+    <div class="week-title">Semana 3 — Expansión controlada</div>
+    <div class="week-dates">26 Mayo–1 Junio</div>
+  </div>
+  <div class="week-body">
+    <ul>
+      <li>Ampliar a 5 familias nuevas — contactos de segunda mano (amigos de amigos con hijos adolescentes)</li>
+      <li>Armar 2 casos de uso documentados: "Familia X usó Evolución para X, resultado: Y"</li>
+      <li>Grabar 1 video de demostración de 2 minutos del flujo completo (pantalla + voz)</li>
+      <li>Presentar Jorge con el deck /jorge — solicitar retroalimentación de inversión</li>
+      <li>Registrar métricas: sesiones activas, mensajes enviados, misiones creadas</li>
+    </ul>
+  </div>
+</div>
+
+<div class="week">
+  <div class="week-head">
+    <div class="week-n">4</div>
+    <div class="week-title">Semana 4 — Cierre y decisión</div>
+    <div class="week-dates">2–12 Junio</div>
+  </div>
+  <div class="week-body">
+    <ul>
+      <li>Entrevistar a cada familia piloto — 10 minutos por videollamada o WhatsApp de voz</li>
+      <li>Consolidar retroalimentación: ¿qué quedarse? ¿qué cambiar?</li>
+      <li>Decidir: ¿alguna escuela avanza a contrato? → preparar propuesta formal</li>
+      <li>Actualizar deck_inversores con datos reales del piloto</li>
+      <li>Hacer upgrade a Render $7/mes si hay al menos 1 escuela interesada</li>
+      <li>Preparar versión v2.1 con los fixes del piloto</li>
+    </ul>
+  </div>
+</div>
+
+<h2>Métricas a seguir durante el mes</h2>
+<div class="kpi-grid">
+  <div class="kpi"><div class="kpi-n">5+</div><div class="kpi-l">Familias activas</div></div>
+  <div class="kpi"><div class="kpi-n">2+</div><div class="kpi-l">Colegios contactados</div></div>
+  <div class="kpi"><div class="kpi-n">50+</div><div class="kpi-l">Conversaciones teen</div></div>
+  <div class="kpi"><div class="kpi-n">10+</div><div class="kpi-l">Misiones creadas</div></div>
+  <div class="kpi"><div class="kpi-n">3+</div><div class="kpi-l">Casos documentados</div></div>
+  <div class="kpi"><div class="kpi-n">1+</div><div class="kpi-l">Maestro probando</div></div>
+</div>
+
+<h2>Mensaje para compartir la demo (WhatsApp)</h2>
+<div class="msg-box">Hola [nombre], te cuento que tengo un proyecto que llevo desarrollando — se llama Evolución, es una app de apoyo para familias con hijos adolescentes. Tiene chat emocional con IA, misiones familiares, y el sistema avisa a los papás si detecta algo importante sin violar la privacidad del chavo.
+
+Está lista y la quiero probar con familias reales antes de llevarla a colegios. ¿Le entrarían? Es gratis, sin instalar nada, y me ayudaría mucho tener su opinión real.
+
+Acceso: evolucion-v2.onrender.com/app
+Código: DEMO01 · PIN: 1234
+
+¡Gracias!</div>
+
+<h2>Presentación a directivos escolares</h2>
+<div class="card">
+  <table>
+    <tr><th>Paso</th><th>Acción</th><th>Material</th></tr>
+    <tr><td>Contacto</td><td>Pedir 20 minutos con coordinador o director</td><td>—</td></tr>
+    <tr><td>Demo</td><td>Mostrar flujo en vivo desde celular</td><td>URL /app + DEMO01</td></tr>
+    <tr><td>Deck</td><td>Presentar propuesta de valor</td><td>/deck/sep2 o /deck/familias</td></tr>
+    <tr><td>Manual</td><td>Entregar manual del plantel</td><td>manual_plantel.html o PDF</td></tr>
+    <tr><td>Piloto</td><td>Ofrecer 30 días gratis, 1 grupo</td><td>—</td></tr>
+    <tr><td>Seguimiento</td><td>WhatsApp 3 días después</td><td>—</td></tr>
+  </table>
+</div>
+
+<h2>Qué NO hacer durante el piloto</h2>
+<ul>
+  <li>No publicar el código DEMO01 en redes públicas — queremos control sobre quién lo usa</li>
+  <li>No prometer funciones que no existen todavía</li>
+  <li>No cobrar nada durante las 4 semanas — el objetivo es feedback, no ingresos</li>
+  <li>No ignorar los bugs que reporten — documentar todos aunque sean menores</li>
+</ul>
+
+<div class="tip"><p>💡 El mejor feedback viene de familias que usaron la app sin que estuvieras presente. Comparte, deja que lo usen solos, y pregunta después.</p></div>
+
+</div>
+<footer>
+  <p>Evolución v2 · Simplex · Guadalajara, Jalisco · Mayo 2026</p>
+  <p style="margin-top:.3rem;">Demo vigente: 12 Mayo – 12 Junio 2026 · DEMO01 / PIN 1234</p>
+</footer>
+</body>
+</html>

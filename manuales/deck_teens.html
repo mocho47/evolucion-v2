@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución — Tu espacio</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#030308;--s1:#080814;--s2:#0d0d20;--border:#1a1a35;
+  --accent:#00e5a0;--accent2:#00b87a;--accent-dim:rgba(0,229,160,.1);--accent-glow:rgba(0,229,160,.25);
+  --purple:#7c3aed;--purple-dim:rgba(124,58,237,.15);--purple-glow:rgba(124,58,237,.3);
+  --blue:#00b4ff;--blue-dim:rgba(0,180,255,.1);
+  --text:#eeeef8;--muted:#8888aa;--muted2:#4a4a6a;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  overflow:hidden;}
+
+#deck{width:100%;height:100%;position:relative;}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;
+  align-items:center;justify-content:center;padding:3rem 2rem;text-align:center;}
+.slide.active{display:flex;}
+
+#nav{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:1rem;z-index:100;
+  background:rgba(3,3,8,.92);backdrop-filter:blur(10px);
+  border:1px solid var(--border);border-radius:99px;padding:.5rem 1.25rem;}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:var(--muted2);cursor:pointer;transition:all .2s;}
+.nav-dot.on{background:var(--accent);box-shadow:0 0 6px var(--accent);}
+#prev,#next{background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:.15rem .4rem;transition:color .15s;}
+#prev:hover,#next:hover{color:var(--accent);}
+#slide-n{font-size:.7rem;color:var(--muted2);min-width:36px;text-align:center;}
+
+.logo{font-size:.95rem;font-weight:900;position:fixed;top:1.25rem;left:1.5rem;}
+.logo span{color:var(--accent);}
+.logo-tag{font-size:.6rem;color:var(--muted2);letter-spacing:.06em;position:fixed;top:1.25rem;right:1.5rem;}
+
+.tag{display:inline-block;background:var(--accent-dim);border:1px solid rgba(0,229,160,.25);
+  color:var(--accent);border-radius:99px;padding:.3rem .9rem;
+  font-size:.72rem;font-weight:700;letter-spacing:.06em;margin-bottom:1.5rem;}
+.tag.purple{background:var(--purple-dim);border-color:rgba(124,58,237,.3);color:#a78bfa;}
+.tag.blue{background:var(--blue-dim);border-color:rgba(0,180,255,.3);color:var(--blue);}
+
+h1{font-size:clamp(2.2rem,6vw,3.8rem);font-weight:900;line-height:1.08;
+  letter-spacing:-.03em;margin-bottom:1rem;max-width:700px;}
+h1 em{font-style:normal;color:var(--accent);}
+h2{font-size:clamp(1.5rem,4vw,2.4rem);font-weight:800;line-height:1.15;
+  letter-spacing:-.02em;margin-bottom:.85rem;max-width:680px;}
+h2 em{font-style:normal;color:var(--accent);}
+h2 em.purple{color:#a78bfa;}
+.sub{font-size:clamp(.9rem,2vw,1.1rem);color:var(--muted);max-width:520px;line-height:1.65;margin-bottom:1.5rem;}
+
+.big{font-size:clamp(4rem,12vw,7rem);line-height:1;margin-bottom:.5rem;}
+.big-t{font-size:clamp(1.2rem,3vw,1.8rem);font-weight:700;margin-bottom:.5rem;}
+.big-d{font-size:1rem;color:var(--muted);max-width:440px;}
+
+.grid{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:1.5rem;max-width:820px;width:100%;}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:1.25rem 1.4rem;text-align:left;flex:1;min-width:200px;max-width:270px;}
+.card-ico{font-size:1.7rem;margin-bottom:.6rem;}
+.card-t{font-weight:700;font-size:.95rem;margin-bottom:.35rem;}
+.card-d{font-size:.82rem;color:var(--muted);line-height:1.55;}
+
+.no-spy{background:var(--s1);border:1px solid rgba(255,64,96,.25);
+  border-radius:14px;padding:1.25rem 1.5rem;max-width:560px;width:100%;margin-top:1rem;text-align:left;}
+.no-spy-t{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#ff4060;margin-bottom:.75rem;}
+.no-spy-item{font-size:.88rem;color:var(--muted);padding:.35rem 0;border-bottom:1px solid rgba(255,64,96,.1);display:flex;gap:.6rem;line-height:1.45;}
+.no-spy-item:last-child{border:none;}
+.no-spy-item::before{content:'✕';color:#ff4060;flex-shrink:0;font-weight:700;}
+
+.niveles{display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center;margin-top:1.5rem;}
+.nv{background:var(--s1);border:1px solid var(--border);border-radius:12px;
+  padding:.85rem 1.1rem;text-align:center;min-width:110px;flex:1;max-width:140px;}
+.nv-ico{font-size:1.3rem;margin-bottom:.35rem;}
+.nv-l{font-weight:700;font-size:.82rem;color:var(--accent);}
+.nv-pts{font-size:.68rem;color:var(--muted2);margin-top:.15rem;}
+
+.quote{font-size:clamp(1.1rem,3vw,1.5rem);font-weight:700;color:var(--text);
+  max-width:580px;line-height:1.45;margin:1rem 0;}
+.quote em{color:var(--accent);font-style:normal;}
+
+.cta-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#030308;border:none;padding:.9rem 2.4rem;border-radius:99px;
+  font-weight:700;font-size:1.05rem;cursor:pointer;text-decoration:none;
+  margin-top:1.5rem;display:inline-block;
+  box-shadow:0 8px 28px var(--accent-glow);}
+
+.slide-cover{background:radial-gradient(ellipse at 50% 30%,#061a0e 0%,var(--bg) 65%);}
+.slide-purple{background:radial-gradient(ellipse at 50% 30%,#0e0620 0%,var(--bg) 65%);}
+.slide-dark{background:var(--s1);}
+
+/* Animación puntito activo */
+@keyframes pop{0%{transform:scale(1);}50%{transform:scale(1.15);}100%{transform:scale(1);}}
+
+@media(max-width:600px){
+  .card{min-width:160px;}
+  .slide{padding:2rem 1.25rem;}
+  .niveles{gap:.5rem;}
+  .nv{min-width:90px;}
+}
+</style>
+</head>
+<body>
+
+<div class="logo">EVO<span>LUCIÓN</span></div>
+<div class="logo-tag">Tu espacio</div>
+
+<div id="deck">
+
+<!-- 1. PORTADA -->
+<div class="slide slide-cover active">
+  <div class="tag">Para ti</div>
+  <h1>Tu espacio.<br><em>Sin filtros.</em><br>Sin juicios.</h1>
+  <p class="sub">Un lugar donde puedes ser honesto sobre lo que piensas, lo que sientes y lo que quieres — sin que nadie te juzgue por eso.</p>
+</div>
+
+<!-- 2. NADIE TE ESPÍA -->
+<div class="slide">
+  <div class="tag purple">Lo más importante primero</div>
+  <h2>Tus conversaciones<br>son <em class="purple">tuyas.</em></h2>
+  <p class="sub">Ni tus papás, ni la escuela, ni nadie lee lo que escribes aquí. Ese es el trato.</p>
+  <div class="no-spy">
+    <div class="no-spy-t">Nadie puede ver</div>
+    <div class="no-spy-item">Lo que le escribes al asistente</div>
+    <div class="no-spy-item">Lo que preguntas o confiesas</div>
+    <div class="no-spy-item">Tus dudas, miedos o problemas</div>
+  </div>
+</div>
+
+<!-- 3. PARA QUÉ SIRVE -->
+<div class="slide slide-dark">
+  <div class="tag">¿Para qué sirve?</div>
+  <h2>No es una app de tareas.<br><em>Es tu aliado.</em></h2>
+  <div class="grid">
+    <div class="card"><div class="card-ico">💬</div><div class="card-t">Para hablar sin filtro</div><div class="card-d">Lo que no puedes decirle a tus papás o a tu mejor amigo. Aquí puedes.</div></div>
+    <div class="card"><div class="card-ico">🧭</div><div class="card-t">Para saber quién eres</div><div class="card-d">¿En qué eres bueno de verdad? ¿Qué se te da sin esfuerzo? El asistente lo detecta en la conversación.</div></div>
+    <div class="card"><div class="card-ico">🎯</div><div class="card-t">Para tus metas</div><div class="card-d">Lo que quieres lograr, para cuándo y cómo. Alguien que te ayude a no perderlo de vista.</div></div>
+    <div class="card"><div class="card-ico">📚</div><div class="card-t">Para la escuela</div><div class="card-d">Si reprobaste algo o no entiendes, el asistente te explica — sin hacerte sentir tonto.</div></div>
+  </div>
+</div>
+
+<!-- 4. NIVELES -->
+<div class="slide slide-purple">
+  <div class="tag purple">Sistema de niveles</div>
+  <h2>Cada misión que completas<br>te hace <em class="purple">subir de nivel.</em></h2>
+  <p class="sub">No es la escuela. No hay calificaciones. Hay puntos que se acumulan y niveles que subes por lo que haces en tu vida real.</p>
+  <div class="niveles">
+    <div class="nv"><div class="nv-ico">⚡</div><div class="nv-l">Chispa</div><div class="nv-pts">NV 1</div></div>
+    <div class="nv"><div class="nv-ico">🔥</div><div class="nv-l">Llama</div><div class="nv-pts">NV 2</div></div>
+    <div class="nv"><div class="nv-ico">🌋</div><div class="nv-l">Volcán</div><div class="nv-pts">NV 3</div></div>
+    <div class="nv"><div class="nv-ico">💎</div><div class="nv-l">Fuego</div><div class="nv-pts">NV 4</div></div>
+    <div class="nv"><div class="nv-ico">🏆</div><div class="nv-l">Leyenda</div><div class="nv-pts">NV 5</div></div>
+  </div>
+</div>
+
+<!-- 5. MISIONES -->
+<div class="slide">
+  <div class="tag">Misiones</div>
+  <h2>Tus papás proponen.<br><em>Tú decides.</em> Todos ganan.</h2>
+  <p class="sub">Las misiones las crea tu familia — ayudar en casa, cumplir un acuerdo, estudiar para un examen. Tú las completas cuando puedes y ganas puntos reales.</p>
+  <div class="grid">
+    <div class="card"><div class="card-ico">📋</div><div class="card-t">Ves tus misiones</div><div class="card-d">Sabes exactamente qué se espera de ti. Sin sorpresas, sin "yo no te dije eso".</div></div>
+    <div class="card"><div class="card-ico">⭐</div><div class="card-t">Ganas puntos</div><div class="card-d">Cada misión completada suma. Los puntos van al marcador y se acumulan.</div></div>
+    <div class="card"><div class="card-ico">🤝</div><div class="card-t">Acuerdos claros</div><div class="card-d">Lo que acordaste con tus papás queda registrado. Para que ambos lados cumplan.</div></div>
+  </div>
+</div>
+
+<!-- 6. TU PERFIL -->
+<div class="slide slide-dark">
+  <div class="tag">Tu perfil</div>
+  <h2>El asistente te conoce<br>más que un <em>test de orientación</em></h2>
+  <p class="sub">No te va a pedir que respondas 40 preguntas aburridas. Te habla, y en la conversación descubre cosas tuyas que a veces tú mismo no sabías.</p>
+  <div class="grid">
+    <div class="card"><div class="card-ico">✦</div><div class="card-t">Si eres superdotado</div><div class="card-d">Lo detecta. Te da retos reales, no los mismos ejercicios de todos.</div></div>
+    <div class="card"><div class="card-ico">◈</div><div class="card-t">Si eres visionario</div><div class="card-d">Si tus ideas son "raras" para todos, aquí las toman en serio.</div></div>
+    <div class="card"><div class="card-ico">🎨</div><div class="card-t">Sea lo que seas</div><div class="card-d">Musical, atlético, emprendedor, artístico — el perfil emerge solo. Sin etiquetas negativas.</div></div>
+  </div>
+</div>
+
+<!-- 7. REGULARIZACIÓN -->
+<div class="slide">
+  <div class="tag blue">Escuela</div>
+  <h2>Reprobaste algo.<br><em>No eres el problema.</em></h2>
+  <p class="sub">La mayoría de los bloqueos escolares tienen un punto exacto de inicio. El asistente lo encuentra y empieza desde ahí — no desde el principio, no desde donde no tienes el problema.</p>
+  <div class="quote">
+    "No te explica como si fueras tonto.<br>Te pregunta hasta que <em>tú mismo</em> lo entiendes."
+  </div>
+</div>
+
+<!-- 8. CTA -->
+<div class="slide slide-cover">
+  <div class="big">⚡</div>
+  <h2>Tu espacio ya existe.<br><em>Solo tienes que entrar.</em></h2>
+  <p class="sub">Pídele el código a tu familia. Si ya lo tienes, entra ahora.</p>
+  <a href="/app" class="cta-btn">Entrar a Evolución</a>
+</div>
+
+</div>
+
+<div id="nav">
+  <button id="prev">‹</button>
+  <div id="dots"></div>
+  <span id="slide-n">1 / 8</span>
+  <button id="next">›</button>
+</div>
+
+<script>
+const slides=document.querySelectorAll('.slide'),total=slides.length;
+let cur=0;
+const dots=document.getElementById('dots'),slideN=document.getElementById('slide-n');
+for(let i=0;i<total;i++){const d=document.createElement('div');d.className='nav-dot'+(i===0?' on':'');d.onclick=()=>go(i);dots.appendChild(d);}
+function go(n){slides[cur].classList.remove('active');dots.children[cur].classList.remove('on');cur=(n+total)%total;slides[cur].classList.add('active');dots.children[cur].classList.add('on');slideN.textContent=(cur+1)+' / '+total;}
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(cur+1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(cur-1);});
+let tx=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)go(dx<0?cur+1:cur-1);});
+</script>
+</body>
+</html>

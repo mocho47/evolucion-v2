@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución — Centro de Documentación</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:#030308;color:#eeeef8;line-height:1.65;font-size:15px;min-height:100vh;}
+.wrap{max-width:900px;margin:0 auto;padding:2.5rem 1.5rem;}
+header{background:rgba(3,3,8,.97);border-bottom:1px solid #1e1e3a;padding:1rem 1.5rem;
+  position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+.logo{font-size:1.1rem;font-weight:900;white-space:nowrap;}.logo span{color:#00e5a0;}
+.nav-links{display:flex;gap:.75rem;flex-wrap:wrap;}
+.nav-links a{color:#6a6a8a;font-size:.78rem;text-decoration:none;padding:.2rem .5rem;border-radius:4px;}
+.nav-links a:hover{color:#00e5a0;background:rgba(0,229,160,.08);}
+.hero{padding:3rem 0 2rem;}
+h1{font-size:2.5rem;font-weight:900;color:#eeeef8;margin-bottom:.5rem;}
+h1 span{color:#00e5a0;}
+.hero-sub{color:#6a6a8a;font-size:1rem;margin-bottom:.75rem;}
+.platform-link{display:inline-flex;align-items:center;gap:.5rem;background:rgba(0,229,160,.08);
+  border:1px solid rgba(0,229,160,.25);color:#00e5a0;border-radius:8px;
+  padding:.5rem 1rem;font-family:monospace;font-size:.85rem;text-decoration:none;margin-top:.5rem;}
+.platform-link:hover{background:rgba(0,229,160,.15);}
+.section-label{font-size:.7rem;font-weight:800;color:#4a4a6a;text-transform:uppercase;
+  letter-spacing:.12em;margin:2.5rem 0 1rem;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.doc-card{background:#0c0c18;border:1px solid #1e1e3a;border-radius:14px;padding:1.25rem;
+  text-decoration:none;color:inherit;display:block;transition:border-color .15s,background .15s;}
+.doc-card:hover{border-color:var(--accent);background:#0f0f20;}
+.doc-ico{font-size:1.75rem;margin-bottom:.65rem;}
+.doc-title{font-weight:800;font-size:.95rem;color:#eeeef8;margin-bottom:.3rem;}
+.doc-desc{font-size:.78rem;color:#8888aa;line-height:1.5;}
+.doc-tag{display:inline-block;font-size:.65rem;font-weight:700;border-radius:4px;
+  padding:.1rem .45rem;margin-top:.6rem;}
+.tag-manual{background:rgba(124,58,237,.15);color:#a78bfa;}
+.tag-deck{background:rgba(0,229,160,.1);color:#00e5a0;}
+.tag-audit{background:rgba(239,68,68,.1);color:#f87171;}
+.tag-plan{background:rgba(251,191,36,.1);color:#fbbf24;}
+.demo-strip{background:rgba(0,229,160,.04);border:1px solid rgba(0,229,160,.2);border-radius:12px;
+  padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin:2rem 0;}
+.demo-info strong{color:#00e5a0;font-size:1.1rem;}
+.demo-info span{color:#6a6a8a;font-size:.8rem;margin-left:.5rem;}
+.demo-meta{font-size:.78rem;color:#8888aa;text-align:right;}
+.repo-strip{background:#0c0c18;border:1px solid #1e1e3a;border-radius:12px;
+  padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:2rem;}
+.repo-url{font-family:monospace;color:#60a5fa;font-size:.85rem;}
+footer{text-align:center;padding:2.5rem 1.5rem;border-top:1px solid #1e1e3a;
+  color:#4a4a6a;font-size:.75rem;margin-top:2rem;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">EVO<span>LUCIÓN</span></div>
+  <nav class="nav-links">
+    <a href="/app">App</a>
+    <a href="/maestro">Maestro</a>
+    <a href="/deck/familias">Deck Familias</a>
+    <a href="/deck/sep2">Deck SEP</a>
+    <a href="/deck/inversores">Deck Inversores</a>
+  </nav>
+</header>
+<div class="wrap">
+
+<div class="hero">
+  <h1>Evolución <span>v2</span></h1>
+  <p class="hero-sub">Centro de documentación completo · Mayo 2026 · Simplex, Guadalajara</p>
+  <a class="platform-link" href="/app">↗ Acceder a la plataforma</a>
+</div>
+
+<div class="demo-strip">
+  <div class="demo-info">
+    <strong>DEMO01</strong><span>Código de familia demo</span>
+    &nbsp;·&nbsp;
+    <strong>1234</strong><span>PIN padre</span>
+  </div>
+  <div class="demo-meta">Vigencia: 12 Mayo – 12 Junio 2026<br>evolucion-v2.onrender.com/app</div>
+</div>
+
+<div class="repo-strip">
+  <span style="font-size:.82rem;color:#6a6a8a;">Repositorio público (código completo)</span>
+  <a class="repo-url" href="https://github.com/mocho47/evolucion-v2" target="_blank">github.com/mocho47/evolucion-v2</a>
+</div>
+
+<!-- MANUALES -->
+<div class="section-label">Manuales de usuario</div>
+<div class="grid">
+  <a class="doc-card" href="manual_padres.html" style="--accent:#a78bfa;">
+    <div class="doc-ico">👨‍👩‍👧</div>
+    <div class="doc-title">Manual para Padres</div>
+    <div class="doc-desc">Crear familia, panel de 5 tabs, misiones, señales, acuerdos, módulos, chat de consejo.</div>
+    <span class="doc-tag tag-manual">Manual</span>
+  </a>
+  <a class="doc-card" href="manual_maestros.html" style="--accent:#00e5a0;">
+    <div class="doc-ico">👩‍🏫</div>
+    <div class="doc-title">Manual para Maestros</div>
+    <div class="doc-desc">Panel docente: resumen, alertas, aptitudes, rezago, bienestar y coaching pedagógico.</div>
+    <span class="doc-tag tag-manual">Manual</span>
+  </a>
+  <a class="doc-card" href="manual_teens.html" style="--accent:#60a5fa;">
+    <div class="doc-ico">🎮</div>
+    <div class="doc-title">Guía para Teens</div>
+    <div class="doc-desc">Unirse a familia, chat, misiones, metas, deseos, logros, tutor y orientación vocacional.</div>
+    <span class="doc-tag tag-manual">Manual</span>
+  </a>
+  <a class="doc-card" href="manual_plantel.html" style="--accent:#fbbf24;">
+    <div class="doc-ico">🏫</div>
+    <div class="doc-title">Manual para Planteles</div>
+    <div class="doc-desc">Registro institucional, vinculación de familias, maestros, módulos por tipo de escuela.</div>
+    <span class="doc-tag tag-manual">Manual</span>
+  </a>
+</div>
+
+<!-- AUDITORÍA -->
+<div class="section-label">Documentos de auditoría</div>
+<div class="grid">
+  <a class="doc-card" href="auditoria_funciones.html" style="--accent:#00e5a0;">
+    <div class="doc-ico">🔍</div>
+    <div class="doc-title">Descripción de Funciones</div>
+    <div class="doc-desc">Todas las funciones de todos los paneles — teen, padre, maestro. API REST completa. Motor IA. BD. Sin omisiones.</div>
+    <span class="doc-tag tag-audit">Auditoría</span>
+  </a>
+  <a class="doc-card" href="acceso_codigo.html" style="--accent:#f87171;">
+    <div class="doc-ico">💻</div>
+    <div class="doc-title">Acceso al Código</div>
+    <div class="doc-desc">Repositorio GitHub, estructura de archivos, instrucciones para clonar y ejecutar localmente, variables de entorno.</div>
+    <span class="doc-tag tag-audit">Auditoría</span>
+  </a>
+  <a class="doc-card" href="numeros_proyecto.html" style="--accent:#00e5a0;">
+    <div class="doc-ico">📊</div>
+    <div class="doc-title">Números del Proyecto</div>
+    <div class="doc-desc">Stack, módulos, tablas BD, mercado objetivo, proyección financiera, estado actual.</div>
+    <span class="doc-tag tag-plan">Negocio</span>
+  </a>
+  <a class="doc-card" href="plan_distribucion_demo.html" style="--accent:#a78bfa;">
+    <div class="doc-ico">🗺️</div>
+    <div class="doc-title">Plan Demo 1 Mes</div>
+    <div class="doc-desc">Estrategia semana a semana · DEMO01 vigente del 12 Mayo al 12 Junio 2026 · métricas y mensajes.</div>
+    <span class="doc-tag tag-plan">Negocio</span>
+  </a>
+</div>
+
+<!-- PRESENTACIONES -->
+<div class="section-label">Presentaciones (Decks)</div>
+<div class="grid">
+  <a class="doc-card" href="/deck/familias" style="--accent:#a78bfa;">
+    <div class="doc-ico">👨‍👩‍👧</div>
+    <div class="doc-title">Deck Familias</div>
+    <div class="doc-desc">Presentación para padres de familia. Propuesta de valor familiar, funciones, cómo empezar.</div>
+    <span class="doc-tag tag-deck">Deck</span>
+  </a>
+  <a class="doc-card" href="/deck/sep2" style="--accent:#00e5a0;">
+    <div class="doc-ico">🏛️</div>
+    <div class="doc-title">Deck SEP</div>
+    <div class="doc-desc">Presentación institucional contundente. Para directivos y coordinadores académicos.</div>
+    <span class="doc-tag tag-deck">Deck</span>
+  </a>
+  <a class="doc-card" href="/deck/inversores" style="--accent:#fbbf24;">
+    <div class="doc-ico">💼</div>
+    <div class="doc-title">Deck Inversores</div>
+    <div class="doc-desc">Pitch financiero. Mercado, modelo de negocio, proyección, uso de capital.</div>
+    <span class="doc-tag tag-deck">Deck</span>
+  </a>
+  <a class="doc-card" href="/deck/teens2" style="--accent:#60a5fa;">
+    <div class="doc-ico">🎯</div>
+    <div class="doc-title">Deck Teens</div>
+    <div class="doc-desc">Presentación para adolescentes. Qué es Evolución desde su perspectiva.</div>
+    <span class="doc-tag tag-deck">Deck</span>
+  </a>
+</div>
+
+<!-- ACCESO DIRECTO -->
+<div class="section-label">Acceso directo a paneles</div>
+<div class="grid">
+  <a class="doc-card" href="/app" style="--accent:#60a5fa;">
+    <div class="doc-ico">📱</div>
+    <div class="doc-title">App Principal</div>
+    <div class="doc-desc">Panel teen y panel padre. Login, crear familia, chat IA, misiones, acuerdos.</div>
+  </a>
+  <a class="doc-card" href="/maestro" style="--accent:#00e5a0;">
+    <div class="doc-ico">🖥️</div>
+    <div class="doc-title">Panel Maestro</div>
+    <div class="doc-desc">Acceso con código de escuela o ID de maestro. 6 pestañas.</div>
+  </a>
+  <a class="doc-card" href="/jorge" style="--accent:#fbbf24;">
+    <div class="doc-ico">📋</div>
+    <div class="doc-title">Evaluación Inversor</div>
+    <div class="doc-desc">Documento confidencial de evaluación de negocio para evaluadores autorizados.</div>
+  </a>
+</div>
+
+</div>
+<footer>
+  <p>Evolución v2 · Simplex · Guadalajara, Jalisco · Mayo 2026</p>
+  <p style="margin-top:.3rem;">evolucion-v2.onrender.com · milanmontellanoanuar@gmail.com</p>
+</footer>
+</body>
+</html>

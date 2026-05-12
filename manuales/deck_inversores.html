@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución — Oportunidad de inversión</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#030308;--s1:#080814;--s2:#0d0d1f;--border:#1a1a35;
+  --gold:#ffab00;--gold2:#e09600;--gold-dim:rgba(255,171,0,.1);--gold-glow:rgba(255,171,0,.25);
+  --accent:#00e5a0;--accent-dim:rgba(0,229,160,.1);
+  --blue:#00b4ff;--blue-dim:rgba(0,180,255,.1);
+  --purple:#7c3aed;--purple-dim:rgba(124,58,237,.12);
+  --danger:#ff4060;
+  --text:#eeeef8;--muted:#8888aa;--muted2:#4a4a6a;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;overflow:hidden;}
+#deck{width:100%;height:100%;position:relative;}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;
+  align-items:center;justify-content:center;padding:3rem 2rem;text-align:center;}
+.slide.active{display:flex;}
+#nav{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:1rem;z-index:100;
+  background:rgba(3,3,8,.92);backdrop-filter:blur(10px);
+  border:1px solid var(--border);border-radius:99px;padding:.5rem 1.25rem;}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:var(--muted2);cursor:pointer;transition:all .2s;}
+.nav-dot.on{background:var(--gold);box-shadow:0 0 6px var(--gold);}
+#prev,#next{background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:.15rem .4rem;}
+#prev:hover,#next:hover{color:var(--gold);}
+#slide-n{font-size:.7rem;color:var(--muted2);min-width:42px;text-align:center;}
+.logo{font-size:.95rem;font-weight:900;position:fixed;top:1.25rem;left:1.5rem;}
+.logo span{color:var(--accent);}
+.logo-tag{font-size:.6rem;color:var(--muted2);letter-spacing:.06em;position:fixed;top:1.25rem;right:1.5rem;}
+
+.tag{display:inline-block;border-radius:99px;padding:.3rem .9rem;
+  font-size:.72rem;font-weight:700;letter-spacing:.06em;margin-bottom:1.5rem;}
+.tag.gold{background:var(--gold-dim);border:1px solid rgba(255,171,0,.3);color:var(--gold);}
+.tag.green{background:var(--accent-dim);border:1px solid rgba(0,229,160,.25);color:var(--accent);}
+.tag.blue{background:var(--blue-dim);border:1px solid rgba(0,180,255,.3);color:var(--blue);}
+
+h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:900;line-height:1.1;
+  letter-spacing:-.03em;margin-bottom:1rem;max-width:740px;}
+h1 em{font-style:normal;color:var(--gold);}
+h2{font-size:clamp(1.4rem,3.5vw,2.2rem);font-weight:800;line-height:1.2;
+  letter-spacing:-.02em;margin-bottom:.85rem;max-width:720px;}
+h2 em{font-style:normal;color:var(--gold);}
+h2 em.green{color:var(--accent);}
+.sub{font-size:clamp(.9rem,2vw,1.05rem);color:var(--muted);max-width:580px;line-height:1.65;margin-bottom:1.25rem;}
+
+/* Métricas grandes */
+.metrics{display:flex;flex-wrap:wrap;gap:1.25rem;justify-content:center;margin-top:1.5rem;max-width:860px;}
+.metric{background:var(--s1);border:1px solid var(--border);border-radius:14px;
+  padding:1.25rem 1.5rem;text-align:center;flex:1;min-width:150px;max-width:200px;}
+.metric.hl{border-color:rgba(255,171,0,.3);background:var(--gold-dim);}
+.m-n{font-size:clamp(1.8rem,5vw,2.8rem);font-weight:900;color:var(--gold);line-height:1;margin-bottom:.35rem;}
+.m-n.green{color:var(--accent);}
+.m-l{font-size:.72rem;color:var(--muted);line-height:1.4;}
+
+/* Tabla inversión */
+.inv-table{max-width:640px;width:100%;margin-top:1.5rem;text-align:left;}
+.inv-row{display:flex;justify-content:space-between;align-items:center;
+  padding:.65rem .85rem;border-bottom:1px solid var(--border);font-size:.88rem;}
+.inv-row:last-child{border:none;font-weight:700;}
+.inv-row.total{background:var(--gold-dim);border-radius:8px;border:1px solid rgba(255,171,0,.25);}
+.inv-label{color:var(--muted);}
+.inv-val{color:var(--text);font-weight:600;}
+.inv-val.gold{color:var(--gold);font-size:1rem;}
+
+/* Escenarios */
+.scenarios{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:1.5rem;max-width:860px;width:100%;}
+.sce{background:var(--s1);border:1px solid var(--border);border-radius:14px;
+  padding:1.25rem;text-align:left;flex:1;min-width:220px;max-width:280px;}
+.sce.hl{border-color:rgba(255,171,0,.3);}
+.sce-name{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted2);margin-bottom:.75rem;}
+.sce-inst{font-size:1.6rem;font-weight:900;color:var(--gold);margin-bottom:.15rem;}
+.sce-desc{font-size:.78rem;color:var(--muted);margin-bottom:.75rem;line-height:1.4;}
+.sce-items{display:flex;flex-direction:column;gap:.3rem;}
+.sce-item{font-size:.78rem;color:var(--text);display:flex;justify-content:space-between;}
+.sce-item span:last-child{color:var(--accent);font-weight:700;}
+
+/* Timeline */
+.timeline{max-width:680px;width:100%;margin-top:1.5rem;text-align:left;}
+.tl-step{display:flex;gap:1rem;margin-bottom:.85rem;align-items:flex-start;}
+.tl-dot{width:28px;height:28px;border-radius:50%;background:var(--s2);border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.65rem;font-weight:700;
+  color:var(--muted);}
+.tl-dot.on{background:var(--gold-dim);border-color:var(--gold);color:var(--gold);}
+.tl-line{width:2px;background:var(--border);height:calc(100% - 28px);margin-left:13px;}
+.tl-body{flex:1;padding-top:.2rem;}
+.tl-when{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--gold);margin-bottom:.2rem;}
+.tl-t{font-weight:700;font-size:.9rem;margin-bottom:.2rem;}
+.tl-d{font-size:.78rem;color:var(--muted);line-height:1.4;}
+
+/* Uso de fondos */
+.uso-grid{display:flex;flex-wrap:wrap;gap:.85rem;justify-content:center;margin-top:1.5rem;max-width:760px;width:100%;}
+.uso-item{background:var(--s1);border:1px solid var(--border);border-radius:12px;
+  padding:1rem 1.1rem;flex:1;min-width:160px;max-width:200px;text-align:left;}
+.uso-pct{font-size:1.4rem;font-weight:900;color:var(--gold);}
+.uso-t{font-weight:700;font-size:.85rem;margin:.2rem 0;}
+.uso-d{font-size:.72rem;color:var(--muted);line-height:1.4;}
+
+/* Ventaja competitiva */
+.moat{display:flex;flex-direction:column;gap:.6rem;max-width:600px;width:100%;margin-top:1.25rem;text-align:left;}
+.moat-item{background:var(--s1);border:1px solid var(--border);border-radius:10px;
+  padding:.85rem 1rem;display:flex;gap:.85rem;align-items:flex-start;}
+.moat-ico{font-size:1.2rem;flex-shrink:0;}
+.moat-t{font-weight:700;font-size:.88rem;margin-bottom:.15rem;}
+.moat-d{font-size:.78rem;color:var(--muted);line-height:1.4;}
+
+.cta-btn{background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#030308;border:none;padding:.9rem 2.4rem;border-radius:99px;
+  font-weight:700;font-size:1rem;cursor:pointer;text-decoration:none;
+  margin-top:1.5rem;display:inline-block;
+  box-shadow:0 8px 28px var(--gold-glow);}
+.url{font-size:.8rem;color:var(--muted2);margin-top:.65rem;}
+
+.slide-cover{background:radial-gradient(ellipse at 50% 30%,#1a0d00 0%,var(--bg) 65%);}
+.slide-dark{background:var(--s1);}
+
+@media(max-width:600px){
+  .slide{padding:2rem 1.25rem;}
+  .metric{min-width:130px;}
+  .sce{min-width:180px;}
+}
+</style>
+</head>
+<body>
+<div class="logo">EVO<span>LUCIÓN</span></div>
+<div class="logo-tag">Oportunidad de inversión</div>
+<div id="deck">
+
+<!-- 1. PORTADA -->
+<div class="slide slide-cover active">
+  <div class="tag gold">Ronda de inversión · 2026</div>
+  <h1>El mercado EdTech<br>más grande de México<br><em>sin competidor directo</em></h1>
+  <p class="sub">Evolución es la primera plataforma de desarrollo humano adolescente con IA conversacional, diseñada para el sistema educativo mexicano. Opera hoy. Escala mañana.</p>
+</div>
+
+<!-- 2. EL MERCADO -->
+<div class="slide">
+  <div class="tag gold">Tamaño del mercado</div>
+  <h2>Un mercado de <em>36 millones</em> de alumnos<br>sin una solución real</h2>
+  <div class="metrics">
+    <div class="metric hl"><div class="m-n">36M</div><div class="m-l">Alumnos en educación básica y media superior en México</div></div>
+    <div class="metric"><div class="m-n">260K</div><div class="m-l">Planteles de educación básica y media superior</div></div>
+    <div class="metric"><div class="m-n">$0</div><div class="m-l">Plataformas con IA conversacional + perfil psicológico + regularización activas hoy en México</div></div>
+    <div class="metric"><div class="m-n">72%</div><div class="m-l">De estudiantes que reprueban al menos una materia en secundaria o bachillerato</div></div>
+  </div>
+</div>
+
+<!-- 3. INVERSIÓN INICIAL -->
+<div class="slide slide-dark">
+  <div class="tag gold">Inversión requerida</div>
+  <h2>Capital semilla para<br><em>escalar de 0 a 100 instituciones</em></h2>
+  <div class="inv-table">
+    <div class="inv-row"><span class="inv-label">Infraestructura cloud (24 meses)</span><span class="inv-val">$120,000 MXN</span></div>
+    <div class="inv-row"><span class="inv-label">Marco legal y compliance LFPDPPP</span><span class="inv-val">$45,000 MXN</span></div>
+    <div class="inv-row"><span class="inv-label">Ventas institucionales (equipo y viajes)</span><span class="inv-val">$180,000 MXN</span></div>
+    <div class="inv-row"><span class="inv-label">Marketing y materiales institucionales</span><span class="inv-val">$60,000 MXN</span></div>
+    <div class="inv-row"><span class="inv-label">Operaciones y soporte (año 1)</span><span class="inv-val">$95,000 MXN</span></div>
+    <div class="inv-row total"><span class="inv-label">Total requerido</span><span class="inv-val gold">$500,000 MXN</span></div>
+  </div>
+  <p style="font-size:.75rem;color:var(--muted);margin-top:.85rem;">La plataforma ya está desarrollada. Esta inversión es 100% para escalar, no para construir.</p>
+</div>
+
+<!-- 4. MODELO DE INGRESOS -->
+<div class="slide">
+  <div class="tag green">Modelo de ingresos</div>
+  <h2>Tres fuentes de ingreso<br><em class="green">simultáneas y recurrentes</em></h2>
+  <div class="metrics" style="max-width:760px">
+    <div class="metric hl"><div class="m-n green">$20K</div><div class="m-l">MXN/año por plantel privado (licencia institucional anual)</div></div>
+    <div class="metric"><div class="m-n">$149</div><div class="m-l">MXN/mes por familia (B2C — acceso directo sin colegio)</div></div>
+    <div class="metric"><div class="m-n">$12</div><div class="m-l">MXN/alumno activo/mes (modelo SEP — escala masiva)</div></div>
+    <div class="metric"><div class="m-n">$199</div><div class="m-l">MXN por materia de regularización escolar (cobro único)</div></div>
+  </div>
+</div>
+
+<!-- 5. PROYECCIÓN 100 INSTITUCIONES -->
+<div class="slide slide-dark">
+  <div class="tag gold">Proyección financiera</div>
+  <h2>Ruta a <em>100 instituciones</em> en 24 meses</h2>
+  <div class="scenarios">
+    <div class="sce">
+      <div class="sce-name">Conservador · Mes 12</div>
+      <div class="sce-inst">15</div>
+      <div class="sce-desc">Planteles + familias B2C + regularización</div>
+      <div class="sce-items">
+        <div class="sce-item"><span>Licencias institucionales</span><span>$300K MXN/año</span></div>
+        <div class="sce-item"><span>B2C familias (300 activas)</span><span>$45K MXN/mes</span></div>
+        <div class="sce-item"><span>Regularización escolar</span><span>$60K MXN/temporada</span></div>
+        <div class="sce-item" style="border-top:1px solid var(--border);padding-top:.3rem;margin-top:.3rem"><span style="font-weight:700">Ingreso anual total</span><span>~$960K MXN</span></div>
+      </div>
+    </div>
+    <div class="sce hl">
+      <div class="sce-name">Realista · Mes 24</div>
+      <div class="sce-inst" style="color:var(--gold)">100</div>
+      <div class="sce-desc">100 planteles + 2,000 familias + SEP estatal</div>
+      <div class="sce-items">
+        <div class="sce-item"><span>Licencias institucionales</span><span>$2M MXN/año</span></div>
+        <div class="sce-item"><span>B2C familias (2,000)</span><span>$300K MXN/mes</span></div>
+        <div class="sce-item"><span>Regularización (verano)</span><span>$500K MXN</span></div>
+        <div class="sce-item" style="border-top:1px solid var(--border);padding-top:.3rem;margin-top:.3rem"><span style="font-weight:700">Ingreso anual total</span><span>~$6.1M MXN</span></div>
+      </div>
+    </div>
+    <div class="sce">
+      <div class="sce-name">Optimista · Con SEP</div>
+      <div class="sce-inst">50K</div>
+      <div class="sce-desc">Alumnos activos en sistema público + SEP nacional</div>
+      <div class="sce-items">
+        <div class="sce-item"><span>Modelo por alumno activo</span><span>$600K MXN/mes</span></div>
+        <div class="sce-item"><span>Licencias institucionales</span><span>$4M MXN/año</span></div>
+        <div class="sce-item" style="border-top:1px solid var(--border);padding-top:.3rem;margin-top:.3rem"><span style="font-weight:700">Ingreso anual total</span><span>>$11M MXN</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 6. RETORNO DE INVERSIÓN -->
+<div class="slide">
+  <div class="tag gold">Retorno de inversión</div>
+  <h2>ROI proyectado:<br><em>recuperación en 14 meses</em></h2>
+  <div class="metrics" style="max-width:700px">
+    <div class="metric hl"><div class="m-n">14</div><div class="m-l">Meses para recuperar la inversión inicial (escenario realista)</div></div>
+    <div class="metric"><div class="m-n">12x</div><div class="m-l">Retorno sobre inversión a 36 meses (escenario realista 100 inst.)</div></div>
+    <div class="metric"><div class="m-n">85%</div><div class="m-l">Margen bruto estimado — negocio de software, no de manufactura</div></div>
+    <div class="metric"><div class="m-n">3</div><div class="m-l">Personas para operar 100 instituciones — modelo altamente escalable</div></div>
+  </div>
+</div>
+
+<!-- 7. TIMELINE -->
+<div class="slide slide-dark">
+  <div class="tag gold">Hoja de ruta</div>
+  <h2>Milestones claros<br><em>con evidencia en cada paso</em></h2>
+  <div class="timeline">
+    <div class="tl-step"><div class="tl-dot on">✓</div><div class="tl-body"><div class="tl-when">Hoy — Operativo</div><div class="tl-t">Plataforma funcionando con familias reales</div><div class="tl-d">Código en producción, conversaciones activas, perfiles construidos.</div></div></div>
+    <div class="tl-step"><div class="tl-dot on">1</div><div class="tl-body"><div class="tl-when">Mes 1-3 · Primer colegio</div><div class="tl-t">Colegio canónico GDL — validación institucional</div><div class="tl-d">Datos reales de impacto, métricas de bienestar, primer ingreso institucional.</div></div></div>
+    <div class="tl-step"><div class="tl-dot">2</div><div class="tl-body"><div class="tl-when">Mes 3-6 · Regularización</div><div class="tl-t">Lanzamiento público de regularización escolar</div><div class="tl-d">Ingreso viral por temporada, B2C escalando.</div></div></div>
+    <div class="tl-step"><div class="tl-dot">3</div><div class="tl-body"><div class="tl-when">Mes 6-12 · 15 planteles</div><div class="tl-t">Expansión GDL + CDMX + Monterrey</div><div class="tl-d">Equipo de ventas activo, reputación institucional establecida.</div></div></div>
+    <div class="tl-step"><div class="tl-dot">4</div><div class="tl-body"><div class="tl-when">Mes 12-24 · 100 planteles + SEP</div><div class="tl-t">Presentación formal a SEP con datos del piloto</div><div class="tl-d">Certificación, contrato estatal, escala nacional.</div></div></div>
+  </div>
+</div>
+
+<!-- 8. USO DE FONDOS -->
+<div class="slide">
+  <div class="tag gold">Uso de la inversión</div>
+  <h2>Cada peso con<br><em>destino específico y medible</em></h2>
+  <div class="uso-grid">
+    <div class="uso-item"><div class="uso-pct">36%</div><div class="uso-t">Ventas institucionales</div><div class="uso-d">Equipo, viajes, presentaciones, primer año de cierre de contratos</div></div>
+    <div class="uso-item"><div class="uso-pct">24%</div><div class="uso-t">Infraestructura cloud</div><div class="uso-d">Servidores, dominio, seguridad, backups, escalamiento</div></div>
+    <div class="uso-item"><div class="uso-pct">19%</div><div class="uso-t">Operaciones año 1</div><div class="uso-d">Soporte a instituciones, onboarding, documentación</div></div>
+    <div class="uso-item"><div class="uso-pct">12%</div><div class="uso-t">Marketing</div><div class="uso-d">Materiales, presencia digital, eventos educativos</div></div>
+    <div class="uso-item"><div class="uso-pct">9%</div><div class="uso-t">Legal y compliance</div><div class="uso-d">LFPDPPP, contratos institucionales, RFC y facturación</div></div>
+  </div>
+</div>
+
+<!-- 9. VENTAJA COMPETITIVA (MOAT) -->
+<div class="slide slide-dark">
+  <div class="tag green">Ventaja competitiva</div>
+  <h2>Por qué es <em class="green">muy difícil de copiar</em></h2>
+  <div class="moat">
+    <div class="moat-item"><div class="moat-ico">🧠</div><div><div class="moat-t">Perfil acumulativo por alumno</div><div class="moat-d">El valor crece con cada conversación. Un competidor que entre en 2 años no tiene los datos históricos que nosotros ya construimos.</div></div></div>
+    <div class="moat-item"><div class="moat-ico">🏫</div><div><div class="moat-t">Contratos institucionales = fricción de salida</div><div class="moat-d">Una escuela que integra Evolución en su currícula no cambia de plataforma fácilmente. El costo de salida es alto.</div></div></div>
+    <div class="moat-item"><div class="moat-ico">🔌</div><div><div class="moat-t">Funciona offline</div><div class="moat-d">Ningún competidor basado en cloud puede entrar a comunidades sin internet. Nosotros ya estamos ahí.</div></div></div>
+    <div class="moat-item"><div class="moat-ico">🤝</div><div><div class="moat-t">Relación con SEP</div><div class="moat-d">Una vez certificados por la SEP, el costo de entrada para un competidor es una negociación de años, no de meses.</div></div></div>
+  </div>
+</div>
+
+<!-- 10. CTA -->
+<div class="slide slide-cover">
+  <div class="tag gold">Siguiente paso</div>
+  <h2>La oportunidad existe hoy.<br><em>El mercado está vacío.</em></h2>
+  <p class="sub">Buscamos un socio estratégico que comprenda el alcance de este proyecto — no solo un cheque. La plataforma opera. El equipo está listo. Lo que necesitamos es escalar.</p>
+  <a href="/app" class="cta-btn">Ver la plataforma en vivo</a>
+  <div class="url">milanmontellanoanuar@gmail.com · Simplex · Guadalajara, México</div>
+</div>
+
+</div><!-- deck -->
+<div id="nav"><button id="prev">‹</button><div id="dots"></div><span id="slide-n">1 / 10</span><button id="next">›</button></div>
+<script>
+const slides=document.querySelectorAll('.slide'),total=slides.length;let cur=0;
+const dots=document.getElementById('dots'),slideN=document.getElementById('slide-n');
+for(let i=0;i<total;i++){const d=document.createElement('div');d.className='nav-dot'+(i===0?' on':'');d.onclick=()=>go(i);dots.appendChild(d);}
+function go(n){slides[cur].classList.remove('active');dots.children[cur].classList.remove('on');cur=(n+total)%total;slides[cur].classList.add('active');dots.children[cur].classList.add('on');slideN.textContent=(cur+1)+' / '+total;}
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(cur+1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(cur-1);});
+let tx=0;document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)go(dx<0?cur+1:cur-1);});
+</script>
+</body>
+</html>

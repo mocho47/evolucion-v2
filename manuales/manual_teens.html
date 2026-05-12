@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución — Manual para Teens</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:#030308;color:#eeeef8;line-height:1.65;font-size:15px;}
+.wrap{max-width:760px;margin:0 auto;padding:2.5rem 1.5rem;}
+header{background:rgba(3,3,8,.97);border-bottom:1px solid #1a1a35;padding:1rem 1.5rem;
+  position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-size:1rem;font-weight:900;}.logo span{color:#00e5a0;}
+.badge{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);color:#60a5fa;
+  border-radius:99px;padding:.2rem .75rem;font-size:.68rem;font-weight:700;letter-spacing:.06em;}
+h1{font-size:2rem;font-weight:900;color:#60a5fa;margin-bottom:.35rem;}
+.sub{color:#6a6a8a;font-size:.9rem;margin-bottom:2.5rem;}
+h2{font-size:1.1rem;font-weight:800;color:#60a5fa;margin:2rem 0 .75rem;
+  border-left:3px solid #3b82f6;padding-left:.8rem;}
+h3{font-size:.95rem;font-weight:700;color:#eeeef8;margin:1.1rem 0 .4rem;}
+p,li{font-size:.88rem;color:#ccccdd;margin-bottom:.45rem;}
+ul,ol{padding-left:1.3rem;margin-bottom:.8rem;}
+.card{background:#0c0c18;border:1px solid #1a1a35;border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:.85rem;}
+.step{display:flex;gap:.85rem;margin-bottom:.85rem;}
+.step-n{width:26px;height:26px;border-radius:50%;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);
+  color:#60a5fa;font-weight:700;font-size:.78rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.1rem;}
+.step-body{flex:1;}
+.step-t{font-weight:700;font-size:.88rem;margin-bottom:.25rem;}
+.step-d{font-size:.8rem;color:#8888aa;line-height:1.5;}
+.code{font-family:monospace;background:#030308;border:1px solid #60a5fa;color:#60a5fa;
+  border-radius:6px;padding:.2rem .55rem;font-size:.85rem;}
+.tip{background:rgba(96,165,250,.05);border:1px solid rgba(96,165,250,.18);border-radius:10px;
+  padding:.8rem 1rem;margin:.75rem 0;}
+.tip p{color:#60a5fa;margin:0;font-size:.82rem;}
+.warn{background:rgba(255,171,0,.06);border:1px solid rgba(255,171,0,.2);border-radius:10px;
+  padding:.8rem 1rem;margin:.75rem 0;}
+.warn p{color:#ffab00;margin:0;font-size:.82rem;}
+.priv{background:rgba(0,229,160,.05);border:1px solid rgba(0,229,160,.18);border-radius:10px;
+  padding:.8rem 1rem;margin:.75rem 0;}
+.priv p{color:#00e5a0;margin:0;font-size:.82rem;}
+.menu-list{list-style:none;padding:0;}
+.menu-list li{padding:.5rem 0;border-bottom:1px solid #0d0d20;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem;}
+.menu-list li:last-child{border:none;}
+.ico{font-size:1rem;flex-shrink:0;margin-top:.05rem;}
+.menu-list strong{color:#60a5fa;}
+table{width:100%;border-collapse:collapse;font-size:.84rem;margin:.75rem 0;}
+th{color:#6a6a8a;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;
+  padding:.45rem .75rem;border-bottom:1px solid #1a1a35;text-align:left;}
+td{padding:.55rem .75rem;border-bottom:1px solid #0d0d20;color:#ccccdd;}
+td:first-child{color:#60a5fa;font-weight:600;}
+footer{text-align:center;padding:2.5rem 1.5rem;border-top:1px solid #1a1a35;
+  color:#4a4a6a;font-size:.75rem;}
+@media print{body{background:#fff;color:#111;}
+  header{background:#fff;border-color:#ddd;}
+  h1,h2{color:#2563eb;}
+  .card{background:#f8f8ff;border-color:#ddd;}
+  .code{background:#f0f0f0;color:#2563eb;}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">EVO<span>LUCIÓN</span></div>
+  <div class="badge">Guía para Teens</div>
+</header>
+<div class="wrap">
+<h1>Tu guía en Evolución</h1>
+<p class="sub">Todo lo que puedes hacer en la app — sin spoilers de lo que te puede pasar · Mayo 2026</p>
+
+<h2>Cómo entrar</h2>
+<div class="card">
+  <p>Desde tu cel, tablet o cualquier compu, sin instalar nada:</p>
+  <div style="background:#030308;border:1px solid #60a5fa;border-radius:8px;padding:.65rem 1rem;font-family:monospace;font-size:.9rem;color:#60a5fa;margin:.5rem 0;">https://evolucion-v2.onrender.com/app</div>
+  <div class="warn"><p>⚠ Si tarda en cargar la primera vez del día — normal. El servidor se despertó. Espera 20–30 segundos.</p></div>
+</div>
+
+<h2>Unirte a tu familia</h2>
+<div class="step"><div class="step-n">1</div><div class="step-body">
+  <div class="step-t">Toca "Tengo un código"</div>
+  <div class="step-d">En la pantalla de inicio. Pídele a tu papá o mamá el código de familia — son 6 letras/números.</div>
+</div></div>
+<div class="step"><div class="step-n">2</div><div class="step-body">
+  <div class="step-t">Ingresa el código</div>
+  <div class="step-d">Escríbelo exactamente como te lo dieron. Mayúsculas o minúsculas, ambas funcionan.</div>
+</div></div>
+<div class="step"><div class="step-n">3</div><div class="step-body">
+  <div class="step-t">Crea tu perfil</div>
+  <div class="step-d">Escribe tu nombre y tu edad. No necesitas PIN — ese es solo para tus papás.</div>
+</div></div>
+<div class="step"><div class="step-n">4</div><div class="step-body">
+  <div class="step-t">Entra al chat</div>
+  <div class="step-d">Ya estás dentro. El asistente te saluda por tu nombre.</div>
+</div></div>
+<div class="tip"><p>💡 La próxima vez que abras la app en el mismo teléfono, entra directo — ya te recuerda.</p></div>
+
+<h2>El chat — tu espacio principal</h2>
+<p>El chat es el corazón de la app. Puedes hablar de cualquier cosa:</p>
+<ul>
+  <li>Cómo te sientes hoy</li>
+  <li>Algo que te preocupa (familia, amigos, escuela)</li>
+  <li>Algo que te emocionó</li>
+  <li>Dudas de una materia</li>
+  <li>Qué quieres ser cuando crezcas</li>
+  <li>Ideas que tienes</li>
+</ul>
+<div class="priv"><p>🔒 Tus conversaciones son privadas. Tus papás NO pueden leer lo que escribes. Solo ven el tipo de alerta, nunca el texto exacto.</p></div>
+
+<h2>El menú lateral (☰)</h2>
+<ul class="menu-list">
+  <li><div class="ico">😊</div><div><strong>¿Cómo estoy hoy?</strong> — Registra tu estado de ánimo. Cinco opciones: desde muy bajo hasta excelente. El asistente adapta su forma de hablar según cómo estés.</div></li>
+  <li><div class="ico">✅</div><div><strong>Mis misiones</strong> — Las tareas que te asignaron tus papás. Cuando las completes, tócas "✓ Completar" y ellos reciben la notificación para aprobarla.</div></li>
+  <li><div class="ico">🎯</div><div><strong>Mis metas</strong> — Metas que tú mismo te pones. Puedes ver cuáles tienes activas.</div></li>
+  <li><div class="ico">➕</div><div><strong>Meta nueva</strong> — Agrega una meta personal. Ejemplo: "Terminar el libro que empecé" o "Mejorar en matemáticas".</div></li>
+  <li><div class="ico">💫</div><div><strong>Mis deseos</strong> — Cosas que quieres lograr a futuro. Diferente de las metas — son más libres, más tuyas.</div></li>
+  <li><div class="ico">➕</div><div><strong>Agregar deseo</strong> — Anota un deseo: algo que quieres, algo que sueñas, algo que te gustaría explorar.</div></li>
+  <li><div class="ico">🏆</div><div><strong>Mis logros</strong> — Tus puntos acumulados y misiones completadas. Cada misión aprobada suma puntos.</div></li>
+  <li><div class="ico">📚</div><div><strong>Tutor escolar</strong> — El asistente cambia a modo tutor académico. Puedes pedirle que te explique algo de cualquier materia.</div></li>
+  <li><div class="ico">🗺️</div><div><strong>Orientación vocacional</strong> — Explora qué carreras podrían ir contigo según tus intereses y aptitudes detectadas.</div></li>
+</ul>
+
+<h2>Misiones</h2>
+<p>Tus papás pueden asignarte misiones — son tareas con puntos de recompensa. Cuando completes una:</p>
+<ol>
+  <li>Ve al menú → Mis misiones</li>
+  <li>Toca el botón <strong>✓ Completar</strong> en la misión que terminaste</li>
+  <li>Tu papá/mamá recibe notificación y la aprueba con su PIN</li>
+  <li>Los puntos se agregan a tu total automáticamente</li>
+</ol>
+
+<h2>Acuerdos</h2>
+<p>Los acuerdos son pactos formales con tus papás. Cuando cumples uno, ganas <strong>+50 puntos</strong> extras. El asistente te avisa cuando tienes un acuerdo activo.</p>
+
+<h2>Aptitudes y perfil</h2>
+<p>A medida que chateas, el sistema detecta tus aptitudes naturales (lógica, creatividad, empatía, liderazgo, entre otras). Puedes ver tu perfil en el chat preguntando: <em>"¿cuáles son mis aptitudes?"</em></p>
+<div class="tip"><p>💡 Si tus papás activaron el modo Gifted o Visionario, el asistente adapta sus respuestas a tu forma de procesar el mundo — más profundo, más retador.</p></div>
+
+<h2>Tutor escolar</h2>
+<p>Desde el menú → Tutor escolar, el asistente puede:</p>
+<ul>
+  <li>Explicarte un tema que no entendiste en clase</li>
+  <li>Darte ejercicios de práctica</li>
+  <li>Repasar contigo para un examen</li>
+  <li>Ayudarte a organizar tus apuntes</li>
+  <li>Armar un plan de regularización si llevas materias atrasadas</li>
+</ul>
+
+<h2>Lo que es completamente tuyo</h2>
+<div class="card">
+  <table>
+    <tr><th>Solo tú lo ves</th><th>Tus papás solo ven</th></tr>
+    <tr><td>El texto de tus conversaciones</td><td>Tipo de alerta (nunca el texto)</td></tr>
+    <tr><td>Tus deseos y metas</td><td>Tus puntos y nivel</td></tr>
+    <tr><td>Tu estado de ánimo detallado</td><td>Qué misiones completaste</td></tr>
+    <tr><td>Tu historial de chat</td><td>Acuerdos activos</td></tr>
+  </table>
+</div>
+
+<h2>Si usas otro teléfono</h2>
+<p>Entra a la app → "Ya tengo cuenta" → ingresa el código de tu familia → crea tu perfil de nuevo. Tus puntos y logros están guardados en el servidor.</p>
+
+</div>
+<footer>
+  <p>Evolución v2 · Simplex · Guadalajara, Jalisco · Mayo 2026</p>
+  <p style="margin-top:.3rem;">evolucion-v2.onrender.com/app · milanmontellanoanuar@gmail.com</p>
+</footer>
+</body>
+</html>

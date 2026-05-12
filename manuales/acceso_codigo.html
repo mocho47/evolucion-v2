@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución — Acceso al Código / Auditoría</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:#030308;color:#eeeef8;line-height:1.65;font-size:15px;}
+.wrap{max-width:820px;margin:0 auto;padding:2.5rem 1.5rem;}
+header{background:rgba(3,3,8,.97);border-bottom:1px solid #1e1e3a;padding:1rem 1.5rem;
+  position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-size:1rem;font-weight:900;}.logo span{color:#00e5a0;}
+.badge{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#f87171;
+  border-radius:99px;padding:.2rem .75rem;font-size:.68rem;font-weight:700;letter-spacing:.06em;}
+h1{font-size:2rem;font-weight:900;color:#f87171;margin-bottom:.35rem;}
+.sub{color:#6a6a8a;font-size:.9rem;margin-bottom:2.5rem;}
+h2{font-size:1.1rem;font-weight:800;color:#f87171;margin:2rem 0 .75rem;
+  border-left:3px solid #ef4444;padding-left:.8rem;}
+h3{font-size:.95rem;font-weight:700;color:#eeeef8;margin:1.1rem 0 .4rem;}
+p,li{font-size:.88rem;color:#ccccdd;margin-bottom:.45rem;}
+ul,ol{padding-left:1.3rem;margin-bottom:.8rem;}
+.card{background:#0c0c18;border:1px solid #1e1e3a;border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:.85rem;}
+.url-row{background:#030308;border:1px solid #00e5a0;border-radius:8px;padding:.65rem 1rem;
+  font-family:monospace;font-size:.88rem;color:#00e5a0;margin:.5rem 0;display:flex;
+  align-items:center;justify-content:space-between;gap:.5rem;word-break:break-all;}
+.code{font-family:monospace;background:#030308;border:1px solid #6b7280;color:#d1d5db;
+  border-radius:6px;padding:.2rem .55rem;font-size:.82rem;}
+.tip{background:rgba(0,229,160,.05);border:1px solid rgba(0,229,160,.18);border-radius:10px;
+  padding:.8rem 1rem;margin:.75rem 0;}
+.tip p{color:#00e5a0;margin:0;font-size:.82rem;}
+.warn{background:rgba(255,171,0,.06);border:1px solid rgba(255,171,0,.2);border-radius:10px;
+  padding:.8rem 1rem;margin:.75rem 0;}
+.warn p{color:#ffab00;margin:0;font-size:.82rem;}
+.file-tree{background:#030308;border:1px solid #1e1e3a;border-radius:10px;
+  padding:1rem 1.25rem;font-family:monospace;font-size:.82rem;color:#8888aa;line-height:2;}
+.file-tree .dir{color:#a78bfa;}
+.file-tree .main{color:#00e5a0;}
+.file-tree .html{color:#60a5fa;}
+.file-tree .cfg{color:#fbbf24;}
+table{width:100%;border-collapse:collapse;font-size:.84rem;margin:.75rem 0;}
+th{color:#6a6a8a;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;
+  padding:.45rem .75rem;border-bottom:1px solid #1e1e3a;text-align:left;}
+td{padding:.55rem .75rem;border-bottom:1px solid #0d0d20;color:#ccccdd;}
+td:first-child{color:#f87171;font-weight:600;}
+footer{text-align:center;padding:2.5rem 1.5rem;border-top:1px solid #1e1e3a;
+  color:#4a4a6a;font-size:.75rem;}
+@media print{body{background:#fff;color:#111;} h1,h2{color:#dc2626;}
+  .card{background:#fff5f5;border-color:#ddd;} .file-tree{background:#f9f9f9;border-color:#ddd;}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">EVO<span>LUCIÓN</span></div>
+  <div class="badge">Acceso Auditoría</div>
+</header>
+<div class="wrap">
+<h1>Acceso al Código — Auditoría Externa</h1>
+<p class="sub">Repositorio, estructura del proyecto y puntos de revisión · Mayo 2026</p>
+
+<h2>Repositorio público</h2>
+<div class="card">
+  <p>El código completo de Evolución v2 está disponible en GitHub:</p>
+  <div class="url-row">https://github.com/mocho47/evolucion-v2</div>
+  <p style="margin-top:.75rem;color:#8888aa;font-size:.82rem;">El repositorio es público. No se requiere cuenta para leer el código. Para clonar localmente:</p>
+  <div class="url-row">git clone https://github.com/mocho47/evolucion-v2.git</div>
+</div>
+<div class="warn"><p>⚠ El archivo .env (con claves de API) y la base de datos (evolucion.db) están excluidos del repositorio por seguridad — ver sección de variables de entorno más abajo.</p></div>
+
+<h2>Plataforma en producción</h2>
+<div class="card">
+  <div class="url-row">https://evolucion-v2.onrender.com/app</div>
+  <p style="margin-top:.5rem;font-size:.82rem;color:#8888aa;">Servidor en nube 24/7. Deploy automático al hacer push a GitHub (rama main).</p>
+  <p style="margin-top:.3rem;font-size:.82rem;color:#8888aa;">Panel de control Render: dashboard.render.com/web/srv-d81dj5navr4c73ba7c20</p>
+</div>
+
+<h2>Estructura de archivos</h2>
+<div class="file-tree">
+<span class="dir">C:\evolucion\</span><br>
+│<br>
+├── <span class="main">evolucion_server.py</span>  ← Servidor principal (FastAPI, ~2500 líneas)<br>
+├── <span class="main">evolucion.html</span>       ← Frontend PWA teen + panel padre<br>
+├── <span class="main">maestro.html</span>         ← Panel docente (6 pestañas)<br>
+├── <span class="main">jorge.html</span>           ← Landing inversor<br>
+├── <span class="main">landing.html</span>         ← Landing pública<br>
+│<br>
+├── <span class="html">deck_familias.html</span>   ← Presentación para padres<br>
+├── <span class="html">deck_sep.html</span>        ← Presentación SEP (v1)<br>
+├── <span class="html">deck_sep2.html</span>       ← Presentación SEP (v2 — contundente)<br>
+├── <span class="html">deck_teens.html</span>      ← Presentación para teens<br>
+├── <span class="html">deck_teens2.html</span>     ← Presentación teens (v2)<br>
+├── <span class="html">deck_inversores.html</span> ← Pitch inversores<br>
+│<br>
+├── <span class="dir">manuales\</span>             ← Carpeta de manuales y documentación<br>
+│   ├── index.html<br>
+│   ├── manual_padres.html<br>
+│   ├── manual_maestros.html<br>
+│   ├── manual_teens.html<br>
+│   ├── manual_plantel.html<br>
+│   ├── numeros_proyecto.html<br>
+│   ├── plan_distribucion_demo.html<br>
+│   ├── acceso_codigo.html  ← este archivo<br>
+│   ├── auditoria_funciones.html<br>
+│   └── [copias de decks]<br>
+│<br>
+├── <span class="cfg">.env</span>                 ← Claves API (excluido de git)<br>
+├── <span class="cfg">.gitignore</span><br>
+├── <span class="cfg">render.yaml</span>          ← Configuración de despliegue<br>
+├── <span class="cfg">requirements.txt</span><br>
+└── evolucion.db             ← Base de datos local (excluida de git)
+</div>
+
+<h2>Archivo principal: evolucion_server.py</h2>
+<div class="card">
+  <p>Todo el backend está en un único archivo Python. Secciones principales:</p>
+  <table>
+    <tr><th>Sección</th><th>Contenido</th></tr>
+    <tr><td>Importaciones y config</td><td>FastAPI, aiosqlite, httpx, dotenv, cors</td></tr>
+    <tr><td>init_db()</td><td>Creación de todas las tablas SQLite con WAL mode</td></tr>
+    <tr><td>PROMPTS</td><td>PROMPT_TEEN, PROMPT_PADRE, PROMPT_MAESTRO, PROMPT_MAESTRO_BIENESTAR</td></tr>
+    <tr><td>BURNOUT_PATRONES</td><td>28 frases en español para detección de burnout docente</td></tr>
+    <tr><td>ai_query()</td><td>Motor IA: Z.ai → Groq → Ollama (fallback encadenado)</td></tr>
+    <tr><td>detectar_senales()</td><td>Análisis de mensajes de teens para alertas psicológicas</td></tr>
+    <tr><td>detectar_burnout_maestro()</td><td>Análisis de mensajes de maestros para burnout</td></tr>
+    <tr><td>Endpoints /api/</td><td>40+ rutas REST: familias, miembros, misiones, acuerdos, metas, deseos, señales, maestros, escuelas</td></tr>
+    <tr><td>Rutas HTML</td><td>GET /, /app, /maestro, /jorge, /manuales/*, /deck/*</td></tr>
+  </table>
+</div>
+
+<h2>Variables de entorno (NO en git)</h2>
+<div class="card">
+  <table>
+    <tr><th>Variable</th><th>Para qué sirve</th><th>Dónde configurar</th></tr>
+    <tr><td>GROQ_API_KEY</td><td>IA fallback (Groq llama-3.3-70b)</td><td>.env local + Render env vars</td></tr>
+    <tr><td>ZAI_API_KEY</td><td>IA primaria (Z.ai GLM-4-flash)</td><td>.env local + Render env vars</td></tr>
+  </table>
+  <p style="margin-top:.5rem;font-size:.82rem;color:#8888aa;">Para ejecutar localmente: crear archivo .env con ambas variables. Para nube: configurar en Render dashboard → Environment.</p>
+</div>
+
+<h2>Cómo ejecutar localmente</h2>
+<div class="card">
+  <h3>Requisitos</h3>
+  <ul>
+    <li>Python 3.12+</li>
+    <li>pip install -r requirements.txt</li>
+    <li>Archivo .env con GROQ_API_KEY y ZAI_API_KEY</li>
+  </ul>
+  <h3>Arrancar el servidor</h3>
+  <div style="background:#030308;border:1px solid #2a2a4a;border-radius:8px;padding:.75rem 1rem;font-family:monospace;font-size:.84rem;color:#a78bfa;margin:.5rem 0;">
+    cd C:\evolucion<br>
+    python evolucion_server.py
+  </div>
+  <p style="margin-top:.5rem;font-size:.82rem;color:#8888aa;">El servidor levanta en http://localhost:8080. Panel: /app. Panel maestro: /maestro.</p>
+</div>
+
+<h2>Dependencias (requirements.txt)</h2>
+<div class="card">
+  <div class="file-tree" style="line-height:1.8;">
+fastapi<br>
+uvicorn[standard]<br>
+aiosqlite<br>
+httpx<br>
+python-dotenv<br>
+python-multipart<br>
+jinja2
+  </div>
+</div>
+
+<h2>Puntos de revisión para auditoría</h2>
+<div class="card">
+  <table>
+    <tr><th>Área</th><th>Qué revisar</th><th>Dónde</th></tr>
+    <tr><td>Privacidad teen</td><td>El chat del teen nunca se expone en endpoints de padre</td><td>GET /api/senales — solo tipo, no contenido</td></tr>
+    <tr><td>Autenticación</td><td>PIN requerido para aprobar misiones y acuerdos</td><td>POST /api/misiones/{id}/aprobar</td></tr>
+    <tr><td>Alertas psicológicas</td><td>Lógica de detección sin IA (keyword matching)</td><td>detectar_senales() en server.py</td></tr>
+    <tr><td>Burnout docente</td><td>28 patrones en español, respuesta confidencial</td><td>BURNOUT_PATRONES + POST /api/maestro/bienestar</td></tr>
+    <tr><td>Fallback IA</td><td>Z.ai → Groq → Ollama sin pérdida de request</td><td>ai_query() en server.py</td></tr>
+    <tr><td>Base de datos</td><td>WAL mode, queries parametrizadas (sin SQL injection)</td><td>init_db() + todos los await db.execute()</td></tr>
+    <tr><td>CORS</td><td>Configuración de orígenes permitidos</td><td>CORSMiddleware en server.py</td></tr>
+  </table>
+</div>
+
+<h2>Contacto del proyecto</h2>
+<div class="card">
+  <p><strong>Responsable técnico:</strong> Anuar Milán Montellano</p>
+  <p><strong>Email:</strong> <span class="code">milanmontellanoanuar@gmail.com</span></p>
+  <p><strong>GitHub:</strong> <span class="code">github.com/mocho47/evolucion-v2</span></p>
+  <p><strong>Empresa:</strong> Simplex · Guadalajara, Jalisco</p>
+</div>
+
+</div>
+<footer>
+  <p>Evolución v2 · Simplex · Guadalajara, Jalisco · Mayo 2026</p>
+  <p style="margin-top:.3rem;">Documento de acceso a código — uso para auditoría externa autorizada</p>
+</footer>
+</body>
+</html>
