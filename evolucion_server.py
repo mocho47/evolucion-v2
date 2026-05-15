@@ -494,7 +494,29 @@ async def startup():
         shutil.copy2(nexus_db, DB_PATH)
         logger.info("DB migrada desde NEXUS Teens")
     await init_db()
+    await _crear_demo_si_falta()
     logger.info(f"Evolución corriendo — puerto {PORT}")
+
+async def _crear_demo_si_falta():
+    """Crea familia DEMO01 y miembros demo si no existen — sobrevive reinicios."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT id FROM familias WHERE codigo_acceso=?", ("DEMO01",))
+        row = await cur.fetchone()
+        if row:
+            return  # ya existe
+        fid = "demo-fam-01"
+        await db.execute("INSERT OR IGNORE INTO familias VALUES (?,?,?,?)",
+                         (fid, "Familia Demo Evolución", "DEMO01", time.time()))
+        pin_hash = hashlib.sha256("1234".encode()).hexdigest()
+        await db.execute(
+            "INSERT OR IGNORE INTO miembros VALUES (?,?,?,?,?,?,0,'{}',1,?)",
+            ("demo-padre-01", fid, "Papá Demo", "padre", 40, pin_hash, time.time()))
+        await db.execute(
+            "INSERT OR IGNORE INTO miembros VALUES (?,?,?,?,?,?,0,'{}',1,?)",
+            ("demo-teen-01", fid, "Demo Teen", "teen", 16, None, time.time()))
+        await db.commit()
+        logger.info("Demo DEMO01/1234 creado automáticamente")
 
 # ── IA ────────────────────────────────────────────────────────────────────────
 async def llamar_ia(prompt: str, mensaje: str, historial: list = None) -> str:
