@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Evolución — Panel Administrador</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#050a14;color:#e2e8f0;min-height:100vh}
+header{background:linear-gradient(135deg,#0f172a,#1e293b);padding:18px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1e3a5f}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-dot{width:10px;height:10px;border-radius:50%;background:#7c3aed;box-shadow:0 0 8px #7c3aed}
+header h1{font-size:1.2rem;font-weight:800;color:#fff}
+header h1 span{color:#7c3aed}
+.status-bar{display:flex;align-items:center;gap:8px;font-size:.8rem;color:#64748b}
+.dot-online{width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+nav{background:#0d1829;border-bottom:1px solid #1e3a5f;padding:0 28px;display:flex;gap:4px}
+.tab{padding:12px 18px;font-size:.85rem;font-weight:600;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab.active,.tab:hover{color:#a78bfa;border-color:#7c3aed}
+.container{max-width:1200px;margin:0 auto;padding:28px 20px}
+.panel{display:none}.panel.active{display:block}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+@media(max-width:768px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:#0d1829;border:1px solid #1e3a5f;border-radius:12px;padding:20px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c,#7c3aed)}
+.kpi .num{font-size:2.2rem;font-weight:900;color:var(--c,#a78bfa)}
+.kpi .lbl{color:#64748b;font-size:.8rem;margin-top:4px}
+.kpi .sub{font-size:.75rem;color:#334155;margin-top:2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+.card{background:#0d1829;border:1px solid #1e3a5f;border-radius:12px;padding:22px;margin-bottom:18px}
+.card-title{font-size:.85rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.refresh-btn{background:transparent;border:1px solid #1e3a5f;color:#64748b;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:.75rem}
+.refresh-btn:hover{border-color:#7c3aed;color:#a78bfa}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:#0a1220;color:#7c3aed;padding:9px 12px;text-align:left;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #1e3a5f}
+td{padding:10px 12px;border-bottom:1px solid #0f1f33;color:#94a3b8}
+tr:hover td{background:#0a1220}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.75rem;font-weight:600}
+.b-green{background:#10b98120;color:#10b981;border:1px solid #10b98140}
+.b-purple{background:#7c3aed20;color:#a78bfa;border:1px solid #7c3aed40}
+.b-blue{background:#3b82f620;color:#60a5fa;border:1px solid #3b82f640}
+.b-gray{background:#1e293b;color:#64748b;border:1px solid #334155}
+.ai-status{display:flex;flex-direction:column;gap:8px}
+.ai-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#050a14;border-radius:8px;border:1px solid #1e3a5f}
+.ai-row .name{font-size:.9rem;font-weight:600;color:#e2e8f0}
+.ai-row .desc{font-size:.75rem;color:#64748b}
+.chip{display:flex;align-items:center;gap:6px;font-size:.8rem;font-weight:600}
+.chip .dot{width:8px;height:8px;border-radius:50%}
+.chip.ok .dot{background:#10b981}
+.chip.ok{color:#10b981}
+.chip.warn .dot{background:#f59e0b}
+.chip.warn{color:#f59e0b}
+.empty{text-align:center;padding:30px;color:#334155;font-size:.9rem}
+.action-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+@media(max-width:640px){.action-grid{grid-template-columns:1fr}}
+.action-btn{background:#0d1829;border:1px solid #1e3a5f;border-radius:10px;padding:16px;cursor:pointer;text-align:center;transition:all .2s;text-decoration:none;display:block}
+.action-btn:hover{border-color:#7c3aed;background:#120a2e}
+.action-btn .icon{font-size:1.6rem;margin-bottom:6px}
+.action-btn .title{font-size:.85rem;font-weight:700;color:#e2e8f0}
+.action-btn .desc{font-size:.75rem;color:#64748b;margin-top:2px}
+.bar-wrap{display:flex;flex-direction:column;gap:8px}
+.bar-item{display:flex;align-items:center;gap:10px}
+.bar-label{width:70px;font-size:.8rem;color:#64748b;text-align:right}
+.bar-track{flex:1;height:10px;background:#0a1220;border-radius:5px;overflow:hidden}
+.bar-fill{height:100%;border-radius:5px;background:#7c3aed}
+.bar-num{font-size:.8rem;color:#94a3b8;min-width:30px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <h1>Evolución <span>Admin</span></h1>
+  </div>
+  <div class="status-bar">
+    <div class="dot-online"></div>
+    <span id="server-status">Conectando...</span>
+    <span style="color:#1e3a5f">|</span>
+    <span id="last-update"></span>
+  </div>
+</header>
+
+<nav>
+  <div class="tab active" onclick="showTab('dashboard')">Dashboard</div>
+  <div class="tab" onclick="showTab('familias')">Familias</div>
+  <div class="tab" onclick="showTab('escuelas')">Escuelas</div>
+  <div class="tab" onclick="showTab('sistema')">Sistema</div>
+</nav>
+
+<div class="container">
+
+  <!-- DASHBOARD -->
+  <div class="panel active" id="tab-dashboard">
+    <div class="kpi-grid" id="kpis">
+      <div class="kpi" style="--c:#a78bfa"><div class="num" id="k-familias">—</div><div class="lbl">Familias registradas</div></div>
+      <div class="kpi" style="--c:#10b981"><div class="num" id="k-teens">—</div><div class="lbl">Teens activos</div></div>
+      <div class="kpi" style="--c:#60a5fa"><div class="num" id="k-escuelas">—</div><div class="lbl">Escuelas</div></div>
+      <div class="kpi" style="--c:#f59e0b"><div class="num" id="k-mood">—</div><div class="lbl">Mood promedio</div><div class="sub">escala 1–5</div></div>
+    </div>
+
+    <div class="action-grid">
+      <a class="action-btn" href="/app" target="_blank">
+        <div class="icon">📱</div>
+        <div class="title">Abrir App</div>
+        <div class="desc">Panel familiar completo</div>
+      </a>
+      <a class="action-btn" href="/escuela" target="_blank">
+        <div class="icon">🏫</div>
+        <div class="title">Panel Escolar</div>
+        <div class="desc">Vista de plantel</div>
+      </a>
+      <a class="action-btn" href="/manuales" target="_blank">
+        <div class="icon">📋</div>
+        <div class="title">Manuales</div>
+        <div class="desc">Documentación pública</div>
+      </a>
+      <a class="action-btn" href="/api/ping-demo" target="_blank" onclick="this.textContent='Creando...';fetch('/api/ping-demo').then(()=>location.reload())">
+        <div class="icon">🔄</div>
+        <div class="title">Recrear DEMO01</div>
+        <div class="desc">Si el demo falla</div>
+      </a>
+      <a class="action-btn" href="/api/admin/stats" target="_blank">
+        <div class="icon">📊</div>
+        <div class="title">Stats JSON</div>
+        <div class="desc">Datos crudos API</div>
+      </a>
+      <a class="action-btn" href="/health" target="_blank">
+        <div class="icon">💚</div>
+        <div class="title">Health Check</div>
+        <div class="desc">Estado del servidor</div>
+      </a>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Usuarios por rol <button class="refresh-btn" onclick="loadStats()">↻</button></div>
+        <div class="bar-wrap" id="roles-chart">
+          <div class="empty">Cargando...</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Actividad del sistema</div>
+        <div id="actividad">
+          <div class="empty">Cargando...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Familias recientes <button class="refresh-btn" onclick="loadStats()">↻</button></div>
+      <table>
+        <tr><th>Nombre</th><th>Código</th><th>Miembros</th><th>Registro</th></tr>
+        <tbody id="familias-recientes"><tr><td colspan="4" class="empty">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FAMILIAS -->
+  <div class="panel" id="tab-familias">
+    <div class="card">
+      <div class="card-title">Todas las familias <button class="refresh-btn" onclick="loadFamilias()">↻</button></div>
+      <table>
+        <tr><th>#</th><th>Nombre</th><th>Código</th><th>Miembros</th><th>Registro</th></tr>
+        <tbody id="tabla-familias"><tr><td colspan="5" class="empty">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ESCUELAS -->
+  <div class="panel" id="tab-escuelas">
+    <div class="card">
+      <div class="card-title">Escuelas registradas <button class="refresh-btn" onclick="loadEscuelas()">↻</button></div>
+      <table>
+        <tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>Acción</th></tr>
+        <tbody id="tabla-escuelas"><tr><td colspan="4" class="empty">Sin escuelas registradas</td></tr></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Registrar nueva escuela</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end">
+        <div><label style="font-size:.8rem;color:#64748b;display:block;margin-bottom:6px">Nombre</label>
+          <input id="e-nombre" style="width:100%;background:#050a14;border:1px solid #1e3a5f;border-radius:6px;padding:10px;color:#e2e8f0;font-size:.9rem" placeholder="Colegio San José"></div>
+        <div><label style="font-size:.8rem;color:#64748b;display:block;margin-bottom:6px">Tipo</label>
+          <select id="e-tipo" style="width:100%;background:#050a14;border:1px solid #1e3a5f;border-radius:6px;padding:10px;color:#e2e8f0;font-size:.9rem">
+            <option>canonico</option><option>laico</option><option>sep</option>
+          </select></div>
+        <button onclick="crearEscuela()" style="background:#7c3aed;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-weight:700;font-size:.9rem">Crear</button>
+      </div>
+      <div id="e-msg" style="margin-top:10px;font-size:.85rem;color:#10b981"></div>
+    </div>
+  </div>
+
+  <!-- SISTEMA -->
+  <div class="panel" id="tab-sistema">
+    <div class="card">
+      <div class="card-title">Cadena de IA</div>
+      <div class="ai-status">
+        <div class="ai-row">
+          <div><div class="name">Z.ai GLM-4-Flash</div><div class="desc">Motor principal — 0ms latencia objetivo</div></div>
+          <div class="chip ok"><div class="dot"></div>Activo</div>
+        </div>
+        <div class="ai-row">
+          <div><div class="name">Groq LLaMA-3.3-70B</div><div class="desc">Fallback nube — 500K tokens/día gratis</div></div>
+          <div class="chip ok"><div class="dot"></div>Activo</div>
+        </div>
+        <div class="ai-row">
+          <div><div class="name">Ollama (Offline)</div><div class="desc">Fallback local — funciona sin internet</div></div>
+          <div class="chip warn"><div class="dot"></div>Solo local</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">URLs del sistema</div>
+      <table>
+        <tr><th>Panel</th><th>URL</th><th>Estado</th></tr>
+        <tr><td>App Principal</td><td style="font-family:monospace;color:#7c3aed">/app</td><td><span class="badge b-green">Activo</span></td></tr>
+        <tr><td>Panel Admin</td><td style="font-family:monospace;color:#7c3aed">/admin</td><td><span class="badge b-green">Activo</span></td></tr>
+        <tr><td>Panel Escolar</td><td style="font-family:monospace;color:#7c3aed">/escuela</td><td><span class="badge b-green">Activo</span></td></tr>
+        <tr><td>Manuales</td><td style="font-family:monospace;color:#7c3aed">/manuales</td><td><span class="badge b-green">Activo</span></td></tr>
+        <tr><td>Health Check</td><td style="font-family:monospace;color:#7c3aed">/health</td><td><span class="badge b-green">Activo</span></td></tr>
+        <tr><td>Demo Reset</td><td style="font-family:monospace;color:#7c3aed">/api/ping-demo</td><td><span class="badge b-green">Activo</span></td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Módulos activos por familia</div>
+      <table>
+        <tr><th>Módulo</th><th>Descripción</th><th>Plan</th></tr>
+        <tr><td>Estándar</td><td>Chat, misiones, metas, mood</td><td><span class="badge b-green">Todos</span></td></tr>
+        <tr><td>Bienestar docente</td><td>Burnout detection, coaching</td><td><span class="badge b-blue">Escuelas</span></td></tr>
+        <tr><td>Orientación vocacional</td><td>Test aptitudes, guía carrera</td><td><span class="badge b-purple">Premium</span></td></tr>
+        <tr><td>Regularización escolar</td><td>Plan de recuperación académica</td><td><span class="badge b-purple">Canónico</span></td></tr>
+        <tr><td>Gifted/Superdotado</td><td>Detección y atención especial</td><td><span class="badge b-gray">Beta</span></td></tr>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const BASE = '';
+
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+  if (id === 'familias') loadFamilias();
+  if (id === 'escuelas') loadEscuelas();
+}
+
+async function loadStats() {
+  try {
+    const r = await fetch(BASE + '/api/admin/stats');
+    const d = await r.json();
+    if (!d.ok) return;
+    const s = d.stats;
+
+    document.getElementById('k-familias').textContent = s.familias || 0;
+    document.getElementById('k-teens').textContent = (s.por_rol || {}).teen || 0;
+    document.getElementById('k-escuelas').textContent = s.escuelas || 0;
+    document.getElementById('k-mood').textContent = s.mood_promedio || '—';
+    document.getElementById('server-status').textContent = 'Servidor activo';
+    document.getElementById('last-update').textContent = new Date().toLocaleTimeString('es-MX');
+
+    // Roles chart
+    const roles = s.por_rol || {};
+    const total = Object.values(roles).reduce((a,b) => a+b, 0) || 1;
+    const colores = {teen:'#a78bfa', padre:'#10b981', maestro:'#60a5fa', admin:'#f59e0b'};
+    document.getElementById('roles-chart').innerHTML = Object.entries(roles).map(([rol, n]) => `
+      <div class="bar-item">
+        <div class="bar-label">${rol}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/total*100)}%;background:${colores[rol]||'#7c3aed'}"></div></div>
+        <div class="bar-num">${n}</div>
+      </div>`).join('') || '<div class="empty">Sin usuarios aún</div>';
+
+    // Actividad
+    document.getElementById('actividad').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${[
+          ['Familias', s.familias, '#a78bfa'],
+          ['Miembros totales', s.miembros, '#10b981'],
+          ['Misiones', s.misiones, '#60a5fa'],
+          ['Acuerdos', s.acuerdos, '#f59e0b'],
+          ['Metas', s.metas, '#fb7185'],
+          ['Mensajes chat', s.chat_mensajes, '#34d399'],
+        ].map(([lbl,val,c]) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#050a14;border-radius:6px;border:1px solid #0f1f33">
+            <span style="font-size:.85rem;color:#64748b">${lbl}</span>
+            <span style="font-size:1rem;font-weight:700;color:${c}">${val ?? 0}</span>
+          </div>`).join('')}
+      </div>`;
+
+    // Familias recientes
+    const fams = s.familias_recientes || [];
+    document.getElementById('familias-recientes').innerHTML = fams.length
+      ? fams.map(f => `<tr>
+          <td style="font-weight:600;color:#e2e8f0">${f.nombre}</td>
+          <td><code style="color:#7c3aed;background:#0a1220;padding:2px 6px;border-radius:4px">${f.codigo_acceso || '—'}</code></td>
+          <td>—</td>
+          <td style="color:#475569;font-size:.8rem">${f.creado ? new Date(f.creado*1000).toLocaleDateString('es-MX') : '—'}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="4" class="empty">Sin familias registradas</td></tr>';
+
+  } catch(e) {
+    document.getElementById('server-status').textContent = 'Error de conexión';
+    console.error(e);
+  }
+}
+
+async function loadFamilias() {
+  const r = await fetch(BASE + '/api/admin/familias');
+  const d = await r.json();
+  const fams = d.familias || [];
+  document.getElementById('tabla-familias').innerHTML = fams.length
+    ? fams.map((f,i) => `<tr>
+        <td style="color:#475569">${i+1}</td>
+        <td style="font-weight:600;color:#e2e8f0">${f.nombre}</td>
+        <td><code style="color:#7c3aed;background:#0a1220;padding:2px 6px;border-radius:4px">${f.codigo_acceso || '—'}</code></td>
+        <td>${f.miembros || 0}</td>
+        <td style="font-size:.8rem;color:#475569">${f.creado ? new Date(f.creado*1000).toLocaleDateString('es-MX') : '—'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="empty">Sin familias</td></tr>';
+}
+
+async function loadEscuelas() {
+  const r = await fetch(BASE + '/api/admin/escuelas');
+  const d = await r.json();
+  const esc = d.escuelas || [];
+  document.getElementById('tabla-escuelas').innerHTML = esc.length
+    ? esc.map(e => `<tr>
+        <td style="font-family:monospace;color:#475569;font-size:.8rem">${e.id}</td>
+        <td style="font-weight:600;color:#e2e8f0">${e.nombre}</td>
+        <td><span class="badge b-purple">${e.tipo || '—'}</span></td>
+        <td><a href="/escuela?eid=${e.id}" style="color:#7c3aed;font-size:.8rem">Ver panel →</a></td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" class="empty">Sin escuelas registradas</td></tr>';
+}
+
+async function crearEscuela() {
+  const nombre = document.getElementById('e-nombre').value.trim();
+  const tipo = document.getElementById('e-tipo').value;
+  if (!nombre) return;
+  const r = await fetch(BASE + '/api/escuelas', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({nombre, tipo, codigo_acceso: nombre.substring(0,6).toUpperCase().replace(/ /g,'')})
+  });
+  const d = await r.json();
+  if (d.ok) {
+    document.getElementById('e-msg').textContent = `Escuela creada. Código: ${d.codigo_acceso}`;
+    document.getElementById('e-nombre').value = '';
+    loadEscuelas();
+  }
+}
+
+loadStats();
+setInterval(loadStats, 60000);
+</script>
+</body>
+</html>

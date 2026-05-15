@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Evolución — Panel Escolar</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#050f0a;color:#e2e8f0;min-height:100vh}
+header{background:linear-gradient(135deg,#071a0f,#0d2818);padding:18px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #134d25}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-dot{width:10px;height:10px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981}
+header h1{font-size:1.2rem;font-weight:800;color:#fff}
+header h1 span{color:#10b981}
+.status{font-size:.8rem;color:#064e3b}
+nav{background:#060f08;border-bottom:1px solid #134d25;padding:0 28px;display:flex;gap:4px;overflow-x:auto}
+.tab{padding:12px 16px;font-size:.85rem;font-weight:600;color:#4b7a5c;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s}
+.tab.active,.tab:hover{color:#10b981;border-color:#10b981}
+.container{max-width:1100px;margin:0 auto;padding:28px 20px}
+.panel{display:none}.panel.active{display:block}
+.login-box{max-width:380px;margin:60px auto;background:#071a0f;border:1px solid #134d25;border-radius:16px;padding:36px}
+.login-box h2{font-size:1.3rem;font-weight:800;color:#10b981;margin-bottom:8px}
+.login-box p{font-size:.9rem;color:#4b7a5c;margin-bottom:24px}
+.field label{display:block;font-size:.8rem;color:#4b7a5c;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+.field input{width:100%;background:#050f0a;border:1px solid #134d25;border-radius:8px;padding:11px 14px;color:#e2e8f0;font-size:.95rem;margin-bottom:14px}
+.field input:focus{outline:none;border-color:#10b981}
+.btn-primary{width:100%;background:#10b981;color:#000;font-weight:800;border:none;padding:13px;border-radius:8px;cursor:pointer;font-size:.95rem;letter-spacing:.3px}
+.btn-primary:hover{background:#34d399}
+.error{color:#fb7185;font-size:.85rem;margin-top:8px;display:none}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+@media(max-width:700px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:#071a0f;border:1px solid #134d25;border-radius:12px;padding:18px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c,#10b981)}
+.kpi .num{font-size:2rem;font-weight:900;color:var(--c,#10b981)}
+.kpi .lbl{color:#4b7a5c;font-size:.8rem;margin-top:4px}
+.card{background:#071a0f;border:1px solid #134d25;border-radius:12px;padding:22px;margin-bottom:18px}
+.card-title{font-size:.85rem;font-weight:700;color:#4b7a5c;text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:#050f0a;color:#10b981;padding:9px 12px;text-align:left;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #134d25}
+td{padding:10px 12px;border-bottom:1px solid #071a0f;color:#94a3b8}
+tr:hover td{background:#060f08}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.75rem;font-weight:600}
+.b-green{background:#10b98120;color:#10b981;border:1px solid #10b98140}
+.b-red{background:#fb718520;color:#fb7185;border:1px solid #fb718540}
+.b-yellow{background:#f59e0b20;color:#f59e0b;border:1px solid #f59e0b40}
+.b-gray{background:#1e293b;color:#64748b;border:1px solid #334155}
+.alert-card{padding:14px 18px;border-radius:10px;border:1px solid #134d25;margin-bottom:10px;display:flex;align-items:flex-start;gap:14px}
+.alert-card.alta{border-color:#fb718540;background:#fb718510}
+.alert-card.media{border-color:#f59e0b40;background:#f59e0b10}
+.alert-card.baja{border-color:#134d25;background:#071a0f}
+.alert-icon{font-size:1.4rem;flex-shrink:0}
+.alert-body .title{font-weight:700;color:#e2e8f0;font-size:.9rem}
+.alert-body .sub{color:#4b7a5c;font-size:.8rem;margin-top:2px}
+.mood-bar{display:flex;gap:4px;align-items:center}
+.mood-pip{width:14px;height:14px;border-radius:50%;background:#1e3a5f}
+.mood-pip.filled{background:#10b981}
+.empty{text-align:center;padding:30px;color:#134d25;font-size:.9rem}
+.school-name{color:#10b981;font-weight:700;font-size:1.1rem;margin-bottom:4px}
+.school-meta{color:#4b7a5c;font-size:.85rem}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <header>
+    <div class="logo">
+      <div class="logo-dot"></div>
+      <h1>Evolución <span>Escolar</span></h1>
+    </div>
+  </header>
+  <div class="container">
+    <div class="login-box">
+      <h2>Acceso Escolar</h2>
+      <p>Ingresa el ID de tu institución para ver el panel completo de tu plantel.</p>
+      <div class="field">
+        <label>ID de Escuela</label>
+        <input id="eid-input" type="text" placeholder="ESC-XXXXXXXX" onkeydown="if(event.key==='Enter')entrarEscuela()">
+      </div>
+      <button class="btn-primary" onclick="entrarEscuela()">Entrar al panel</button>
+      <div class="error" id="login-error">ID no encontrado. Verifica con el administrador.</div>
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid #134d25;font-size:.8rem;color:#134d25;text-align:center">
+        ¿No tienes cuenta? Contacta a<br>
+        <strong style="color:#10b981">hola@simplex.mx</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL ESCOLAR (oculto hasta login) -->
+<div id="panel-screen" style="display:none">
+  <header>
+    <div class="logo">
+      <div class="logo-dot"></div>
+      <h1 id="escuela-nombre-header">Evolución <span>Escolar</span></h1>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span id="escuela-tipo-badge" class="badge b-green"></span>
+      <button onclick="cerrarSesion()" style="background:transparent;border:1px solid #134d25;color:#4b7a5c;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.8rem">Salir</button>
+    </div>
+  </header>
+
+  <nav>
+    <div class="tab active" onclick="showTab('resumen')">Resumen</div>
+    <div class="tab" onclick="showTab('alumnos')">Alumnos</div>
+    <div class="tab" onclick="showTab('alertas')">Alertas</div>
+    <div class="tab" onclick="showTab('maestros')">Maestros</div>
+    <div class="tab" onclick="showTab('modulos')">Módulos</div>
+  </nav>
+
+  <div class="container">
+
+    <!-- RESUMEN -->
+    <div class="panel active" id="tab-resumen">
+      <div class="kpi-grid">
+        <div class="kpi" style="--c:#10b981"><div class="num" id="k-alumnos">—</div><div class="lbl">Alumnos vinculados</div></div>
+        <div class="kpi" style="--c:#60a5fa"><div class="num" id="k-familias-esc">—</div><div class="lbl">Familias activas</div></div>
+        <div class="kpi" style="--c:#a78bfa"><div class="num" id="k-maestros-esc">—</div><div class="lbl">Maestros</div></div>
+        <div class="kpi" style="--c:#f59e0b"><div class="num" id="k-alertas-esc">—</div><div class="lbl">Alertas activas</div></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Estado general del plantel</div>
+          <div id="estado-plantel"><div class="empty">Cargando datos...</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Distribución por módulo</div>
+          <div id="dist-modulos"><div class="empty">Cargando...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALUMNOS -->
+    <div class="panel" id="tab-alumnos">
+      <div class="card">
+        <div class="card-title">Alumnos vinculados</div>
+        <table>
+          <tr><th>Nombre</th><th>Edad</th><th>Familia</th><th>Mood</th><th>Misiones</th></tr>
+          <tbody id="tabla-alumnos"><tr><td colspan="5" class="empty">Cargando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ALERTAS -->
+    <div class="panel" id="tab-alertas">
+      <div id="lista-alertas"><div class="empty">Cargando alertas...</div></div>
+    </div>
+
+    <!-- MAESTROS -->
+    <div class="panel" id="tab-maestros">
+      <div class="card">
+        <div class="card-title">Registro de maestros</div>
+        <table>
+          <tr><th>Nombre</th><th>Materia</th><th>Bienestar</th><th>Estado</th></tr>
+          <tbody id="tabla-maestros"><tr><td colspan="4" class="empty">Sin maestros registrados</td></tr></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">Registrar maestro</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end">
+          <div>
+            <label style="font-size:.8rem;color:#4b7a5c;display:block;margin-bottom:6px">Nombre</label>
+            <input id="m-nombre" style="width:100%;background:#050f0a;border:1px solid #134d25;border-radius:6px;padding:10px;color:#e2e8f0;font-size:.9rem" placeholder="Profa. García">
+          </div>
+          <div>
+            <label style="font-size:.8rem;color:#4b7a5c;display:block;margin-bottom:6px">Materia</label>
+            <input id="m-materia" style="width:100%;background:#050f0a;border:1px solid #134d25;border-radius:6px;padding:10px;color:#e2e8f0;font-size:.9rem" placeholder="Matemáticas">
+          </div>
+          <button onclick="crearMaestro()" style="background:#10b981;color:#000;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-weight:700;font-size:.9rem">Agregar</button>
+        </div>
+        <div id="m-msg" style="margin-top:8px;font-size:.85rem;color:#10b981"></div>
+      </div>
+    </div>
+
+    <!-- MÓDULOS -->
+    <div class="panel" id="tab-modulos">
+      <div class="card">
+        <div class="card-title">Módulos del plantel</div>
+        <div id="lista-modulos"><div class="empty">Cargando módulos...</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let EID = new URLSearchParams(location.search).get('eid') || '';
+let escuelaData = null;
+
+async function entrarEscuela() {
+  const eid = document.getElementById('eid-input').value.trim() || EID;
+  if (!eid) return;
+  try {
+    const r = await fetch(`/api/escuelas/${eid}`);
+    const d = await r.json();
+    if (!d.ok) { document.getElementById('login-error').style.display='block'; return; }
+    EID = eid;
+    escuelaData = d;
+    mostrarPanel(d);
+  } catch(e) {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+function mostrarPanel(d) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('panel-screen').style.display = 'block';
+  const esc = d.escuela || {};
+  document.getElementById('escuela-nombre-header').innerHTML = `${esc.nombre || 'Escuela'} <span>Escolar</span>`;
+  document.getElementById('escuela-tipo-badge').textContent = esc.tipo || 'plantel';
+  loadInsights();
+}
+
+function cerrarSesion() {
+  document.getElementById('login-screen').style.display = 'block';
+  document.getElementById('panel-screen').style.display = 'none';
+  EID = '';
+}
+
+function showTab(id) {
+  document.querySelectorAll('#panel-screen .tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#panel-screen .panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+  if (id === 'maestros') loadMaestros();
+}
+
+async function loadInsights() {
+  if (!EID) return;
+  try {
+    const r = await fetch(`/api/escuelas/${EID}/insights`);
+    const d = await r.json();
+    const ins = d.insights || {};
+
+    document.getElementById('k-alumnos').textContent = ins.total_alumnos || 0;
+    document.getElementById('k-familias-esc').textContent = ins.total_familias || 0;
+    document.getElementById('k-maestros-esc').textContent = ins.total_maestros || 0;
+
+    // Alertas
+    const alertas = ins.alertas_recientes || [];
+    document.getElementById('k-alertas-esc').textContent = alertas.filter(a => a.nivel === 'alta').length;
+
+    // Estado general
+    const mood = ins.mood_promedio || 0;
+    const pips = Array(5).fill(0).map((_,i) => `<div class="mood-pip ${i < Math.round(mood) ? 'filled' : ''}"></div>`).join('');
+    document.getElementById('estado-plantel').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#050f0a;border-radius:8px">
+          <span style="font-size:.9rem;color:#4b7a5c">Bienestar promedio</span>
+          <div class="mood-bar">${pips}<span style="color:#10b981;font-weight:700;margin-left:6px">${mood}/5</span></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#050f0a;border-radius:8px">
+          <span style="font-size:.9rem;color:#4b7a5c">Misiones completadas</span>
+          <span style="color:#a78bfa;font-weight:700">${ins.misiones_completadas || 0}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#050f0a;border-radius:8px">
+          <span style="font-size:.9rem;color:#4b7a5c">Conversaciones IA</span>
+          <span style="color:#60a5fa;font-weight:700">${ins.conversaciones || 0}</span>
+        </div>
+      </div>`;
+
+    // Distribución módulos
+    const mods = ins.modulos || {};
+    document.getElementById('dist-modulos').innerHTML = Object.entries(mods).length
+      ? Object.entries(mods).map(([m, activo]) => `
+          <div style="display:flex;justify-content:space-between;padding:8px 14px;background:#050f0a;border-radius:6px;border:1px solid #134d25;margin-bottom:6px">
+            <span style="font-size:.85rem;color:#94a3b8">${m.replace('_',' ')}</span>
+            <span class="badge ${activo ? 'b-green' : 'b-gray'}">${activo ? 'Activo' : 'Inactivo'}</span>
+          </div>`).join('')
+      : '<div class="empty">Sin módulos configurados</div>';
+
+    // Tabla alumnos
+    const alumnos = ins.alumnos || [];
+    document.getElementById('tabla-alumnos').innerHTML = alumnos.length
+      ? alumnos.map(a => {
+          const moodPips = Array(5).fill(0).map((_,i) => `<div class="mood-pip" style="width:10px;height:10px;${i < Math.round(a.mood||0) ? 'background:#10b981' : 'background:#134d25'};border-radius:50%"></div>`).join('');
+          return `<tr>
+            <td style="font-weight:600;color:#e2e8f0">${a.nombre}</td>
+            <td>${a.edad || '—'}</td>
+            <td style="color:#4b7a5c;font-size:.8rem">${a.familia || '—'}</td>
+            <td><div style="display:flex;gap:2px">${moodPips}</div></td>
+            <td>${a.misiones || 0}</td>
+          </tr>`;}).join('')
+      : '<tr><td colspan="5" class="empty">Sin alumnos vinculados</td></tr>';
+
+    // Alertas
+    document.getElementById('lista-alertas').innerHTML = alertas.length
+      ? alertas.map(a => `
+          <div class="alert-card ${a.nivel || 'baja'}">
+            <div class="alert-icon">${a.nivel === 'alta' ? '🔴' : a.nivel === 'media' ? '🟡' : '🟢'}</div>
+            <div class="alert-body">
+              <div class="title">${a.alumno || 'Alumno'} — ${a.tipo || 'alerta'}</div>
+              <div class="sub">${a.descripcion || ''} · ${a.fecha || ''}</div>
+            </div>
+          </div>`).join('')
+      : '<div class="empty">Sin alertas activas — todo en orden</div>';
+
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+async function loadMaestros() {
+  if (!EID) return;
+  // Maestros vinculados a la escuela via insights
+  const r = await fetch(`/api/escuelas/${EID}/insights`);
+  const d = await r.json();
+  const maestros = (d.insights || {}).maestros_lista || [];
+  document.getElementById('tabla-maestros').innerHTML = maestros.length
+    ? maestros.map(m => `<tr>
+        <td style="font-weight:600;color:#e2e8f0">${m.nombre}</td>
+        <td>${m.materia || '—'}</td>
+        <td><span class="badge ${(m.burnout_score||0) > 3 ? 'b-red' : 'b-green'}">${(m.burnout_score||0) > 3 ? 'En riesgo' : 'Estable'}</span></td>
+        <td><a href="/api/maestro/${m.id}/panel" target="_blank" style="color:#10b981;font-size:.8rem">Ver panel →</a></td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" class="empty">Sin maestros registrados en esta escuela</td></tr>';
+}
+
+async function crearMaestro() {
+  const nombre = document.getElementById('m-nombre').value.trim();
+  const materia = document.getElementById('m-materia').value.trim();
+  if (!nombre || !EID) return;
+  const r = await fetch('/api/maestros', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({nombre, materia, escuela_id: EID, pin: '0000'})
+  });
+  const d = await r.json();
+  if (d.ok) {
+    document.getElementById('m-msg').textContent = `Maestro creado. ID: ${d.maestro_id}`;
+    document.getElementById('m-nombre').value = '';
+    document.getElementById('m-materia').value = '';
+    loadMaestros();
+  }
+}
+
+// Auto-login si viene EID en URL
+if (EID) entrarEscuela();
+</script>
+</body>
+</html>

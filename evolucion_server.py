@@ -1608,6 +1608,84 @@ async def ping_demo():
         row = await cur.fetchone()
     return {"ok": bool(row), "demo": "DEMO01", "pin": "1234"}
 
+# ── Admin API ─────────────────────────────────────────────────────────────────
+@app.get("/api/admin/stats")
+async def admin_stats():
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        stats = {}
+        for tabla, col in [
+            ("familias","id"), ("miembros","id"), ("escuelas","id"),
+            ("misiones","id"), ("acuerdos","id"), ("metas","id"),
+            ("mood_log","id"), ("maestros","id")
+        ]:
+            try:
+                cur = await db.execute(f"SELECT COUNT(*) as n FROM {tabla}")
+                row = await cur.fetchone()
+                stats[tabla] = dict(row)["n"]
+            except:
+                stats[tabla] = 0
+        # miembros por rol
+        cur = await db.execute("SELECT rol, COUNT(*) as n FROM miembros GROUP BY rol")
+        stats["por_rol"] = {r["rol"]: r["n"] for r in await cur.fetchall()}
+        # familias recientes
+        cur = await db.execute("SELECT nombre, codigo_acceso, creado FROM familias ORDER BY creado DESC LIMIT 10")
+        stats["familias_recientes"] = [dict(r) for r in await cur.fetchall()]
+        # escuelas recientes
+        cur = await db.execute("SELECT id, nombre, tipo FROM escuelas ORDER BY rowid DESC LIMIT 10")
+        stats["escuelas_lista"] = [dict(r) for r in await cur.fetchall()]
+        # mood promedio
+        try:
+            cur = await db.execute("SELECT AVG(score) as avg FROM mood_log")
+            row = await cur.fetchone()
+            stats["mood_promedio"] = round(dict(row)["avg"] or 0, 1)
+        except:
+            stats["mood_promedio"] = 0
+        # mensajes chat
+        try:
+            cur = await db.execute("SELECT COUNT(*) as n FROM chat_log")
+            row = await cur.fetchone()
+            stats["chat_mensajes"] = dict(row)["n"]
+        except:
+            stats["chat_mensajes"] = 0
+    return {"ok": True, "stats": stats}
+
+@app.get("/api/admin/familias")
+async def admin_familias():
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("""
+            SELECT f.id, f.nombre, f.codigo_acceso, f.creado,
+                   COUNT(m.id) as miembros
+            FROM familias f
+            LEFT JOIN miembros m ON m.familia_id = f.id
+            GROUP BY f.id ORDER BY f.creado DESC LIMIT 50
+        """)
+        rows = [dict(r) for r in await cur.fetchall()]
+    return {"ok": True, "familias": rows}
+
+@app.get("/api/admin/escuelas")
+async def admin_escuelas():
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM escuelas ORDER BY rowid DESC")
+        rows = [dict(r) for r in await cur.fetchall()]
+    return {"ok": True, "escuelas": rows}
+
+# ── Panel Admin ────────────────────────────────────────────────────────────────
+@app.get("/admin", response_class=HTMLResponse)
+async def panel_admin():
+    p = os.path.join(os.path.dirname(__file__), "admin.html")
+    with open(p, encoding="utf-8") as f:
+        return f.read()
+
+# ── Panel Escolar ──────────────────────────────────────────────────────────────
+@app.get("/escuela", response_class=HTMLResponse)
+async def panel_escolar():
+    p = os.path.join(os.path.dirname(__file__), "panel_escolar.html")
+    with open(p, encoding="utf-8") as f:
+        return f.read()
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn
