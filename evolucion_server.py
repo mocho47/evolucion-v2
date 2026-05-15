@@ -1598,6 +1598,16 @@ async def manual_page(nombre: str):
     with open(path, encoding="utf-8") as f:
         return f.read()
 
+@app.get("/api/ping-demo")
+async def ping_demo():
+    """Crea DEMO01 si no existe. Llamar si la app dice 'Código no válido' en DEMO01."""
+    await _crear_demo_si_falta()
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT id FROM familias WHERE codigo_acceso='DEMO01'")
+        row = await cur.fetchone()
+    return {"ok": bool(row), "demo": "DEMO01", "pin": "1234"}
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn
