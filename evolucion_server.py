@@ -1679,6 +1679,90 @@ async def panel_admin():
     with open(p, encoding="utf-8") as f:
         return f.read()
 
+# ── Sembrar escenario demo completo ───────────────────────────────────────────
+@app.post("/api/admin/sembrar-demo")
+async def sembrar_demo():
+    """Siembra datos demo completos: familia, teen, misiones, mood, alertas, escuela."""
+    import random
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        now = time.time()
+
+        # Familia demo (ya existe DEMO01, crear DEMO02 para pruebas adicionales)
+        fid2 = "demo-fam-02"
+        cur = await db.execute("SELECT id FROM familias WHERE id=?", (fid2,))
+        if not await cur.fetchone():
+            await db.execute("INSERT OR IGNORE INTO familias VALUES (?,?,?,?)",
+                             (fid2, "Familia Hernández Demo", "DEMO02", now))
+            pin2 = hashlib.sha256("5678".encode()).hexdigest()
+            await db.execute("INSERT OR IGNORE INTO miembros VALUES (?,?,?,?,?,?,0,'{}',1,?)",
+                             ("demo-p2", fid2, "Mamá Hernández", "padre", 42, pin2, now))
+            await db.execute("INSERT OR IGNORE INTO miembros VALUES (?,?,?,?,?,?,0,'{}',1,?)",
+                             ("demo-t2", fid2, "Sofía Hernández", "teen", 15, None, now))
+
+        # Misiones para DEMO01
+        misiones_demo = [
+            ("Lavar los trastes esta semana", "completada", "demo-padre-01", "demo-teen-01"),
+            ("Estudiar Matemáticas 1h sin celular", "pendiente", "demo-padre-01", "demo-teen-01"),
+            ("Llamar al abuelo el domingo", "aprobada", "demo-padre-01", "demo-teen-01"),
+        ]
+        for txt, estado, padre, teen in misiones_demo:
+            mid = str(uuid.uuid4())[:8]
+            await db.execute(
+                "INSERT OR IGNORE INTO misiones VALUES (?,?,?,?,?,?,?)",
+                (mid, "demo-fam-01", padre, teen, txt, estado, now - random.randint(0, 604800)))
+
+        # Mood logs para demo-teen-01 (últimos 7 días)
+        for i in range(7):
+            ts = now - (i * 86400)
+            score = random.randint(2, 5)
+            await db.execute("INSERT INTO mood_log VALUES (?,?,?,?,?)",
+                             (str(uuid.uuid4())[:8], "demo-teen-01", score, None, ts))
+
+        # Acuerdos
+        acuerdos_demo = [
+            ("Llegar antes de las 10pm los fines de semana", "activo"),
+            ("Avisar si cambia el plan durante la tarde", "activo"),
+        ]
+        for txt, estado in acuerdos_demo:
+            aid = str(uuid.uuid4())[:8]
+            await db.execute("INSERT OR IGNORE INTO acuerdos VALUES (?,?,?,?,?)",
+                             (aid, "demo-fam-01", txt, estado, now - 86400))
+
+        # Alerta de riesgo demo
+        await db.execute("INSERT OR IGNORE INTO alertas VALUES (?,?,?,?,?,?,?)",
+                         (str(uuid.uuid4())[:8], "demo-fam-01", "demo-teen-01",
+                          "riesgo_medio", "Patrón de bajo bienestar detectado esta semana",
+                          0, now - 3600))
+
+        # Escuela demo
+        cur2 = await db.execute("SELECT id FROM escuelas WHERE id=?", ("escuela-demo-01",))
+        if not await cur2.fetchone():
+            await db.execute(
+                "INSERT OR IGNORE INTO escuelas VALUES (?,?,?,?,?,1,?)",
+                ("escuela-demo-01", "Prepa Lázaro Cárdenas Demo", "ESCUELA01",
+                 "Tlaquepaque, Jalisco", "Dr. Roberto Pérez", now))
+            await db.execute(
+                "INSERT OR IGNORE INTO escuela_familias VALUES (?,?)",
+                ("escuela-demo-01", "demo-fam-01"))
+
+        # Maestro demo con burnout moderado
+        cur3 = await db.execute("SELECT id FROM maestros WHERE id=?", ("maestro-demo-01",))
+        if not await cur3.fetchone():
+            await db.execute(
+                "INSERT OR IGNORE INTO maestros VALUES (?,?,?,?,?)",
+                ("maestro-demo-01", "escuela-demo-01", "Prof. Ana García", "Matemáticas", now))
+        for i in range(5):
+            ts = now - (i * 86400)
+            score = random.choice([2, 2, 3, 2, 1])
+            await db.execute(
+                "INSERT INTO maestro_mood VALUES (?,?,?,?,?)",
+                (str(uuid.uuid4())[:8], "maestro-demo-01", score,
+                 random.choice(["Muy cansada esta semana", "Los alumnos no participan", None]), ts))
+
+        await db.commit()
+    return {"ok": True, "msg": "Escenario demo sembrado: DEMO01/1234, DEMO02/5678, escuela, misiones, mood, alertas, maestro con burnout"}
+
 # ── Panel Escolar ──────────────────────────────────────────────────────────────
 @app.get("/escuela", response_class=HTMLResponse)
 async def panel_escolar():
