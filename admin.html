@@ -118,10 +118,20 @@ tr:last-child td{border-bottom:none}
         <div class="title">Manuales</div>
         <div class="desc">Documentación pública</div>
       </a>
-      <a class="action-btn" href="/api/ping-demo" target="_blank" onclick="this.textContent='Creando...';fetch('/api/ping-demo').then(()=>location.reload())">
+      <a class="action-btn" href="/nosotros" target="_blank">
+        <div class="icon">🌱</div>
+        <div class="title">Nosotros</div>
+        <div class="desc">Visión, misión y proyecto</div>
+      </a>
+      <a class="action-btn" style="cursor:pointer" onclick="sembrarDemo(this)">
+        <div class="icon">🌱</div>
+        <div class="title">Sembrar Demo</div>
+        <div class="desc">Crea escenario DEMO02 completo</div>
+      </a>
+      <a class="action-btn" style="cursor:pointer" onclick="resetDemo(this)">
         <div class="icon">🔄</div>
         <div class="title">Recrear DEMO01</div>
-        <div class="desc">Si el demo falla</div>
+        <div class="desc">Restaura acceso de prueba</div>
       </a>
       <a class="action-btn" href="/api/admin/stats" target="_blank">
         <div class="icon">📊</div>
@@ -223,6 +233,9 @@ tr:last-child td{border-bottom:none}
         <tr><td>Manuales</td><td style="font-family:monospace;color:#7c3aed">/manuales</td><td><span class="badge b-green">Activo</span></td></tr>
         <tr><td>Health Check</td><td style="font-family:monospace;color:#7c3aed">/health</td><td><span class="badge b-green">Activo</span></td></tr>
         <tr><td>Demo Reset</td><td style="font-family:monospace;color:#7c3aed">/api/ping-demo</td><td><span class="badge b-green">Activo</span></td></tr>
+        <tr><td>Nosotros</td><td style="font-family:monospace;color:#7c3aed">/nosotros</td><td><span class="badge b-green">Activo</span></td></tr>
+        <tr><td>Aviso de Privacidad</td><td style="font-family:monospace;color:#7c3aed">/privacidad</td><td><span class="badge b-green">Activo</span></td></tr>
+        <tr><td>Términos</td><td style="font-family:monospace;color:#7c3aed">/terminos</td><td><span class="badge b-green">Activo</span></td></tr>
       </table>
     </div>
     <div class="card">
@@ -263,6 +276,7 @@ async function loadStats() {
     document.getElementById('k-teens').textContent = (s.por_rol || {}).teen || 0;
     document.getElementById('k-escuelas').textContent = s.escuelas || 0;
     document.getElementById('k-mood').textContent = s.mood_promedio || '—';
+    statsLoaded = true;
     document.getElementById('server-status').textContent = 'Servidor activo';
     document.getElementById('last-update').textContent = new Date().toLocaleTimeString('es-MX');
 
@@ -355,6 +369,41 @@ async function crearEscuela() {
     document.getElementById('e-nombre').value = '';
     loadEscuelas();
   }
+}
+
+// ── Timeout para "Cargando..." infinito ──────────────────────────────────────
+let statsLoaded = false;
+setTimeout(() => {
+  if (!statsLoaded) {
+    document.querySelectorAll('.empty').forEach(el => {
+      if (el.textContent === 'Cargando...') {
+        el.innerHTML = 'Sin datos · <button onclick="loadStats()" style="background:transparent;border:1px solid #7c3aed;color:#a78bfa;padding:2px 10px;border-radius:6px;cursor:pointer;font-size:.8rem">Reintentar</button>';
+      }
+    });
+    document.getElementById('server-status').textContent = 'Sin respuesta';
+  }
+}, 5000);
+
+async function resetDemo(el) {
+  const orig = el.querySelector('.title').textContent;
+  el.querySelector('.title').textContent = 'Creando...';
+  try {
+    await fetch('/api/ping-demo');
+    el.querySelector('.title').textContent = 'DEMO01 listo';
+    setTimeout(() => { el.querySelector('.title').textContent = orig; loadStats(); }, 2000);
+  } catch(e) { el.querySelector('.title').textContent = 'Error'; }
+}
+
+async function sembrarDemo(el) {
+  const orig = el.querySelector('.title').textContent;
+  el.querySelector('.title').textContent = 'Sembrando...';
+  try {
+    const r = await fetch('/api/admin/sembrar-demo', {method:'POST'});
+    const d = await r.json();
+    el.querySelector('.title').textContent = d.ok ? 'Listo ✓' : 'Error';
+    el.querySelector('.desc').textContent = d.ok ? 'DEMO02/5678 activo' : (d.error||'Fallo');
+    setTimeout(() => { el.querySelector('.title').textContent = orig; loadStats(); }, 3000);
+  } catch(e) { el.querySelector('.title').textContent = 'Error'; }
 }
 
 loadStats();

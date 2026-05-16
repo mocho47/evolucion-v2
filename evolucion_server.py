@@ -1770,6 +1770,24 @@ async def panel_escolar():
     with open(p, encoding="utf-8") as f:
         return f.read()
 
+@app.get("/nosotros", response_class=HTMLResponse)
+async def pagina_nosotros():
+    p = os.path.join(os.path.dirname(__file__), "nosotros.html")
+    with open(p, encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/privacidad", response_class=HTMLResponse)
+async def pagina_privacidad():
+    p = os.path.join(os.path.dirname(__file__), "privacidad.html")
+    with open(p, encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/terminos", response_class=HTMLResponse)
+async def pagina_terminos():
+    p = os.path.join(os.path.dirname(__file__), "terminos.html")
+    with open(p, encoding="utf-8") as f:
+        return f.read()
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn

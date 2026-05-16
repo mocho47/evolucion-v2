@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual Admin — Evolución</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#030308;--s1:#080814;--s2:#0d0d20;--border:#1a1a35;
+  --accent:#00e5a0;--accent2:#00b87a;--accent-dim:rgba(0,229,160,.08);
+  --purple:#7c3aed;--purple-dim:rgba(124,58,237,.1);
+  --red:#ff4060;--red-dim:rgba(255,64,96,.08);
+  --yellow:#fbbf24;--yellow-dim:rgba(251,191,36,.08);
+  --text:#eeeef8;--muted:#8888aa;--muted2:#4a4a6a;
+}
+body{background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  font-size:15px;line-height:1.65;padding:2rem 1.5rem;max-width:860px;margin:0 auto;}
+h1{font-size:2rem;font-weight:900;letter-spacing:-.03em;margin-bottom:.3rem;}
+h1 span{color:var(--accent);}
+.meta{color:var(--muted);font-size:.82rem;margin-bottom:2.5rem;}
+h2{font-size:1.25rem;font-weight:800;letter-spacing:-.02em;margin:2.2rem 0 .8rem;
+  color:var(--text);border-left:3px solid var(--accent);padding-left:.75rem;}
+h3{font-size:1rem;font-weight:700;color:var(--accent);margin:1.4rem 0 .5rem;}
+p{color:var(--muted);margin-bottom:.75rem;}
+.url{font-family:monospace;background:var(--s1);border:1px solid var(--border);
+  border-radius:8px;padding:.5rem 1rem;color:var(--accent);font-size:.88rem;
+  display:block;margin:.5rem 0;}
+code{background:var(--s1);border:1px solid var(--border);border-radius:4px;
+  padding:.15rem .4rem;font-size:.85rem;color:#a78bfa;}
+
+/* Paso a paso */
+.steps{margin:1rem 0;}
+.step{display:flex;gap:1rem;margin-bottom:1rem;align-items:flex-start;}
+.step-n{width:28px;height:28px;border-radius:50%;background:var(--accent);
+  color:#030308;font-weight:900;font-size:.78rem;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;margin-top:.1rem;}
+.step-body{flex:1;}
+.step-t{font-weight:700;font-size:.92rem;margin-bottom:.2rem;}
+.step-d{color:var(--muted);font-size:.85rem;}
+
+/* Alerts */
+.alert{border-radius:10px;padding:.85rem 1.1rem;margin:1rem 0;font-size:.88rem;}
+.alert-ok{background:var(--accent-dim);border:1px solid rgba(0,229,160,.2);color:var(--accent);}
+.alert-warn{background:var(--yellow-dim);border:1px solid rgba(251,191,36,.25);color:var(--yellow);}
+.alert-err{background:var(--red-dim);border:1px solid rgba(255,64,96,.2);color:var(--red);}
+.alert strong{font-weight:800;}
+
+/* Table */
+table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.85rem;}
+th{background:var(--s1);text-align:left;padding:.55rem .75rem;
+  font-weight:700;border-bottom:1px solid var(--border);color:var(--muted);}
+td{padding:.5rem .75rem;border-bottom:1px solid #1a1a25;vertical-align:top;}
+td:first-child{color:var(--accent);font-family:monospace;font-weight:700;}
+tr:last-child td{border:none;}
+
+/* TOC */
+.toc{background:var(--s1);border:1px solid var(--border);border-radius:12px;
+  padding:1.25rem 1.4rem;margin-bottom:2rem;}
+.toc-title{font-weight:800;margin-bottom:.75rem;font-size:.9rem;color:var(--muted);}
+.toc a{display:block;color:var(--muted);text-decoration:none;padding:.25rem 0;
+  font-size:.85rem;border-bottom:1px solid #1a1a25;}
+.toc a:last-child{border:none;}
+.toc a:hover{color:var(--accent);}
+
+/* Profile badges */
+.badge{display:inline-block;border-radius:99px;padding:.25rem .75rem;
+  font-size:.72rem;font-weight:700;letter-spacing:.04em;margin-right:.3rem;}
+.b-admin{background:var(--purple-dim);color:#a78bfa;border:1px solid rgba(124,58,237,.3);}
+.b-parent{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(0,229,160,.25);}
+.b-teen{background:rgba(0,180,255,.08);color:#00b4ff;border:1px solid rgba(0,180,255,.25);}
+.b-school{background:rgba(251,191,36,.08);color:var(--yellow);border:1px solid rgba(251,191,36,.25);}
+.b-teacher{background:rgba(255,64,96,.08);color:var(--red);border:1px solid rgba(255,64,96,.2);}
+
+@media print{
+  body{background:#fff;color:#111;padding:1.5rem;}
+  :root{--bg:#fff;--s1:#f8f8f8;--text:#111;--muted:#555;--muted2:#888;
+    --border:#ddd;--accent:#00aa77;--purple:#5b21b6;--red:#cc2040;--yellow:#b45309;}
+  .url,.toc{border:1px solid #ddd;}
+}
+</style>
+</head>
+<body>
+
+<h1>EVOLUCIÓN <span>— Manual Administrador</span></h1>
+<p class="meta">Guía completa · Demos · Troubleshooting · Anuar Milán · v1.0 · Mayo 2026</p>
+
+<div class="toc">
+  <div class="toc-title">CONTENIDO</div>
+  <a href="#accesos">1. Accesos y URLs</a>
+  <a href="#perfiles">2. Perfiles del sistema</a>
+  <a href="#demo-basico">3. Demo básico — DEMO01</a>
+  <a href="#demo-completo">4. Sembrar demo completo</a>
+  <a href="#demo-familiar">5. Demo Perfil Familiar (padre + teen)</a>
+  <a href="#demo-escolar">6. Demo Perfil Escolar</a>
+  <a href="#demo-admin">7. Demo Panel Admin</a>
+  <a href="#fallas">8. Fallas comunes y soluciones</a>
+  <a href="#comandos">9. Comandos de emergencia</a>
+</div>
+
+<!-- 1 -->
+<h2 id="accesos">1. Accesos y URLs</h2>
+
+<table>
+  <tr><th>Destino</th><th>URL</th></tr>
+  <tr><td>/</td><td>Landing pública — https://evolucion-v2.onrender.com</td></tr>
+  <tr><td>/app</td><td>App principal (padres y teens)</td></tr>
+  <tr><td>/admin</td><td>Panel administrador (tuyo)</td></tr>
+  <tr><td>/escuela</td><td>Panel escolar (para directivos)</td></tr>
+  <tr><td>/maestro</td><td>Panel docente (para profesores)</td></tr>
+  <tr><td>/api/admin/stats</td><td>JSON con métricas globales</td></tr>
+  <tr><td>/api/ping-demo</td><td>Verificar que DEMO01 existe</td></tr>
+  <tr><td>/api/admin/sembrar-demo</td><td>POST — siembra datos demo completos</td></tr>
+</table>
+
+<div class="alert alert-warn"><strong>Cold start:</strong> En plan gratuito el servidor duerme después de 15 min sin tráfico. Abre la URL 10 min antes de cualquier demo para despertarlo.</div>
+
+<!-- 2 -->
+<h2 id="perfiles">2. Perfiles del sistema</h2>
+
+<table>
+  <tr><th>Perfil</th><th>Acceso</th><th>Ve</th><th>Puede</th></tr>
+  <tr><td><span class="badge b-admin">ADMIN</span></td><td>/admin (sin login)</td><td>Todo el sistema</td><td>Ver métricas, crear escuelas, sembrar demos</td></tr>
+  <tr><td><span class="badge b-parent">PADRE/MAMÁ</span></td><td>/app → código familia → PIN</td><td>Panorama emocional, alertas, misiones</td><td>Crear/aprobar misiones, acuerdos, agregar teen</td></tr>
+  <tr><td><span class="badge b-teen">TEEN</span></td><td>/app → código familia</td><td>Su chat privado, misiones, puntos</td><td>Hablar con IA, completar misiones, ver estado</td></tr>
+  <tr><td><span class="badge b-school">ESCUELA</span></td><td>/escuela?eid=escuela-demo-01</td><td>Alertas, estadísticas, maestros</td><td>Ver burnout docente, alertas de alumnos</td></tr>
+  <tr><td><span class="badge b-teacher">MAESTRO</span></td><td>/maestro?mid=maestro-demo-01</td><td>Su panel personal de bienestar</td><td>Registrar mood, chatear con IA de apoyo</td></tr>
+</table>
+
+<!-- 3 -->
+<h2 id="demo-basico">3. Demo básico — DEMO01</h2>
+<p>La cuenta DEMO01 se crea automáticamente cada vez que el servidor arranca. Nunca la borres.</p>
+
+<div class="steps">
+  <div class="step"><div class="step-n">1</div><div class="step-body">
+    <div class="step-t">Abrir la app como padre</div>
+    <div class="step-d">Ve a <code>/app</code> → ingresa código <code>DEMO01</code> → PIN <code>1234</code> → entras como "Papá Demo"</div>
+  </div></div>
+  <div class="step"><div class="step-n">2</div><div class="step-body">
+    <div class="step-t">Abrir la app como teen (otro dispositivo o ventana incógnito)</div>
+    <div class="step-d">Ve a <code>/app</code> → ingresa código <code>DEMO01</code> → selecciona "Demo Teen" (sin PIN)</div>
+  </div></div>
+  <div class="step"><div class="step-n">3</div><div class="step-body">
+    <div class="step-t">Mostrar el chat de IA del teen</div>
+    <div class="step-d">El teen escribe "me siento mal hoy" — el asistente responde con empatía real usando Z.ai → Groq → Ollama</div>
+  </div></div>
+  <div class="step"><div class="step-n">4</div><div class="step-body">
+    <div class="step-t">Mostrar el panel del padre</div>
+    <div class="step-d">El padre ve el estado emocional del teen, puede crear una misión y aprobarla cuando el teen la complete</div>
+  </div></div>
+</div>
+
+<!-- 4 -->
+<h2 id="demo-completo">4. Sembrar demo completo (para demos avanzados)</h2>
+<p>Este comando crea DEMO02, misiones, mood logs de 7 días, acuerdos, alerta de riesgo, escuela y maestro con burnout:</p>
+
+<span class="url">POST https://evolucion-v2.onrender.com/api/admin/sembrar-demo</span>
+
+<p>Desde el panel admin, hay un botón "Sembrar Demo Completo" que hace esto con un clic.</p>
+
+<div class="alert alert-ok"><strong>Resultado:</strong> DEMO02/5678 (Familia Hernández), escuela "Prepa Lázaro Cárdenas Demo", maestro "Prof. Ana García" con historial de burnout, alertas de riesgo activas.</div>
+
+<div class="steps">
+  <div class="step"><div class="step-n">1</div><div class="step-body">
+    <div class="step-t">Ir al Panel Admin</div>
+    <div class="step-d">Abre <code>/admin</code> → haz clic en "Sembrar Demo Completo" en el tab Sistema</div>
+  </div></div>
+  <div class="step"><div class="step-n">2</div><div class="step-body">
+    <div class="step-t">Entrar como padre de DEMO02</div>
+    <div class="step-d">Código <code>DEMO02</code>, PIN <code>5678</code> — entras como "Mamá Hernández" con teen "Sofía Hernández"</div>
+  </div></div>
+  <div class="step"><div class="step-n">3</div><div class="step-body">
+    <div class="step-t">Ver la alerta de riesgo</div>
+    <div class="step-d">El padre ve una alerta de bienestar para Sofía — ahí demuestras el sistema de detección temprana</div>
+  </div></div>
+  <div class="step"><div class="step-n">4</div><div class="step-body">
+    <div class="step-t">Abrir panel escolar</div>
+    <div class="step-d">Ir a <code>/escuela?eid=escuela-demo-01</code> — ves la escuela "Prepa Lázaro Cárdenas Demo" con alumnos, alertas y maestros</div>
+  </div></div>
+</div>
+
+<!-- 5 -->
+<h2 id="demo-familiar">5. Demo Perfil Familiar — Guión completo</h2>
+
+<h3>Narrativa sugerida:</h3>
+<p>"Imagina que eres mamá o papá. Tienes un adolescente de 15 años. No sabes cómo está hoy. Abres Evolución..."</p>
+
+<div class="steps">
+  <div class="step"><div class="step-n">1</div><div class="step-body">
+    <div class="step-t">Mostrar que NO es una red social</div>
+    <div class="step-d">Primero abre el chat del teen: "Aquí tu hijo puede decir lo que no dice en casa. Tú nunca lees esto."</div>
+  </div></div>
+  <div class="step"><div class="step-n">2</div><div class="step-body">
+    <div class="step-t">Hacer una pregunta emocional al chat</div>
+    <div class="step-d">Teen escribe: "reprobé matemáticas y tengo miedo de decirle a mi mamá" — muestra la respuesta del AI</div>
+  </div></div>
+  <div class="step"><div class="step-n">3</div><div class="step-body">
+    <div class="step-t">Cambiar al panel del padre</div>
+    <div class="step-d">Mostrar que el padre VE el estado emocional (algo va mal) pero NO ve el contenido del chat</div>
+  </div></div>
+  <div class="step"><div class="step-n">4</div><div class="step-body">
+    <div class="step-t">Crear una misión</div>
+    <div class="step-d">Padre crea misión: "Estudiar Matemáticas 1 hora". El teen la ve, la completa, el padre la aprueba con su PIN.</div>
+  </div></div>
+</div>
+
+<!-- 6 -->
+<h2 id="demo-escolar">6. Demo Perfil Escolar — Guión</h2>
+<p>"Ahora imagina que eres el director de una preparatoria. Tienes 400 alumnos. ¿Cuántos están en riesgo hoy?"</p>
+
+<div class="steps">
+  <div class="step"><div class="step-n">1</div><div class="step-body">
+    <div class="step-t">Abrir panel escolar</div>
+    <div class="step-d">Ve a <code>/escuela?eid=escuela-demo-01</code> — no necesita login, muestra datos del plantel en tiempo real</div>
+  </div></div>
+  <div class="step"><div class="step-n">2</div><div class="step-body">
+    <div class="step-t">Mostrar las alertas</div>
+    <div class="step-d">Tab Alertas — "Este alumno lleva 5 días con bienestar bajo. Sistema detectó patrón. Nadie más lo sabía."</div>
+  </div></div>
+  <div class="step"><div class="step-n">3</div><div class="step-body">
+    <div class="step-t">Mostrar el burnout docente</div>
+    <div class="step-d">Tab Maestros — "Prof. Ana García lleva una semana con estado crítico. Burnout inminente." Esto hoy no existe en ningún sistema.</div>
+  </div></div>
+</div>
+
+<!-- 7 -->
+<h2 id="demo-admin">7. Demo Panel Admin (tu panel)</h2>
+
+<div class="steps">
+  <div class="step"><div class="step-n">1</div><div class="step-body">
+    <div class="step-t">Abrir /admin</div>
+    <div class="step-d">Tab Dashboard: ves familias activas, mood promedio del sistema, escuelas registradas, actividad reciente.</div>
+  </div></div>
+  <div class="step"><div class="step-n">2</div><div class="step-body">
+    <div class="step-t">Crear una escuela nueva en vivo</div>
+    <div class="step-d">Tab Escuelas → llenar el formulario → crear escuela → se genera código automático → ya puede vincularse a familias.</div>
+  </div></div>
+  <div class="step"><div class="step-n">3</div><div class="step-body">
+    <div class="step-t">Mostrar métricas globales</div>
+    <div class="step-d">En Dashboard: "Esto que ves aquí es lo que la SEP nunca ha visto — bienestar en tiempo real de todos los alumnos del sistema."</div>
+  </div></div>
+</div>
+
+<!-- 8 -->
+<h2 id="fallas">8. Fallas comunes y soluciones</h2>
+
+<table>
+  <tr><th>Síntoma</th><th>Causa</th><th>Solución</th></tr>
+  <tr>
+    <td>Servidor tarda 30-50s en responder</td>
+    <td>Cold start — plan gratuito</td>
+    <td>Abre la URL 10 min antes. En Starter plan no pasa.</td>
+  </tr>
+  <tr>
+    <td>DEMO01 desaparecido</td>
+    <td>Deploy nuevo con DB limpia</td>
+    <td>Ir a <code>/api/ping-demo</code> — se recrea automáticamente. O reiniciar el servicio.</td>
+  </tr>
+  <tr>
+    <td>Chat IA no responde</td>
+    <td>GROQ_API_KEY no configurada en Render</td>
+    <td>Render dashboard → evolucion-v2 → Environment → verificar GROQ_API_KEY y ZAI_API_KEY.</td>
+  </tr>
+  <tr>
+    <td>Error 500 en /app</td>
+    <td>DB corrupta o migración faltante</td>
+    <td>Render dashboard → Shell → <code>rm /data/evolucion.db</code> → reiniciar servicio.</td>
+  </tr>
+  <tr>
+    <td>Datos desaparecen en cada deploy</td>
+    <td>Sin disco persistente</td>
+    <td>Render → Settings → Disks → verificar que existe "evolucion-db" en /data. EVO_DB=/data/evolucion.db.</td>
+  </tr>
+  <tr>
+    <td>Panel admin devuelve 404</td>
+    <td>Deploy no completado</td>
+    <td>Verificar en dashboard.render.com que el último deploy está en "Live" con el commit correcto.</td>
+  </tr>
+  <tr>
+    <td>IA responde en inglés</td>
+    <td>Prompt del sistema sin idioma</td>
+    <td>El sistema tiene instrucción en español — si persiste, revisar GROQ_MODEL en las env vars.</td>
+  </tr>
+</table>
+
+<!-- 9 -->
+<h2 id="comandos">9. Comandos de emergencia</h2>
+
+<h3>Verificar servidor</h3>
+<span class="url">curl https://evolucion-v2.onrender.com/api/admin/stats</span>
+
+<h3>Recrear DEMO01</h3>
+<span class="url">curl https://evolucion-v2.onrender.com/api/ping-demo</span>
+
+<h3>Sembrar demo completo</h3>
+<span class="url">curl -X POST https://evolucion-v2.onrender.com/api/admin/sembrar-demo</span>
+
+<h3>Forzar nuevo deploy desde Render API</h3>
+<span class="url">curl -X POST -H "Authorization: Bearer [TOKEN]" https://api.render.com/v1/services/srv-d81dj5navr4c73ba7c20/deploys -d '{"clearCache":"do_not_clear"}'</span>
+
+<h3>Ver logs en Render</h3>
+<p>Render dashboard → evolucion-v2 → Logs. Filtrar por "ERROR" para ver solo errores.</p>
+
+<h3>Acceso SSH a Render (plan Starter)</h3>
+<span class="url">ssh srv-d81dj5navr4c73ba7c20@ssh.oregon.render.com</span>
+
+<div class="alert alert-ok"><strong>Contacto técnico:</strong> Claude Code — simplemente describe el problema en el chat y se resuelve en minutos.</div>
+
+<div style="margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:.78rem;color:var(--muted2);text-align:center;">
+  Evolución by Simplex · Guadalajara, México · 2026 · Manual Admin v1.0
+</div>
+
+</body>
+</html>
