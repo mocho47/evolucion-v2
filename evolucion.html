@@ -255,6 +255,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 }
 #sbtn:hover{transform:scale(1.08);}
 #sbtn:disabled{background:var(--border);box-shadow:none;cursor:not-allowed;}
+#mic-btn{
+  background:transparent;border:1px solid var(--border);color:var(--muted);
+  width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:1rem;
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+#mic-btn.listening{border-color:var(--accent);color:var(--accent);
+  background:var(--accent-dim);animation:mic-pulse 1s infinite;}
+@keyframes mic-pulse{0%,100%{box-shadow:0 0 0 0 var(--accent-dim)}50%{box-shadow:0 0 0 6px transparent;}}
 
 /* Drawer */
 #overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:none;}
@@ -582,6 +591,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
     <button class="mb" onclick="mood(5)" title="Fuego">🔥</button>
   </div>
   <div id="input-area">
+    <button id="mic-btn" onclick="toggleMic()" title="Habla" style="display:none">🎙</button>
     <textarea id="txt" rows="1" placeholder="¿Qué tienes en la cabeza?"
       oninput="resize(this)" onkeydown="tecla(event)"></textarea>
     <button id="sbtn" onclick="enviar()">↑</button>
@@ -1611,6 +1621,35 @@ document.getElementById('pin-input')?.addEventListener('keydown',e=>{
 document.getElementById('deso-desc')?.addEventListener('keydown',e=>{
   if(e.key==='Enter'){e.preventDefault();agregarDeseo();}
 });
+
+// ── Voz ──────────────────────────────────────────────────────────────────────
+(function initVoice(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return; // navegador no compatible
+  const micBtn = document.getElementById('mic-btn');
+  micBtn.style.display = 'flex';
+  const rec = new SR();
+  rec.lang = 'es-MX';
+  rec.continuous = false;
+  rec.interimResults = false;
+  let listening = false;
+  rec.onresult = e => {
+    const txt = e.results[0][0].transcript;
+    document.getElementById('txt').value = txt;
+    resize(document.getElementById('txt'));
+  };
+  rec.onend = () => { listening = false; micBtn.classList.remove('listening'); micBtn.textContent = '🎙'; };
+  rec.onerror = () => { listening = false; micBtn.classList.remove('listening'); micBtn.textContent = '🎙'; };
+  window.toggleMic = function() {
+    if (!listening) {
+      rec.start(); listening = true;
+      micBtn.classList.add('listening'); micBtn.textContent = '⏹';
+    } else {
+      rec.stop(); listening = false;
+      micBtn.classList.remove('listening'); micBtn.textContent = '🎙';
+    }
+  };
+})();
 </script>
 </body>
 </html>
