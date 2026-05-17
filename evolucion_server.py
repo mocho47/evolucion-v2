@@ -23,6 +23,10 @@ DB_PATH      = os.getenv("EVO_DB",      os.path.join(os.path.dirname(__file__), 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 ZAI_API_KEY  = os.getenv("ZAI_API_KEY",  "")
 PORT         = int(os.getenv("PORT", "8080"))
+GREEN_INSTANCE = os.getenv("GREEN_API_INSTANCE", "")
+GREEN_TOKEN    = os.getenv("GREEN_API_TOKEN", "")
+GREEN_SERVER   = os.getenv("GREEN_API_SERVER", "")
+_GREEN_BASE    = f"https://{GREEN_SERVER}.api.greenapi.com/waInstance{GREEN_INSTANCE}" if GREEN_INSTANCE else ""
 
 # ── SSE en memoria ────────────────────────────────────────────────────────────
 _sse_queues: dict[str, asyncio.Queue] = {}
@@ -34,6 +38,26 @@ async def _notificar(evento: str, datos: dict, canal: str = "global"):
             await _sse_queues[cid].put(msg)
         except Exception:
             pass
+
+# ── WhatsApp via Green API ────────────────────────────────────────────────────
+async def send_whatsapp(phone: str, message: str) -> bool:
+    if not _GREEN_BASE or not GREEN_TOKEN:
+        return False
+    digits = "".join(c for c in phone if c.isdigit())
+    if len(digits) == 10:
+        digits = "52" + digits
+    chat_id = f"{digits}@c.us"
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.post(
+                f"{_GREEN_BASE}/sendMessage/{GREEN_TOKEN}",
+                json={"chatId": chat_id, "message": message}
+            )
+            return r.status_code == 200
+    except Exception as e:
+        logger.warning(f"WhatsApp send error: {e}")
+        return False
 
 async def _sse_gen(cliente_id: str) -> AsyncGenerator[str, None]:
     q = asyncio.Queue(maxsize=50)
@@ -485,6 +509,11 @@ async def init_db():
                 score INTEGER NOT NULL, nota TEXT, creado REAL
             );
         """)
+        # Migración: telefono_padre en familias (no falla si ya existe)
+        try:
+            await db.execute("ALTER TABLE familias ADD COLUMN telefono_padre TEXT DEFAULT ''")
+        except Exception:
+            pass
         await db.commit()
 
 @app.on_event("startup")
@@ -606,6 +635,23 @@ async def registrar_alerta(db, fid: str, tid: str, tipo: str):
     await db.execute("INSERT INTO alertas VALUES (?,?,?,?,?,?,0,?)",
         (str(uuid.uuid4())[:8], fid, tid, tipo, f"Tema: {tipo}", sugerencia, time.time()))
     await _notificar("alerta_evo", {"tipo": tipo, "sugerencia": sugerencia}, canal=f"padres_{fid}")
+    if tipo == "riesgo_alto":
+        try:
+            cur = await db.execute(
+                "SELECT f.telefono_padre, m.nombre FROM familias f JOIN miembros m ON m.familia_id=f.id WHERE f.id=? AND m.id=?",
+                (fid, tid))
+            row = await cur.fetchone()
+            if row and row[0]:
+                msg = (
+                    f"🚨 *Alerta Evolución*\n\n"
+                    f"Tu hij@ *{row[1]}* activó una señal de seguridad en la app.\n\n"
+                    f"No es para alarmarte — es para que no cargue esto solo/a.\n"
+                    f"Acércate con calma y pregúntale cómo está.\n\n"
+                    f"— Equipo Evolución by Simplex"
+                )
+                asyncio.create_task(send_whatsapp(row[0], msg))
+        except Exception as e:
+            logger.warning(f"WhatsApp alerta error: {e}")
 
 # ── Models ────────────────────────────────────────────────────────────────────
 class RegistrarFamilia(BaseModel):
@@ -1787,6 +1833,45 @@ async def pagina_terminos():
     p = os.path.join(os.path.dirname(__file__), "terminos.html")
     with open(p, encoding="utf-8") as f:
         return f.read()
+
+# ── WhatsApp endpoints ────────────────────────────────────────────────────────
+@app.get("/api/whatsapp/estado")
+async def whatsapp_estado():
+    if not _GREEN_BASE:
+        return {"ok": False, "msg": "Green API no configurado"}
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=8) as client:
+            r = await client.get(f"{_GREEN_BASE}/getStateInstance/{GREEN_TOKEN}")
+            data = r.json()
+            return {"ok": True, "estado": data.get("stateInstance", "unknown"), "instancia": GREEN_INSTANCE}
+    except Exception as e:
+        return {"ok": False, "msg": str(e)}
+
+@app.post("/api/familia/{fid}/telefono")
+async def actualizar_telefono(fid: str, req: Request):
+    body = await req.json()
+    telefono = "".join(c for c in str(body.get("telefono", "")) if c.isdigit())
+    if len(telefono) not in (10, 12, 13):
+        raise HTTPException(400, "Teléfono inválido (10 dígitos sin código país, o con 52)")
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("UPDATE familias SET telefono_padre=? WHERE id=?", (telefono, fid))
+        await db.commit()
+    return {"ok": True, "telefono": telefono}
+
+@app.post("/api/whatsapp/webhook")
+async def whatsapp_webhook(req: Request):
+    try:
+        data = await req.json()
+        tipo = data.get("typeWebhook", "")
+        if tipo == "incomingMessageReceived":
+            msg_data = data.get("messageData", {})
+            text = msg_data.get("textMessageData", {}).get("textMessage", "")
+            sender = data.get("senderData", {}).get("chatId", "")
+            logger.info(f"WhatsApp entrante de {sender}: {text[:80]}")
+        return {"ok": True}
+    except Exception:
+        return {"ok": True}
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
