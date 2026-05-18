@@ -185,6 +185,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .impacto-medio{background:rgba(0,128,255,.12);color:var(--blue);border:1px solid rgba(0,128,255,.22);}
 .impacto-bajo{background:var(--surface2);color:var(--muted2);border:1px solid var(--border);}
 
+/* DINAMICAS */
+.din-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:.85rem;margin-bottom:.65rem;}
+.din-filtros{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.75rem;}
+.din-filtro{background:var(--surface2);border:1px solid var(--border);color:var(--muted2);
+  border-radius:99px;padding:.25rem .75rem;font-size:.73rem;cursor:pointer;font-weight:600;font-family:inherit;}
+.din-filtro.active{background:var(--purple-dim);border-color:var(--purple);color:var(--text);}
+
 /* MODAL REPORTE */
 #modal-reporte{position:fixed;inset:0;background:rgba(3,3,8,.88);z-index:900;
   display:none;align-items:center;justify-content:center;padding:1.25rem;}
@@ -244,6 +252,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
     <button class="tab"        id="tab-aptitudes"   onclick="switchTab('aptitudes')">Aptitudes</button>
     <button class="tab"        id="tab-rezago"      onclick="switchTab('rezago')">Rezago</button>
     <button class="tab"        id="tab-bienestar"   onclick="switchTab('bienestar')">Bienestar</button>
+    <button class="tab"        id="tab-dinamicas"   onclick="switchTab('dinamicas')">Dinámicas</button>
     <button class="tab"        id="tab-coaching"    onclick="switchTab('coaching')">Coaching IA</button>
   </div>
   <div id="content"></div>
@@ -255,6 +264,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);
     <h3>📊 Reporte semanal del grupo</h3>
     <button class="modal-close" onclick="cerrarReporte()">✕</button>
     <div id="reporte-body"><div class="reporte-texto">Cargando...</div></div>
+  </div>
+</div>
+
+<!-- MODAL EXPEDIENTE ALUMNO -->
+<div id="m-expediente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:#1a1a2e;border-radius:16px;padding:1.25rem;max-width:360px;width:92%;max-height:85vh;overflow-y:auto;position:relative;border:1px solid #2a2a4a;">
+    <button onclick="document.getElementById('m-expediente').style.display='none'" style="position:absolute;top:.75rem;right:.75rem;background:none;border:none;color:#888;font-size:1.2rem;cursor:pointer;">✕</button>
+    <div id="expediente-content">Cargando...</div>
   </div>
 </div>
 
@@ -360,6 +377,7 @@ function renderTab(tab, silencioso=false){
     case 'rezago':      renderRezago(p); break;
     case 'temperatura': renderTemperatura(); break;
     case 'misiones':    renderMisiones(); break;
+    case 'dinamicas':   renderDinamicas(); break;
   }
 }
 
@@ -632,6 +650,7 @@ function switchTab(tab){ _tabActual=tab; document.querySelectorAll('.tab').forEa
   if(tab==='bienestar'){ document.getElementById('content').style.overflow='auto';document.getElementById('content').style.padding='.75rem';document.getElementById('content').style.display='block';renderBienestar(); return; }
   if(tab==='temperatura'){ document.getElementById('content').style.overflow='auto';document.getElementById('content').style.padding='.75rem';document.getElementById('content').style.display='block';renderTemperatura(); return; }
   if(tab==='misiones'){ document.getElementById('content').style.overflow='auto';document.getElementById('content').style.padding='.75rem';document.getElementById('content').style.display='block';renderMisiones(); return; }
+  if(tab==='dinamicas'){ document.getElementById('content').style.overflow='auto';document.getElementById('content').style.padding='.75rem';document.getElementById('content').style.display='block';renderDinamicas(); return; }
   if(_panel) renderTab(tab); else { document.getElementById('content').innerHTML='<div class="empty">Cargando...</div>';cargarPanel(); }
 }
 
@@ -681,12 +700,15 @@ async function renderTemperatura(){
 
     const cards = alumnos.length === 0
       ? '<div class="empty" style="grid-column:1/-1">Ningún alumno ha registrado estado hoy.</div>'
-      : alumnos.map(a => `
-          <div class="alumno-card ${cardClass(a)}" title="${esc(a.nombre)}">
+      : alumnos.map(a => {
+          const tid = a.teen_id || a.id || a.nombre;
+          return `
+          <div class="alumno-card ${cardClass(a)}" title="${esc(a.nombre)}" style="cursor:pointer;" onclick="verExpediente('${esc(String(tid))}')">
             ${a.riesgo ? '<div class="ac-badge">⚠ Señal</div>' : ''}
             <div class="ac-emoji">${moodEmoji(a.mood_promedio)}</div>
             <div class="ac-nombre">${esc((a.nombre||'').split(' ')[0])}</div>
-          </div>`).join('');
+          </div>`;
+        }).join('');
 
     const promedioColor = (promedio !== '—' && promedio >= 4) ? 'var(--accent)'
       : (promedio !== '—' && promedio >= 3) ? 'var(--blue)'
@@ -834,6 +856,130 @@ function toast(msg){ const el=document.getElementById('toast');el.textContent=ms
   document.getElementById(id)?.addEventListener('keydown',e=>{
     if(e.key==='Enter'){e.preventDefault(); id.startsWith('l-')?acceder():registrar();}
   });
+});
+
+// ─── EXPEDIENTE POR ALUMNO ────────────────────────────────────────────────────
+async function verExpediente(teen_id){
+  const modal = document.getElementById('m-expediente');
+  modal.style.display = 'flex';
+  document.getElementById('expediente-content').innerHTML = '<div style="text-align:center;padding:1rem;color:#888;">Cargando expediente...</div>';
+  try{
+    const r = await fetch(`/api/maestro/${M.mid}/expediente/${encodeURIComponent(teen_id)}`, {
+      headers:{'ngrok-skip-browser-warning':'true'}
+    }).then(x=>x.json());
+    const d = r.expediente || {};
+    const moodBar = score => {
+      const colors = {1:'#ef4444',2:'#f97316',3:'#eab308',4:'#22c55e',5:'#4ade80'};
+      return `<span style="background:${colors[Math.round(score)]||'#888'};color:#fff;padding:.15rem .4rem;border-radius:6px;font-size:.78rem;">${score}/5</span>`;
+    };
+    document.getElementById('expediente-content').innerHTML = `
+      <h3 style="margin:0 0 .75rem;color:#e2e8f0;padding-right:1.5rem;">${esc(d.nombre||teen_id)}</h3>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem;">
+        ${d.mood_promedio ? `<span style="background:#1e293b;padding:.25rem .6rem;border-radius:8px;font-size:.78rem;color:#94a3b8;">Mood: ${moodBar(d.mood_promedio)}</span>` : ''}
+        ${d.racha ? `<span style="background:#1e293b;padding:.25rem .6rem;border-radius:8px;font-size:.78rem;color:#f97316;">🔥 ${d.racha} días</span>` : ''}
+        ${d.alertas_total ? `<span style="background:#450a0a;padding:.25rem .6rem;border-radius:8px;font-size:.78rem;color:#fca5a5;">⚠ ${d.alertas_total} señales</span>` : ''}
+      </div>
+      ${d.materias_tutor?.length ? `<div style="margin-bottom:.6rem;"><span style="font-size:.75rem;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Materias en tutor</span><div style="margin-top:.3rem;">${d.materias_tutor.map(m=>`<span style="background:#1e3a5f;color:#93c5fd;padding:.2rem .5rem;border-radius:6px;font-size:.78rem;display:inline-block;margin:.2rem .2rem 0 0;">${esc(m)}</span>`).join('')}</div></div>` : ''}
+      ${d.aptitudes?.length ? `<div style="margin-bottom:.6rem;"><span style="font-size:.75rem;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Aptitudes detectadas</span><div style="margin-top:.3rem;">${d.aptitudes.map(a=>`<span style="background:#1e3a2f;color:#86efac;padding:.2rem .5rem;border-radius:6px;font-size:.78rem;display:inline-block;margin:.2rem .2rem 0 0;">${esc(a)}</span>`).join('')}</div></div>` : ''}
+      ${d.logros?.length ? `<div style="margin-bottom:.6rem;"><span style="font-size:.75rem;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Logros</span><div style="margin-top:.25rem;font-size:.82rem;color:#fbbf24;">${d.logros.map(l=>esc(l)).join(' · ')}</div></div>` : ''}
+      ${d.metas?.length ? `<div style="margin-bottom:.6rem;"><span style="font-size:.75rem;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Metas activas</span><div style="margin-top:.25rem;font-size:.82rem;color:#c4b5fd;">${d.metas.map(m=>esc(m)).join(' · ')}</div></div>` : ''}
+      ${!d.mood_promedio && !d.racha && !d.alertas_total && !d.materias_tutor?.length && !d.aptitudes?.length && !d.logros?.length && !d.metas?.length ? '<div style="font-size:.82rem;color:#64748b;padding:.5rem 0;">Sin datos de expediente aún.</div>' : ''}
+      <div style="margin-top:.75rem;display:flex;gap:.5rem;flex-wrap:wrap;">
+        <button onclick="protocoloIntervencion('${esc(String(teen_id))}')" style="flex:1;background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:.5rem;font-size:.8rem;cursor:pointer;font-family:inherit;">🎯 Protocolo</button>
+        <button onclick="contactarPadre('${esc(String(teen_id))}')" style="flex:1;background:#1e40af;color:#fff;border:none;border-radius:8px;padding:.5rem;font-size:.8rem;cursor:pointer;font-family:inherit;">📱 Contactar padre</button>
+      </div>`;
+  }catch(e){
+    document.getElementById('expediente-content').innerHTML = '<div style="color:#f87171;padding:1rem;">Error al cargar expediente.</div>';
+  }
+}
+
+// ─── PROTOCOLO DE INTERVENCIÓN ────────────────────────────────────────────────
+async function protocoloIntervencion(teen_id){
+  document.getElementById('expediente-content').innerHTML = '<div style="text-align:center;padding:1rem;color:#a78bfa;">Generando protocolo...</div>';
+  try{
+    const r = await fetch(`/api/maestro/${M.mid}/protocolo/${encodeURIComponent(teen_id)}`, {
+      method:'POST', headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'}
+    }).then(x=>x.json());
+    document.getElementById('expediente-content').innerHTML = `
+      <h3 style="color:#e2e8f0;margin:0 0 .75rem;padding-right:1.5rem;">Protocolo de intervención</h3>
+      <div style="font-size:.85rem;color:#cbd5e1;line-height:1.65;white-space:pre-line;">${esc(r.protocolo||r.mensaje||'Sin datos')}</div>
+      <button onclick="document.getElementById('m-expediente').style.display='none'" style="margin-top:.75rem;width:100%;background:#334155;color:#e2e8f0;border:none;border-radius:8px;padding:.5rem;cursor:pointer;font-family:inherit;">Cerrar</button>`;
+  }catch(e){
+    document.getElementById('expediente-content').innerHTML = '<div style="color:#f87171;padding:1rem;">Error al generar protocolo.</div>';
+  }
+}
+
+// ─── CONTACTAR PADRE ──────────────────────────────────────────────────────────
+async function contactarPadre(teen_id){
+  document.getElementById('expediente-content').innerHTML = '<div style="text-align:center;padding:1rem;color:#93c5fd;">Enviando mensaje al padre...</div>';
+  try{
+    const r = await fetch(`/api/maestro/${M.mid}/contactar-padre/${encodeURIComponent(teen_id)}`, {
+      method:'POST', headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'},
+      body:JSON.stringify({})
+    }).then(x=>x.json());
+    document.getElementById('expediente-content').innerHTML = `
+      <div style="color:${r.ok?'#4ade80':'#f87171'};text-align:center;padding:1rem;">
+        ${r.ok ? '✓ Mensaje enviado al padre por WhatsApp' : '⚠ No se pudo enviar — el padre no tiene teléfono configurado'}
+      </div>
+      <button onclick="document.getElementById('m-expediente').style.display='none'" style="margin-top:.5rem;width:100%;background:#334155;color:#e2e8f0;border:none;border-radius:8px;padding:.5rem;cursor:pointer;font-family:inherit;">Cerrar</button>`;
+  }catch(e){
+    document.getElementById('expediente-content').innerHTML = '<div style="color:#f87171;padding:1rem;">Error al contactar.</div>';
+  }
+}
+
+// ─── BANCO DE DINÁMICAS SEL ───────────────────────────────────────────────────
+let _dinFiltro = '';
+
+async function renderDinamicas(){
+  const el = document.getElementById('content');
+  el.innerHTML = '<div class="empty">Cargando dinámicas...</div>';
+  try{
+    const url = _dinFiltro ? `/dinamicas?necesidad=${encodeURIComponent(_dinFiltro)}` : '/dinamicas';
+    const r = await api(url);
+    const dinamicas = r.dinamicas || [];
+    const filtros = [
+      {key:'', label:'Todo'},
+      {key:'energia_baja', label:'Energía baja'},
+      {key:'conflicto', label:'Conflicto'},
+      {key:'inicio_clase', label:'Inicio de clase'},
+      {key:'cierre', label:'Cierre'},
+    ];
+    const filtrosHTML = `<div class="din-filtros">${filtros.map(f=>`
+      <button class="din-filtro${_dinFiltro===f.key?' active':''}" onclick="cambiarDinFiltro('${f.key}')">${esc(f.label)}</button>`).join('')}</div>`;
+
+    if(dinamicas.length === 0){
+      el.innerHTML = filtrosHTML + '<div class="empty">Sin dinámicas para este filtro por ahora.</div>';
+      return;
+    }
+
+    const cards = dinamicas.map(d => `
+      <div class="din-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.4rem;">
+          <div style="font-weight:600;color:#e2e8f0;font-size:.9rem;flex:1;padding-right:.5rem;">${esc(d.titulo)}</div>
+          <span style="background:#1e3a5f;color:#93c5fd;border-radius:12px;padding:.15rem .5rem;font-size:.73rem;white-space:nowrap;flex-shrink:0;">${esc(d.duracion)}</span>
+        </div>
+        <div style="font-size:.8rem;color:#94a3b8;margin-bottom:.4rem;">${esc(d.objetivo)}</div>
+        <details style="font-size:.78rem;color:#64748b;">
+          <summary style="cursor:pointer;color:#7c3aed;font-weight:600;">Ver cómo hacerla</summary>
+          <div style="margin-top:.4rem;line-height:1.5;color:#94a3b8;">${esc(d.instrucciones)}</div>
+          <div style="margin-top:.3rem;color:#f59e0b;font-style:italic;">Usar cuando: ${esc(d.cuando_usar)}</div>
+        </details>
+      </div>`).join('');
+
+    el.innerHTML = filtrosHTML + cards;
+  }catch(e){
+    el.innerHTML = '<div class="empty">Error al cargar dinámicas.</div>';
+  }
+}
+
+function cambiarDinFiltro(filtro){
+  _dinFiltro = filtro;
+  renderDinamicas();
+}
+
+// cerrar modal expediente al hacer click en el fondo
+document.getElementById('m-expediente').addEventListener('click', function(e){
+  if(e.target === this) this.style.display = 'none';
 });
 </script>
 </body>
