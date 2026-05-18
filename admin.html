@@ -15,9 +15,10 @@ header h1 span{color:#7c3aed}
 .status-bar{display:flex;align-items:center;gap:8px;font-size:.8rem;color:#64748b}
 .dot-online{width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-nav{background:#0d1829;border-bottom:1px solid #1e3a5f;padding:0 28px;display:flex;gap:4px}
-.tab{padding:12px 18px;font-size:.85rem;font-weight:600;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+nav{background:#0d1829;border-bottom:1px solid #1e3a5f;padding:0 28px;display:flex;gap:4px;flex-wrap:wrap}
+.tab{padding:12px 18px;font-size:.85rem;font-weight:600;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;display:flex;align-items:center;gap:6px;white-space:nowrap}
 .tab.active,.tab:hover{color:#a78bfa;border-color:#7c3aed}
+.tab-badge{background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:.7rem;font-weight:700;min-width:18px;text-align:center}
 .container{max-width:1200px;margin:0 auto;padding:28px 20px}
 .panel{display:none}.panel.active{display:block}
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
@@ -38,11 +39,14 @@ th{background:#0a1220;color:#7c3aed;padding:9px 12px;text-align:left;font-size:.
 td{padding:10px 12px;border-bottom:1px solid #0f1f33;color:#94a3b8}
 tr:hover td{background:#0a1220}
 tr:last-child td{border-bottom:none}
+tr.riesgo-alto td{background:#2d0a0a !important;border-left:3px solid #ef4444}
+tr.riesgo-alto:hover td{background:#3d0e0e !important}
 .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.75rem;font-weight:600}
 .b-green{background:#10b98120;color:#10b981;border:1px solid #10b98140}
 .b-purple{background:#7c3aed20;color:#a78bfa;border:1px solid #7c3aed40}
 .b-blue{background:#3b82f620;color:#60a5fa;border:1px solid #3b82f640}
 .b-gray{background:#1e293b;color:#64748b;border:1px solid #334155}
+.b-red{background:#ef444420;color:#f87171;border:1px solid #ef444440}
 .ai-status{display:flex;flex-direction:column;gap:8px}
 .ai-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#050a14;border-radius:8px;border:1px solid #1e3a5f}
 .ai-row .name{font-size:.9rem;font-weight:600;color:#e2e8f0}
@@ -67,6 +71,48 @@ tr:last-child td{border-bottom:none}
 .bar-track{flex:1;height:10px;background:#0a1220;border-radius:5px;overflow:hidden}
 .bar-fill{height:100%;border-radius:5px;background:#7c3aed}
 .bar-num{font-size:.8rem;color:#94a3b8;min-width:30px}
+/* Alertas */
+.alert-action-btn{background:#0a1220;border:1px solid #1e3a5f;color:#a78bfa;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:.75rem;transition:all .2s;margin-right:4px}
+.alert-action-btn:hover{border-color:#7c3aed;background:#120a2e}
+.alert-action-btn.danger{color:#f87171;border-color:#ef444440}
+.alert-action-btn.danger:hover{border-color:#ef4444;background:#2d0a0a}
+/* Operaciones */
+.op-block{margin-bottom:20px}
+.op-label{font-size:.8rem;color:#64748b;display:block;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.op-input{width:100%;background:#050a14;border:1px solid #1e3a5f;border-radius:8px;padding:10px 14px;color:#e2e8f0;font-size:.9rem;resize:vertical}
+.op-input:focus{outline:none;border-color:#7c3aed}
+.op-btn{background:#7c3aed;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;transition:all .2s;margin-top:8px}
+.op-btn:hover{background:#6d28d9}
+.op-btn:disabled{background:#1e293b;color:#475569;cursor:not-allowed}
+.op-btn.secondary{background:#0d1829;border:1px solid #7c3aed;color:#a78bfa}
+.op-btn.secondary:hover{background:#120a2e}
+.op-result{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:.85rem;display:none}
+.op-result.ok{background:#10b98120;border:1px solid #10b98140;color:#34d399}
+.op-result.err{background:#ef444420;border:1px solid #ef444440;color:#f87171}
+.op-result.info{background:#3b82f620;border:1px solid #3b82f640;color:#60a5fa}
+.mod-checks{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.mod-checks label{display:flex;align-items:center;gap:6px;font-size:.85rem;color:#94a3b8;cursor:pointer;background:#050a14;border:1px solid #1e3a5f;border-radius:6px;padding:6px 12px;transition:all .2s}
+.mod-checks label:hover{border-color:#7c3aed;color:#a78bfa}
+.mod-checks input[type=checkbox]{accent-color:#7c3aed}
+/* Chat IA */
+.chat-msgs{background:#050a14;border:1px solid #1e3a5f;border-radius:10px;padding:16px;min-height:280px;max-height:500px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+.msg{max-width:85%;padding:10px 14px;border-radius:10px;font-size:.88rem;line-height:1.5}
+.msg.user{background:#7c3aed30;border:1px solid #7c3aed50;color:#c4b5fd;align-self:flex-end;border-radius:10px 10px 2px 10px}
+.msg.bot{background:#0d1829;border:1px solid #1e3a5f;color:#e2e8f0;align-self:flex-start;border-radius:10px 10px 10px 2px}
+.msg.bot .accion{margin-top:8px;padding:8px 10px;background:#10b98120;border:1px solid #10b98140;border-radius:6px;color:#34d399;font-size:.8rem}
+.chat-input-row{display:flex;gap:10px}
+.chat-input-row input{flex:1;background:#050a14;border:1px solid #1e3a5f;border-radius:8px;padding:10px 14px;color:#e2e8f0;font-size:.9rem}
+.chat-input-row input:focus{outline:none;border-color:#7c3aed}
+.chat-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.chat-chip{background:#0d1829;border:1px solid #1e3a5f;color:#64748b;padding:5px 12px;border-radius:20px;font-size:.78rem;cursor:pointer;transition:all .2s}
+.chat-chip:hover{border-color:#7c3aed;color:#a78bfa;background:#120a2e}
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:12px 20px;border-radius:10px;font-size:.85rem;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;max-width:320px}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok{border-color:#10b98140;background:#10b98115;color:#34d399}
+.toast.err{border-color:#ef444440;background:#ef444415;color:#f87171}
+/* Métricas */
+.metrics-text{font-size:1rem;color:#a78bfa;font-weight:700;padding:10px 0;border-bottom:1px solid #1e3a5f;margin-bottom:14px}
 </style>
 </head>
 <body>
@@ -85,11 +131,17 @@ tr:last-child td{border-bottom:none}
 </header>
 
 <nav>
-  <div class="tab active" onclick="showTab('dashboard')">Dashboard</div>
-  <div class="tab" onclick="showTab('familias')">Familias</div>
-  <div class="tab" onclick="showTab('escuelas')">Escuelas</div>
-  <div class="tab" onclick="showTab('sistema')">Sistema</div>
+  <div class="tab active" onclick="showTab('dashboard',this)">Dashboard</div>
+  <div class="tab" onclick="showTab('alertas',this)">Alertas <span class="tab-badge" id="badge-alertas" style="display:none">0</span></div>
+  <div class="tab" onclick="showTab('operaciones',this)">Operaciones</div>
+  <div class="tab" onclick="showTab('metricas',this)">Métricas</div>
+  <div class="tab" onclick="showTab('chat-admin',this)">Chat Admin IA</div>
+  <div class="tab" onclick="showTab('familias',this)">Familias</div>
+  <div class="tab" onclick="showTab('escuelas',this)">Escuelas</div>
+  <div class="tab" onclick="showTab('sistema',this)">Sistema</div>
 </nav>
+
+<div id="toast-el" class="toast"></div>
 
 <div class="container">
 
@@ -166,6 +218,133 @@ tr:last-child td{border-bottom:none}
         <tr><th>Nombre</th><th>Código</th><th>Miembros</th><th>Registro</th></tr>
         <tbody id="familias-recientes"><tr><td colspan="4" class="empty">Cargando...</td></tr></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- ALERTAS -->
+  <div class="panel" id="tab-alertas">
+    <div class="card">
+      <div class="card-title">
+        Alertas críticas sin atender
+        <button class="refresh-btn" onclick="loadAlertas()">↻ Actualizar</button>
+      </div>
+      <table>
+        <tr><th>Familia</th><th>Teen</th><th>Tipo</th><th>Hace</th><th>Acción</th></tr>
+        <tbody id="tabla-alertas"><tr><td colspan="5" class="empty">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- OPERACIONES -->
+  <div class="panel" id="tab-operaciones">
+
+    <!-- Bloque A: WhatsApp masivo -->
+    <div class="card">
+      <div class="card-title">Bloque A — WhatsApp masivo</div>
+      <div class="op-block">
+        <label class="op-label">Mensaje personalizado</label>
+        <textarea id="wa-mensaje" class="op-input" rows="3" placeholder="Hola {nombre}, te escribimos desde Evolución..."></textarea>
+        <button class="op-btn" onclick="enviarBroadcastWA()">📱 Enviar a todas las familias</button>
+        <div id="wa-result" class="op-result"></div>
+      </div>
+    </div>
+
+    <!-- Bloque B: Reportes masivos -->
+    <div class="card">
+      <div class="card-title">Bloque B — Reportes masivos</div>
+      <div class="op-block">
+        <p style="font-size:.85rem;color:#64748b;margin-bottom:12px">Genera y envía un reporte PDF de progreso a todas las familias registradas.</p>
+        <button class="op-btn" onclick="enviarReporteMasivo(this)">📄 Enviar reporte PDF a todas las familias</button>
+        <div id="reporte-result" class="op-result"></div>
+      </div>
+    </div>
+
+    <!-- Bloque C: Pregunta del día -->
+    <div class="card">
+      <div class="card-title">Bloque C — Pregunta del día</div>
+      <div class="op-block">
+        <p style="font-size:.85rem;color:#64748b;margin-bottom:12px">Envía la pregunta reflexiva del día a todos los teens con teléfono configurado.</p>
+        <button class="op-btn secondary" onclick="enviarPreguntaDia(this)">❓ Enviar pregunta del día ahora</button>
+        <div id="pregunta-result" class="op-result"></div>
+      </div>
+    </div>
+
+    <!-- Bloque D: Módulos por familia -->
+    <div class="card">
+      <div class="card-title">Bloque D — Gestión de módulos por familia</div>
+      <div class="op-block">
+        <label class="op-label">Seleccionar familia</label>
+        <select id="mod-familia" class="op-input" style="resize:none" onchange="cargarModulosFamilia()">
+          <option value="">— Elige una familia —</option>
+        </select>
+        <div class="mod-checks" id="mod-checks">
+          <label><input type="checkbox" name="mod" value="gifted"> Gifted</label>
+          <label><input type="checkbox" name="mod" value="visionario"> Visionario</label>
+          <label><input type="checkbox" name="mod" value="especial"> Especial</label>
+          <label><input type="checkbox" name="mod" value="canonico"> Canónico</label>
+          <label><input type="checkbox" name="mod" value="regularizacion"> Regularización</label>
+        </div>
+        <button class="op-btn" onclick="guardarModulos()" style="margin-top:14px">💾 Guardar módulos</button>
+        <div id="mod-result" class="op-result"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MÉTRICAS -->
+  <div class="panel" id="tab-metricas">
+    <div class="kpi-grid" id="kpi-metricas">
+      <div class="kpi" style="--c:#10b981"><div class="num" id="m-activas">—</div><div class="lbl">Familias activas 7d</div></div>
+      <div class="kpi" style="--c:#60a5fa"><div class="num" id="m-convs">—</div><div class="lbl">Conversaciones totales</div></div>
+      <div class="kpi" style="--c:#f59e0b"><div class="num" id="m-mood">—</div><div class="lbl">Mood global</div><div class="sub">escala 1–5</div></div>
+      <div class="kpi" style="--c:#ef4444"><div class="num" id="m-alertas">—</div><div class="lbl">Alertas esta semana</div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">
+          Retención y actividad
+          <button class="refresh-btn" onclick="loadMetricas()">↻</button>
+        </div>
+        <div id="metricas-retencion">
+          <div class="empty">Cargando...</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Materias más consultadas en tutor</div>
+        <table>
+          <tr><th>#</th><th>Materia</th><th>Consultas</th></tr>
+          <tbody id="top-materias"><tr><td colspan="3" class="empty">Cargando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT ADMIN IA -->
+  <div class="panel" id="tab-chat-admin">
+    <div class="card">
+      <div class="card-title">Chat Admin IA — Control autónomo del sistema</div>
+
+      <div class="chat-chips" id="chat-chips">
+        <span class="chat-chip" onclick="chipClick(this)">Activa módulo gifted para familia Milán</span>
+        <span class="chat-chip" onclick="chipClick(this)">Envía reporte a todas las familias</span>
+        <span class="chat-chip" onclick="chipClick(this)">¿Cuántas alertas sin atender hay?</span>
+        <span class="chat-chip" onclick="chipClick(this)">Lista las familias sin teléfono configurado</span>
+        <span class="chat-chip" onclick="chipClick(this)">Envía la pregunta del día ahora</span>
+        <span class="chat-chip" onclick="chipClick(this)">¿Cuál es el mood promedio esta semana?</span>
+        <span class="chat-chip" onclick="chipClick(this)">Muestra las últimas alertas de riesgo alto</span>
+      </div>
+
+      <div class="chat-msgs" id="chat-msgs">
+        <div class="msg bot">
+          Hola. Soy el Admin IA de Evolución. Puedo ejecutar acciones en el sistema, consultar métricas, gestionar familias y módulos, y enviar comunicaciones masivas. ¿En qué te ayudo?
+        </div>
+      </div>
+
+      <div class="chat-input-row">
+        <input type="text" id="chat-input" placeholder="Escribe un comando o pregunta..." onkeydown="if(event.key==='Enter')sendAdminChat()">
+        <button class="op-btn" onclick="sendAdminChat()" style="margin-top:0;padding:10px 24px">Enviar</button>
+      </div>
     </div>
   </div>
 
@@ -256,15 +435,45 @@ tr:last-child td{border-bottom:none}
 <script>
 const BASE = '';
 
-function showTab(id) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.remove('active'));
+// ── Utilidades ────────────────────────────────────────────────────────────────
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast-el');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.classList.remove('show'); }, 3200);
+}
+
+function showResult(id, msg, type='ok') {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'op-result ' + type;
+  el.style.display = 'block';
+}
+
+function tiempoRelativo(ts) {
+  if (!ts) return '—';
+  const seg = Math.floor(Date.now()/1000) - ts;
+  if (seg < 60) return 'hace ' + seg + 's';
+  if (seg < 3600) return 'hace ' + Math.floor(seg/60) + 'm';
+  if (seg < 86400) return 'hace ' + Math.floor(seg/3600) + 'h';
+  return 'hace ' + Math.floor(seg/86400) + 'd';
+}
+
+// ── Navegación de tabs ────────────────────────────────────────────────────────
+function showTab(id, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  event.target.classList.add('active');
+  (el || event.target).classList.add('active');
   document.getElementById('tab-' + id).classList.add('active');
   if (id === 'familias') loadFamilias();
   if (id === 'escuelas') loadEscuelas();
+  if (id === 'alertas') loadAlertas();
+  if (id === 'metricas') loadMetricas();
+  if (id === 'operaciones') loadFamiliasSelect();
 }
 
+// ── Dashboard ─────────────────────────────────────────────────────────────────
 async function loadStats() {
   try {
     const r = await fetch(BASE + '/api/admin/stats');
@@ -280,7 +489,6 @@ async function loadStats() {
     document.getElementById('server-status').textContent = 'Servidor activo';
     document.getElementById('last-update').textContent = new Date().toLocaleTimeString('es-MX');
 
-    // Roles chart
     const roles = s.por_rol || {};
     const total = Object.values(roles).reduce((a,b) => a+b, 0) || 1;
     const colores = {teen:'#a78bfa', padre:'#10b981', maestro:'#60a5fa', admin:'#f59e0b'};
@@ -291,7 +499,6 @@ async function loadStats() {
         <div class="bar-num">${n}</div>
       </div>`).join('') || '<div class="empty">Sin usuarios aún</div>';
 
-    // Actividad
     document.getElementById('actividad').innerHTML = `
       <div style="display:flex;flex-direction:column;gap:8px">
         ${[
@@ -308,7 +515,6 @@ async function loadStats() {
           </div>`).join('')}
       </div>`;
 
-    // Familias recientes
     const fams = s.familias_recientes || [];
     document.getElementById('familias-recientes').innerHTML = fams.length
       ? fams.map(f => `<tr>
@@ -325,6 +531,285 @@ async function loadStats() {
   }
 }
 
+// ── Alertas críticas ──────────────────────────────────────────────────────────
+async function loadAlertas() {
+  document.getElementById('tabla-alertas').innerHTML = '<tr><td colspan="5" class="empty">Cargando...</td></tr>';
+  try {
+    const r = await fetch(BASE + '/api/admin/alertas-criticas');
+    const d = await r.json();
+    if (!d.ok) { document.getElementById('tabla-alertas').innerHTML = '<tr><td colspan="5" class="empty">Error al cargar alertas</td></tr>'; return; }
+    const alertas = d.alertas || [];
+
+    // Actualizar badge
+    const badge = document.getElementById('badge-alertas');
+    if (alertas.length > 0) {
+      badge.textContent = alertas.length;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+
+    document.getElementById('tabla-alertas').innerHTML = alertas.length
+      ? alertas.map(a => `<tr class="${a.tipo === 'riesgo_alto' ? 'riesgo-alto' : ''}">
+          <td style="font-weight:600;color:#e2e8f0">${a.familia_nombre || '—'}</td>
+          <td>${a.teen_nombre || '—'}</td>
+          <td>
+            <span class="badge ${a.tipo === 'riesgo_alto' ? 'b-red' : 'b-purple'}">${a.tipo || '—'}</span>
+          </td>
+          <td style="color:#475569;font-size:.8rem">${tiempoRelativo(a.creado)}</td>
+          <td>
+            <button class="alert-action-btn" onclick="notificarPadre(${a.id})">📱 WA padre</button>
+            <button class="alert-action-btn" onclick="marcarVista(${a.id}, this)">✓ Vista</button>
+          </td>
+        </tr>`).join('')
+      : '<tr><td colspan="5" class="empty">Sin alertas sin atender</td></tr>';
+  } catch(e) {
+    document.getElementById('tabla-alertas').innerHTML = '<tr><td colspan="5" class="empty">Sin respuesta del servidor</td></tr>';
+  }
+}
+
+async function notificarPadre(id) {
+  try {
+    const r = await fetch(BASE + `/api/admin/alerta/${id}/notificar`, {method:'POST'});
+    const d = await r.json();
+    d.ok ? toast('Notificación enviada al padre') : toast('Error: ' + (d.error || 'Fallo'), 'err');
+  } catch(e) { toast('Error de red', 'err'); }
+}
+
+async function marcarVista(id, btn) {
+  try {
+    const r = await fetch(BASE + `/api/admin/alerta/${id}/marcar-vista`, {method:'POST'});
+    const d = await r.json();
+    if (d.ok) {
+      const fila = btn.closest('tr');
+      fila.style.transition = 'opacity .3s';
+      fila.style.opacity = '0';
+      setTimeout(() => { fila.remove(); actualizarBadgeAlertas(); }, 300);
+      toast('Alerta marcada como vista');
+    } else {
+      toast('Error: ' + (d.error || 'Fallo'), 'err');
+    }
+  } catch(e) { toast('Error de red', 'err'); }
+}
+
+function actualizarBadgeAlertas() {
+  const filas = document.querySelectorAll('#tabla-alertas tr[class]').length +
+                document.querySelectorAll('#tabla-alertas tr:not([class])').length;
+  const visibles = document.querySelectorAll('#tabla-alertas tr td').length;
+  const badge = document.getElementById('badge-alertas');
+  const n = document.querySelectorAll('#tabla-alertas tr').length;
+  if (n <= 0) { badge.style.display = 'none'; return; }
+  badge.textContent = n;
+}
+
+// ── Operaciones ───────────────────────────────────────────────────────────────
+async function loadFamiliasSelect() {
+  try {
+    const r = await fetch(BASE + '/api/admin/familias');
+    const d = await r.json();
+    const sel = document.getElementById('mod-familia');
+    const fams = d.familias || [];
+    sel.innerHTML = '<option value="">— Elige una familia —</option>' +
+      fams.map(f => `<option value="${f.id}">${f.nombre}</option>`).join('');
+  } catch(e) {}
+}
+
+async function enviarBroadcastWA() {
+  const msg = document.getElementById('wa-mensaje').value.trim();
+  if (!msg) { showResult('wa-result', 'Escribe un mensaje primero', 'err'); return; }
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    const r = await fetch(BASE + '/api/admin/broadcast-whatsapp', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({mensaje: msg})
+    });
+    const d = await r.json();
+    if (d.ok) {
+      showResult('wa-result', `Enviado a ${d.enviados || d.total || '?'} familias`, 'ok');
+      toast('WhatsApp masivo enviado');
+    } else {
+      showResult('wa-result', 'Error: ' + (d.error || 'Fallo'), 'err');
+    }
+  } catch(e) { showResult('wa-result', 'Error de red', 'err'); }
+  btn.disabled = false; btn.textContent = '📱 Enviar a todas las familias';
+}
+
+async function enviarReporteMasivo(btn) {
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Generando reportes...';
+  showResult('reporte-result', 'Procesando... esto puede tomar unos segundos', 'info');
+  try {
+    const r = await fetch(BASE + '/api/admin/reporte-masivo', {method:'POST'});
+    const d = await r.json();
+    if (d.ok) {
+      showResult('reporte-result', `Reportes enviados a ${d.enviados || d.total || '?'} familias`, 'ok');
+      toast('Reporte masivo enviado');
+    } else {
+      showResult('reporte-result', 'Error: ' + (d.error || 'Fallo'), 'err');
+    }
+  } catch(e) { showResult('reporte-result', 'Error de red', 'err'); }
+  btn.disabled = false; btn.textContent = orig;
+}
+
+async function enviarPreguntaDia(btn) {
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    const r = await fetch(BASE + '/api/admin/pregunta-dia-masiva', {method:'POST'});
+    const d = await r.json();
+    if (d.ok) {
+      showResult('pregunta-result', `Enviado a ${d.enviados || d.total || '?'} familias con teléfono`, 'ok');
+      toast('Pregunta del día enviada');
+    } else {
+      showResult('pregunta-result', 'Error: ' + (d.error || 'Fallo'), 'err');
+    }
+  } catch(e) { showResult('pregunta-result', 'Error de red', 'err'); }
+  btn.disabled = false; btn.textContent = orig;
+}
+
+async function cargarModulosFamilia() {
+  const fid = document.getElementById('mod-familia').value;
+  if (!fid) return;
+  try {
+    const r = await fetch(BASE + `/api/admin/modulos/${fid}`);
+    const d = await r.json();
+    const mods = d.modulos || {};
+    document.querySelectorAll('#mod-checks input[type=checkbox]').forEach(cb => {
+      cb.checked = !!(mods[cb.value]);
+    });
+  } catch(e) {}
+}
+
+async function guardarModulos() {
+  const fid = document.getElementById('mod-familia').value;
+  if (!fid) { showResult('mod-result', 'Selecciona una familia', 'err'); return; }
+  const modulos = {};
+  document.querySelectorAll('#mod-checks input[type=checkbox]').forEach(cb => {
+    modulos[cb.value] = cb.checked;
+  });
+  try {
+    const r = await fetch(BASE + `/api/admin/modulos/${fid}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({modulos})
+    });
+    const d = await r.json();
+    if (d.ok) {
+      showResult('mod-result', 'Módulos guardados correctamente', 'ok');
+      toast('Módulos actualizados');
+    } else {
+      showResult('mod-result', 'Error: ' + (d.error || 'Fallo'), 'err');
+    }
+  } catch(e) { showResult('mod-result', 'Error de red', 'err'); }
+}
+
+// ── Métricas ──────────────────────────────────────────────────────────────────
+async function loadMetricas() {
+  try {
+    const r = await fetch(BASE + '/api/admin/metricas');
+    const d = await r.json();
+    if (!d.ok) return;
+
+    document.getElementById('m-activas').textContent = d.familias_activas_7d ?? '—';
+    document.getElementById('m-convs').textContent = d.total_conversaciones ?? '—';
+    document.getElementById('m-mood').textContent = d.mood_promedio_global ?? '—';
+    document.getElementById('m-alertas').textContent = d.alertas_semana ?? '—';
+
+    const total = d.total_familias || 1;
+    const activas = d.familias_activas_7d || 0;
+    const retencion = total > 0 ? Math.round(activas / total * 100) : 0;
+
+    document.getElementById('metricas-retencion').innerHTML = `
+      <div class="metrics-text">Retención 7 días: ${retencion}%</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${[
+          ['Total familias', d.total_familias, '#a78bfa'],
+          ['Familias activas 7d', d.familias_activas_7d, '#10b981'],
+          ['Total teens', d.total_teens, '#60a5fa'],
+          ['Misiones aprobadas (sem)', d.misiones_aprobadas_semana, '#f59e0b'],
+        ].map(([lbl,val,c]) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#050a14;border-radius:6px;border:1px solid #0f1f33">
+            <span style="font-size:.85rem;color:#64748b">${lbl}</span>
+            <span style="font-size:1rem;font-weight:700;color:${c}">${val ?? 0}</span>
+          </div>`).join('')}
+      </div>`;
+
+    const top = d.top_materias || [];
+    document.getElementById('top-materias').innerHTML = top.length
+      ? top.map((m,i) => `<tr>
+          <td style="color:#475569;font-weight:700">${i+1}</td>
+          <td style="color:#e2e8f0">${m.materia}</td>
+          <td style="color:#a78bfa;font-weight:700">${m.count}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="3" class="empty">Sin datos</td></tr>';
+  } catch(e) {
+    console.error('metricas error', e);
+  }
+}
+
+// ── Chat Admin IA ─────────────────────────────────────────────────────────────
+function chipClick(el) {
+  document.getElementById('chat-input').value = el.textContent;
+  document.getElementById('chat-input').focus();
+}
+
+function appendMsg(tipo, texto, accion) {
+  const box = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = 'msg ' + tipo;
+  div.textContent = texto;
+  if (accion) {
+    const ac = document.createElement('div');
+    ac.className = 'accion';
+    ac.textContent = '+ ' + accion;
+    div.appendChild(ac);
+  }
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function appendThinking() {
+  const box = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.id = 'msg-thinking';
+  div.textContent = '...';
+  div.style.color = '#475569';
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+async function sendAdminChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  appendMsg('user', msg);
+  appendThinking();
+  try {
+    const r = await fetch(BASE + '/api/admin/chat', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({mensaje: msg})
+    });
+    const d = await r.json();
+    const thinking = document.getElementById('msg-thinking');
+    if (thinking) thinking.remove();
+    if (d.ok) {
+      appendMsg('bot', d.respuesta, d.accion_ejecutada || null);
+    } else {
+      appendMsg('bot', 'Error: ' + (d.error || 'Sin respuesta del servidor'));
+    }
+  } catch(e) {
+    const thinking = document.getElementById('msg-thinking');
+    if (thinking) thinking.remove();
+    appendMsg('bot', 'Error de conexión con el servidor');
+  }
+}
+
+// ── Familias ──────────────────────────────────────────────────────────────────
 async function loadFamilias() {
   const r = await fetch(BASE + '/api/admin/familias');
   const d = await r.json();
@@ -340,6 +825,7 @@ async function loadFamilias() {
     : '<tr><td colspan="5" class="empty">Sin familias</td></tr>';
 }
 
+// ── Escuelas ──────────────────────────────────────────────────────────────────
 async function loadEscuelas() {
   const r = await fetch(BASE + '/api/admin/escuelas');
   const d = await r.json();
@@ -371,7 +857,7 @@ async function crearEscuela() {
   }
 }
 
-// ── Timeout para "Cargando..." infinito ──────────────────────────────────────
+// ── Demo helpers ───────────────────────────────────────────────────────────────
 let statsLoaded = false;
 setTimeout(() => {
   if (!statsLoaded) {
@@ -406,8 +892,21 @@ async function sembrarDemo(el) {
   } catch(e) { el.querySelector('.title').textContent = 'Error'; }
 }
 
+// ── Arranque ──────────────────────────────────────────────────────────────────
 loadStats();
 setInterval(loadStats, 60000);
+// Verificar alertas cada 2 minutos en background para mantener badge actualizado
+setInterval(async () => {
+  try {
+    const r = await fetch(BASE + '/api/admin/alertas-criticas');
+    const d = await r.json();
+    if (!d.ok) return;
+    const n = (d.alertas || []).length;
+    const badge = document.getElementById('badge-alertas');
+    if (n > 0) { badge.textContent = n; badge.style.display = 'inline-block'; }
+    else { badge.style.display = 'none'; }
+  } catch(e) {}
+}, 120000);
 </script>
 </body>
 </html>
