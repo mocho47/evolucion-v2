@@ -16,6 +16,22 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("evolucion")
 
+# ── Sentry (opcional — activa con SENTRY_DSN en env) ─────────────────────────
+_SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+if _SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.fastapi import FastApiIntegration
+        sentry_sdk.init(
+            dsn=_SENTRY_DSN,
+            integrations=[FastApiIntegration()],
+            traces_sample_rate=0.1,
+            environment=os.getenv("ENVIRONMENT", "production"),
+        )
+        logger.info("Sentry activado")
+    except ImportError:
+        logger.warning("sentry-sdk no instalado — instalar con: pip install sentry-sdk[fastapi]")
+
 app = FastAPI(title="Evolución", version="2.0")
 
 # CORS — solo dominios propios
@@ -653,6 +669,7 @@ async def startup():
     await _crear_demo_si_falta()
     asyncio.create_task(_scheduler_semanal())
     asyncio.create_task(_scheduler_pregunta_diaria())
+    asyncio.create_task(_scheduler_followup_leads())
     logger.info(f"Evolución corriendo — puerto {PORT}")
 
 async def _scheduler_pregunta_diaria():
@@ -946,7 +963,20 @@ async def manifest():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "producto": "Evolución", "version": "2.0"}
+    db_ok = False
+    try:
+        async with aiosqlite.connect(DB_PATH) as db:
+            await db.execute("SELECT 1")
+        db_ok = True
+    except Exception:
+        pass
+    return {
+        "status": "ok" if db_ok else "degraded",
+        "db": db_ok,
+        "whatsapp": bool(GREEN_INSTANCE),
+        "version": "2.0",
+        "instance": _INSTANCE_ID
+    }
 
 # ── Demo requests ─────────────────────────────────────────────────────────────
 @app.post("/api/demo-request")
@@ -2959,6 +2989,84 @@ async def actualizar_telefono(fid: str, req: Request):
         await db.commit()
     return {"ok": True, "telefono": telefono}
 
+# ── Bot de marketing autónomo ────────────────────────────────────────────────
+_BOT_CONTEXT: dict[str, dict] = {}  # phone -> {stage, nombre, tipo, ts}
+
+_BOT_FAQ = {
+    "precio": "Evolución tiene un modelo por plantel o por familia. Para colegios: licencia anual por número de alumnos activos. Para familias individuales: cuota mensual. Escríbeme para cotizar según tu caso específico.",
+    "demo": "¡Claro! Puedo activarte una demo completa hoy mismo. Solo dime: ¿eres padre de familia, orientador escolar o directivo?",
+    "privacidad": "Evolución cumple LFPDPPP. Los padres son titulares de los datos. Ni maestros ni directivos ven el contenido de las conversaciones del teen — solo tendencias anónimas. Ver aviso completo: https://evolucion-v2.onrender.com/privacidad",
+    "funciona": "Sí, ya está en operación. Hay familias y teens activos conversando en este momento. Puedo activarte una demo en 5 minutos.",
+    "ia": "Usamos modelos de lenguaje de última generación con 6 marcos psicológicos reales (Erikson, Dweck, Frankl, Vygotsky, Seligman, UDL). No es un chatbot genérico — adapta su forma de acompañar a cada alumno.",
+}
+
+_BOT_WELCOME = """Hola 👋 Soy el asistente de Evolución by Simplex.
+
+Somos la primera plataforma de acompañamiento emocional, vocacional y académico para adolescentes mexicanos — con IA real.
+
+¿En qué puedo ayudarte?
+• Quiero ver la *demo*
+• Información de *precios*
+• Soy *director* de colegio
+• Soy *padre* de familia
+• Hablar con *Anuar* directamente
+
+Responde con la palabra clave o cuéntame lo que necesitas 🙌"""
+
+async def _bot_responder(phone: str, texto: str) -> str:
+    """Genera respuesta inteligente del bot de marketing."""
+    texto_lower = texto.lower().strip()
+    ctx = _BOT_CONTEXT.get(phone, {"stage": "nuevo"})
+
+    # Detectar keywords FAQ
+    for kw, resp in _BOT_FAQ.items():
+        if kw in texto_lower:
+            _BOT_CONTEXT[phone] = {"stage": "faq_respondido", "ts": time.time()}
+            return resp + "\n\n¿Quieres que active tu demo ahora? Solo dime tu nombre y tipo de institución."
+
+    # Detectar interés en demo
+    if any(w in texto_lower for w in ["demo", "probar", "ver", "quiero", "activar", "conocer"]):
+        _BOT_CONTEXT[phone] = {"stage": "capturando_nombre", "ts": time.time()}
+        return "¡Perfecto! 🎯 Para activarte la demo personalizada necesito 2 datos:\n\n1️⃣ ¿Cuál es tu nombre?\n2️⃣ ¿Eres padre de familia, orientador o directivo?"
+
+    # Detectar querer hablar con humano
+    if any(w in texto_lower for w in ["anuar", "humano", "persona", "llamar", "hablar con"]):
+        asyncio.create_task(send_whatsapp("3326148674",
+            f"LEAD QUIERE CONTACTO DIRECTO\nDe: {phone}\nMensaje: {texto[:100]}"))
+        return "Claro, le aviso a Anuar ahora mismo. Normalmente responde en menos de 30 minutos en horario de oficina (9am–7pm). ¿Hay algo que pueda adelantarte mientras tanto?"
+
+    # Capturar nombre si estamos en ese stage
+    if ctx.get("stage") == "capturando_nombre" and len(texto.strip()) > 2:
+        nombre = texto.strip().split()[0].capitalize()
+        _BOT_CONTEXT[phone] = {"stage": "demo_enviada", "nombre": nombre, "ts": time.time()}
+        asyncio.create_task(send_whatsapp("3326148674",
+            f"LEAD CALIFICADO\nNombre: {nombre}\nTel: {phone}\nSolicita demo ahora"))
+        return (f"Perfecto {nombre}! 🚀 Te comparto el acceso a la plataforma:\n\n"
+                f"🔗 *https://evolucion-v2.onrender.com/app*\n\n"
+                f"Para entrar usa el código de demo: *DEMO01*\n\n"
+                f"Explora el panel teen, el panel de padres y el panel maestro. "
+                f"¿Tienes preguntas específicas sobre lo que ves?")
+
+    # Respuesta por defecto con IA si el texto es más elaborado
+    if len(texto) > 30:
+        try:
+            prompt_bot = f"""Eres el asistente de ventas de Evolución by Simplex, una plataforma EdTech mexicana de desarrollo humano adolescente.
+Responde de manera profesional, cálida y orientada a calificar el lead para una demo.
+Oferta: acompañamiento IA para teens (emocional + vocacional + académico).
+Clientes objetivo: colegios privados, familias con teens 12-18 años, orientadores.
+Precio: modelo por plantel o por familia. Demo gratuita.
+
+MENSAJE DEL PROSPECTO: {texto}
+
+Responde en máximo 3 líneas. Termina con una pregunta que lleve a la demo."""
+            respuesta_ia = await llamar_ia(prompt_bot, texto)
+            return respuesta_ia[:500]
+        except Exception as e:
+            logger.debug(f"bot IA error: {e}")
+
+    # Default: bienvenida
+    return _BOT_WELCOME
+
 @app.post("/api/whatsapp/webhook")
 async def whatsapp_webhook(req: Request):
     try:
@@ -2968,10 +3076,50 @@ async def whatsapp_webhook(req: Request):
             msg_data = data.get("messageData", {})
             text = msg_data.get("textMessageData", {}).get("textMessage", "")
             sender = data.get("senderData", {}).get("chatId", "")
-            logger.info(f"WhatsApp entrante de {sender}: {text[:80]}")
+            phone = sender.replace("@c.us", "").replace("@g.us", "")
+            logger.info(f"WA entrante de {phone}: {text[:60]}")
+            if text and not sender.endswith("@g.us"):  # ignora grupos
+                respuesta = await _bot_responder(phone, text)
+                asyncio.create_task(send_whatsapp(phone, respuesta))
         return {"ok": True}
-    except Exception:
+    except Exception as e:
+        logger.debug(f"webhook error: {e}")
         return {"ok": True}
+
+# ── Admin: ver leads de demo ─────────────────────────────────────────────────
+@app.put("/api/admin/demo-request/{rid}/estado")
+async def admin_update_lead(rid: str, req: Request):
+    _verify_admin(req)
+    body = await req.json()
+    estado = body.get("estado", "nuevo")[:30]
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("UPDATE demo_requests SET atendido=? WHERE id=?",
+            (1 if estado != "nuevo" else 0, rid))
+        await db.commit()
+    return {"ok": True, "id": rid, "estado": estado}
+
+# ── Scheduler: follow-up automatico a leads sin contactar ────────────────────
+async def _scheduler_followup_leads():
+    """24h despues de un demo request sin respuesta, envia WA recordatorio."""
+    while True:
+        try:
+            await asyncio.sleep(3600)  # revisar cada hora
+            cutoff_24h = time.time() - 86400
+            cutoff_48h = time.time() - 172800
+            async with aiosqlite.connect(DB_PATH) as db:
+                cur = await db.execute(
+                    "SELECT id, nombre, telefono FROM demo_requests WHERE atendido=0 AND creado BETWEEN ? AND ? AND telefono != ''",
+                    (cutoff_48h, cutoff_24h))
+                leads = [(r[0], r[1], r[2]) for r in await cur.fetchall()]
+            for rid, nombre, tel in leads:
+                msg = (f"Hola {nombre or 'de nuevo'} 👋 Hace 24h solicitaste info sobre Evolución. "
+                       f"¿Tienes 5 minutos hoy para ver la demo? Puedo activártela ahora mismo: "
+                       f"https://evolucion-v2.onrender.com/app — código DEMO01")
+                await send_whatsapp(tel, msg)
+                await asyncio.sleep(3)
+        except Exception as e:
+            logger.debug(f"followup scheduler error: {e}")
+            await asyncio.sleep(3600)
 
 
 # LFPDPPP art.8 — derecho de supresion
