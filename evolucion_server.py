@@ -16,17 +16,107 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("evolucion")
 
-app = FastAPI(title="Evolución", version="1.0")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app = FastAPI(title="Evolución", version="2.0")
+
+# CORS — solo dominios propios
+_ALLOWED_ORIGINS = [
+    "https://evolucion-v2.onrender.com",
+    "http://localhost:8080", "http://127.0.0.1:8080",
+    "http://localhost:3000",
+]
+app.add_middleware(CORSMiddleware,
+    allow_origins=_ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://.*\.ngrok-free\.dev",
+    allow_methods=["GET","POST","PUT","DELETE","OPTIONS"],
+    allow_headers=["*"],
+    allow_credentials=True)
 
 DB_PATH      = os.getenv("EVO_DB",      os.path.join(os.path.dirname(__file__), "evolucion.db"))
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 ZAI_API_KEY  = os.getenv("ZAI_API_KEY",  "")
 PORT         = int(os.getenv("PORT", "8080"))
+ADMIN_KEY    = os.getenv("ADMIN_KEY", hashlib.sha256(b"evolucion-admin-2026").hexdigest()[:20])
+APP_SECRET   = os.getenv("APP_SECRET", hashlib.sha256(b"evo-secret-2026").hexdigest())
+
+# ── Anti-piracy / License ────────────────────────────────────────────────────
+import socket as _socket
+_INSTANCE_ID = os.getenv("EVOLUCION_INSTANCE", "291fb821c672ea40")
+_ALLOWED_HOSTS = set(filter(None, os.getenv("EVOLUCION_HOSTS", "evolucion-v2.onrender.com,localhost,127.0.0.1,teensevolucion.duckdns.org").split(",")))
+
+def _verify_license():
+    """Verifica que el entorno de ejecución es autorizado."""
+    license_key = os.getenv("EVOLUCION_LICENSE", "")
+    if not license_key:
+        logger.warning("EVOLUCION_LICENSE no configurado — usando modo sin licencia")
+        return
+    expected = hashlib.sha256(f"evolucion-simplex-{_INSTANCE_ID}".encode()).hexdigest()[:32]
+    if license_key != expected:
+        logger.error("Licencia inválida — sistema bloqueado")
+        import sys as _sys
+        _sys.exit(77)
+
 GREEN_INSTANCE = os.getenv("GREEN_API_INSTANCE", "")
 GREEN_TOKEN    = os.getenv("GREEN_API_TOKEN", "")
 GREEN_SERVER   = os.getenv("GREEN_API_SERVER", "")
 _GREEN_BASE    = f"https://{GREEN_SERVER}.api.greenapi.com/waInstance{GREEN_INSTANCE}" if GREEN_INSTANCE else ""
+
+
+# ── Security headers middleware ───────────────────────────────────────────────
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        # Host validation
+        host = request.headers.get("host", "").split(":")[0]
+        if host and host not in _ALLOWED_HOSTS and not host.endswith(".ngrok-free.dev") and not host.endswith(".ngrok.io"):
+            if host not in ("localhost", "127.0.0.1", "0.0.0.0"):
+                logger.warning(f"Host no autorizado: {host}")
+                # Log but don't block — allows testing; set EVOLUCION_STRICT=1 to block
+                if os.getenv("EVOLUCION_STRICT") == "1":
+                    from fastapi.responses import JSONResponse
+                    return JSONResponse({"error": "host no autorizado"}, status_code=403)
+
+        response = await call_next(request)
+
+        # Security headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(self), camera=()"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline'; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "img-src 'self' data: blob:; "
+            "connect-src 'self' https://*.ngrok-free.dev https://*.onrender.com; "
+            "frame-ancestors 'none';"
+        )
+        # Watermark
+        response.headers["X-Evolucion-Instance"] = _INSTANCE_ID
+        response.headers["X-Powered-By"] = "Evolucion by Simplex"
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
+
+# ── Rate limiter simple (in-memory) ──────────────────────────────────────────
+_rate_store: dict[str, list[float]] = {}
+
+def _rate_check(key: str, limit: int, window: int = 60) -> bool:
+    now = time.time()
+    hits = [t for t in _rate_store.get(key, []) if now - t < window]
+    _rate_store[key] = hits
+    if len(hits) >= limit:
+        return False
+    _rate_store[key].append(now)
+    return True
+
+# ── Admin auth ─────────────────────────────────────────────────────────────
+def _verify_admin(request: Request):
+    key = request.headers.get("X-Admin-Key") or request.query_params.get("key", "")
+    if key != ADMIN_KEY:
+        raise HTTPException(403, "Acceso admin no autorizado")
 
 # ── SSE en memoria ────────────────────────────────────────────────────────────
 _sse_queues: dict[str, asyncio.Queue] = {}
@@ -552,6 +642,7 @@ async def startup():
     if not os.path.exists(DB_PATH) and os.path.exists(nexus_db):
         shutil.copy2(nexus_db, DB_PATH)
         logger.info("DB migrada desde NEXUS Teens")
+    _verify_license()
     await init_db()
     await _crear_demo_si_falta()
     asyncio.create_task(_scheduler_semanal())
@@ -905,12 +996,17 @@ async def registrar_familia(req: RegistrarFamilia):
     return {"ok": True, "familia_id": fid, "codigo_acceso": codigo}
 
 @app.get("/api/familias/codigo/{codigo}")
-async def buscar_familia(codigo: str):
+async def buscar_familia(codigo: str, request: Request):
+    ip = request.client.host if request.client else "unknown"
+    if not _rate_check(f"codigo:{ip}", limit=10, window=60):
+        raise HTTPException(429, "Demasiados intentos. Espera un momento.")
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         cur = await db.execute("SELECT id, nombre FROM familias WHERE codigo_acceso=?", (codigo.upper(),))
         row = await cur.fetchone()
-    if not row: return {"ok": False, "error": "Código no válido"}
+    if not row:
+        await asyncio.sleep(0.3)  # timing attack mitigation
+        return {"ok": False, "error": "Código no válido"}
     return {"ok": True, "familia_id": dict(row)["id"], "nombre": dict(row)["nombre"]}
 
 @app.post("/api/miembros")
@@ -965,7 +1061,12 @@ async def ver_familia(fid: str):
 
 # ── Chat ──────────────────────────────────────────────────────────────────────
 @app.post("/api/chat")
-async def chat(req: ChatRequest):
+async def chat(req: ChatRequest, request: Request):
+    ip = request.client.host if request.client else "unknown"
+    if not _rate_check(f"chat:{ip}", limit=40, window=60):
+        raise HTTPException(429, "Demasiados mensajes. Espera un momento.")
+    if req.mensaje and len(req.mensaje) > 2000:
+        raise HTTPException(400, "Mensaje demasiado largo (máx 2000 caracteres)")
     async with aiosqlite.connect(DB_PATH) as db:
         miembro = await get_miembro(db, req.miembro_id)
         if not miembro:
@@ -974,7 +1075,7 @@ async def chat(req: ChatRequest):
         rol    = miembro["rol"]
         nombre = miembro["nombre"]
         fid    = miembro["familia_id"]
-        mensaje = req.mensaje.strip()
+        mensaje = req.mensaje.strip() if req.mensaje else ""
 
         # Riesgo vital — respuesta fija, no delegada a IA
         if rol in ("teen","hermano") and detectar_riesgo(mensaje):
@@ -1023,7 +1124,7 @@ async def chat(req: ChatRequest):
             acuerdos  = await get_acuerdos_teen(db, fid, req.miembro_id)
             ctx_raw   = miembro.get("active_context") or "{}"
             try: ctx = json.loads(ctx_raw)
-            except: ctx = {}
+            except Exception: ctx = {}
             contexto = ctx.get("tema_principal","ninguno")
             perfil_ctx = ctx.get("perfil","estandar")
             materia  = detectar_materia(mensaje)
@@ -1137,8 +1238,7 @@ async def qr_familia(fid: str):
         buf = io.BytesIO()
         img.save(buf, format="PNG")
         buf.seek(0)
-        from fastapi.responses import StreamingResponse as SR
-        return SR(buf, media_type="image/png",
+        return StreamingResponse(buf, media_type="image/png",
                   headers={"Content-Disposition": f'inline; filename="qr_{codigo}.png"'})
     except ImportError:
         raise HTTPException(500, "qrcode no instalado")
@@ -1798,7 +1898,8 @@ async def ping_demo():
 
 # ── Admin API ─────────────────────────────────────────────────────────────────
 @app.get("/api/admin/stats")
-async def admin_stats():
+async def admin_stats(request: Request):
+    _verify_admin(request)
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         stats = {}
@@ -1811,7 +1912,7 @@ async def admin_stats():
                 cur = await db.execute(f"SELECT COUNT(*) as n FROM {tabla}")
                 row = await cur.fetchone()
                 stats[tabla] = dict(row)["n"]
-            except:
+            except Exception:
                 stats[tabla] = 0
         # miembros por rol
         cur = await db.execute("SELECT rol, COUNT(*) as n FROM miembros GROUP BY rol")
@@ -1827,19 +1928,20 @@ async def admin_stats():
             cur = await db.execute("SELECT AVG(score) as avg FROM mood_log")
             row = await cur.fetchone()
             stats["mood_promedio"] = round(dict(row)["avg"] or 0, 1)
-        except:
+        except Exception:
             stats["mood_promedio"] = 0
         # mensajes chat
         try:
             cur = await db.execute("SELECT COUNT(*) as n FROM chat_log")
             row = await cur.fetchone()
             stats["chat_mensajes"] = dict(row)["n"]
-        except:
+        except Exception:
             stats["chat_mensajes"] = 0
     return {"ok": True, "stats": stats}
 
 @app.get("/api/admin/familias")
-async def admin_familias():
+async def admin_familias(request: Request):
+    _verify_admin(request)
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         cur = await db.execute("""
@@ -1853,7 +1955,8 @@ async def admin_familias():
     return {"ok": True, "familias": rows}
 
 @app.get("/api/admin/escuelas")
-async def admin_escuelas():
+async def admin_escuelas(request: Request):
+    _verify_admin(request)
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         cur = await db.execute("SELECT * FROM escuelas ORDER BY rowid DESC")
@@ -1869,7 +1972,8 @@ async def panel_admin():
 
 # ── Sembrar escenario demo completo ───────────────────────────────────────────
 @app.post("/api/admin/sembrar-demo")
-async def sembrar_demo():
+async def sembrar_demo(request: Request):
+    _verify_admin(request)
     """Siembra datos demo completos: familia, teen, misiones, mood, alertas, escuela."""
     import random
     async with aiosqlite.connect(DB_PATH) as db:
@@ -2040,7 +2144,7 @@ async def get_future_me(mid: str):
     try:
         ctx = json.loads(row[0] or "{}")
         return {"ok": True, "vision": ctx.get("future_me", "")}
-    except:
+    except Exception:
         return {"ok": True, "vision": ""}
 
 @app.post("/api/teen/{mid}/future-me")
@@ -2052,7 +2156,7 @@ async def save_future_me(mid: str, req: Request):
         cur = await db.execute("SELECT active_context FROM miembros WHERE id=?", (mid,))
         row = await cur.fetchone()
         try: ctx = json.loads(row[0] or "{}") if row else {}
-        except: ctx = {}
+        except Exception: ctx = {}
         ctx["future_me"] = vision
         await db.execute("UPDATE miembros SET active_context=? WHERE id=?",
             (json.dumps(ctx, ensure_ascii=False), mid))
@@ -2170,7 +2274,7 @@ async def misiones_docente(mid: str):
     completadas = []
     if row:
         try: completadas = json.loads(row[0] or "{}").get("misiones_completadas", [])
-        except: pass
+        except Exception: pass
     misiones = [dict(m, completada=m["id"] in completadas) for m in MISIONES_DOCENTE]
     return {"ok": True, "misiones": misiones}
 
@@ -2182,7 +2286,7 @@ async def completar_mision_docente(mid: str, req: Request):
         cur = await db.execute("SELECT active_context FROM maestros WHERE id=?", (mid,))
         row = await cur.fetchone()
         try: ctx = json.loads(row[0] or "{}") if row else {}
-        except: ctx = {}
+        except Exception: ctx = {}
         completadas = ctx.get("misiones_completadas", [])
         if mision_id not in completadas:
             completadas.append(mision_id)
@@ -2232,7 +2336,7 @@ async def misiones_padre(mid: str):
     completadas = []
     if row:
         try: completadas = json.loads(row[0] or "{}").get("misiones_padre_completadas", [])
-        except: pass
+        except Exception: pass
     misiones = [dict(m, completada=m["id"] in completadas) for m in MISIONES_PADRE]
     return {"ok": True, "misiones": misiones}
 
@@ -2244,7 +2348,7 @@ async def completar_mision_padre(mid: str, req: Request):
         cur = await db.execute("SELECT active_context FROM miembros WHERE id=?", (mid,))
         row = await cur.fetchone()
         try: ctx = json.loads(row[0] or "{}") if row else {}
-        except: ctx = {}
+        except Exception: ctx = {}
         completadas = ctx.get("misiones_padre_completadas", [])
         if mision_id not in completadas: completadas.append(mision_id)
         ctx["misiones_padre_completadas"] = completadas
@@ -2537,7 +2641,8 @@ async def maestro_contactar_padre(mid: str, teen_id: str):
 # ── Admin autónomo ────────────────────────────────────────────────────────────
 
 @app.get("/api/admin/alertas-criticas")
-async def admin_alertas_criticas():
+async def admin_alertas_criticas(request: Request):
+    _verify_admin(request)
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         cur = await db.execute("""
@@ -2553,7 +2658,8 @@ async def admin_alertas_criticas():
     return {"ok": True, "alertas": alertas, "total": len(alertas)}
 
 @app.post("/api/admin/alerta/{aid}/notificar")
-async def admin_notificar_alerta(aid: str):
+async def admin_notificar_alerta(aid: str, request: Request):
+    _verify_admin(request)
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         cur = await db.execute(
@@ -2570,7 +2676,8 @@ async def admin_notificar_alerta(aid: str):
     return {"ok": ok}
 
 @app.post("/api/admin/alerta/{aid}/marcar-vista")
-async def admin_marcar_vista(aid: str):
+async def admin_marcar_vista(aid: str, request: Request):
+    _verify_admin(request)
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("UPDATE alertas SET visto=1 WHERE id=?", (aid,))
         await db.commit()
@@ -2578,6 +2685,7 @@ async def admin_marcar_vista(aid: str):
 
 @app.post("/api/admin/broadcast-whatsapp")
 async def admin_broadcast(req: Request):
+    _verify_admin(req)
     body = await req.json()
     mensaje = body.get("mensaje", "").strip()
     if not mensaje: raise HTTPException(400, "mensaje requerido")
@@ -2594,7 +2702,8 @@ async def admin_broadcast(req: Request):
     return {"ok": True, "enviados": enviados, "total": len(telefonos)}
 
 @app.post("/api/admin/reporte-masivo")
-async def admin_reporte_masivo():
+async def admin_reporte_masivo(request: Request):
+    _verify_admin(request)
     async with aiosqlite.connect(DB_PATH) as db:
         cur = await db.execute("SELECT id, telefono_padre FROM familias WHERE telefono_padre IS NOT NULL AND telefono_padre != ''")
         familias = [(r[0], r[1]) for r in await cur.fetchall()]
@@ -2609,7 +2718,8 @@ async def admin_reporte_masivo():
     return {"ok": True, "enviados": enviados, "total": len(familias)}
 
 @app.post("/api/admin/pregunta-dia-masiva")
-async def admin_pregunta_masiva():
+async def admin_pregunta_masiva(request: Request):
+    _verify_admin(request)
     import datetime
     dia = datetime.date.today().toordinal()
     pregunta = PREGUNTAS_DIA[dia % len(PREGUNTAS_DIA)]
@@ -2625,8 +2735,16 @@ async def admin_pregunta_masiva():
         except Exception: pass
     return {"ok": True, "enviados": enviados, "pregunta": pregunta}
 
+
+@app.get("/api/admin/modulos/{fid}")
+async def admin_get_modulos(fid: str, request: Request):
+    _verify_admin(request)
+    async with aiosqlite.connect(DB_PATH) as db:
+        modulos = await get_modulos_familia(db, fid)
+    return {"ok": True, "fid": fid, "modulos": modulos}
 @app.post("/api/admin/modulos/{fid}")
 async def admin_set_modulos(fid: str, req: Request):
+    _verify_admin(req)
     body = await req.json()
     modulos = body.get("modulos", {})
     async with aiosqlite.connect(DB_PATH) as db:
@@ -2638,7 +2756,8 @@ async def admin_set_modulos(fid: str, req: Request):
     return {"ok": True, "modulos_actualizados": len(modulos)}
 
 @app.get("/api/admin/metricas")
-async def admin_metricas():
+async def admin_metricas(request: Request):
+    _verify_admin(request)
     desde_7d = time.time() - 7 * 86400
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
@@ -2669,6 +2788,7 @@ async def admin_metricas():
 
 @app.post("/api/admin/chat")
 async def admin_chat(req: Request):
+    _verify_admin(req)
     body = await req.json()
     mensaje = body.get("mensaje", "").strip()
     if not mensaje: raise HTTPException(400, "mensaje requerido")
@@ -2723,8 +2843,16 @@ Ejemplo: si piden "envía reportes", responde ejecutando la acción."""
             elif accion == "/api/admin/broadcast-whatsapp":
                 params = accion_data.get("params", {})
                 if params.get("mensaje"):
-                    result = await admin_broadcast(type('R', (), {'json': lambda s=None: params})())
-                    accion_ejecutada = f"Broadcast enviado: {result['enviados']} familias"
+                    if params.get('mensaje'):
+                        _bc_enviados = 0
+                        async with aiosqlite.connect(DB_PATH) as _db:
+                            _bc_cur = await _db.execute(
+                                "SELECT telefono_padre FROM familias WHERE telefono_padre IS NOT NULL AND telefono_padre != ''")
+                            _bc_tels = [r[0] for r in await _bc_cur.fetchall()]
+                        for _tel in _bc_tels:
+                            if await send_whatsapp(_tel, params['mensaje']): _bc_enviados += 1
+                            await asyncio.sleep(1.5)
+                        accion_ejecutada = f'Broadcast enviado: {_bc_enviados} familias'
     except Exception:
         pass
 
@@ -2797,6 +2925,29 @@ async def whatsapp_webhook(req: Request):
     except Exception:
         return {"ok": True}
 
+
+# LFPDPPP art.8 — derecho de supresion
+@app.delete("/api/familia/{fid}/datos")
+async def eliminar_datos_familia(fid: str, request: Request):
+    admin_key = request.headers.get("X-Admin-Key") or request.query_params.get("key", "")
+    if admin_key != ADMIN_KEY:
+        raise HTTPException(403, "No autorizado")
+    async with aiosqlite.connect(DB_PATH) as db:
+        row = await (await db.execute("SELECT id FROM familias WHERE id=?", (fid,))).fetchone()
+        if not row:
+            raise HTTPException(404, "Familia no encontrada")
+        for tabla, col in [
+            ("conversaciones","familia_id"),("alertas","familia_id"),
+            ("mood_history","familia_id"),("misiones","familia_id"),
+            ("acuerdos","familia_id"),("modulos","familia_id"),
+            ("regularizacion","familia_id"),("logros","familia_id"),
+            ("miembros","familia_id"),
+        ]:
+            await db.execute(f"DELETE FROM {tabla} WHERE {col}=?", (fid,))
+        await db.execute("DELETE FROM familias WHERE id=?", (fid,))
+        await db.commit()
+    logger.info(f"LFPDPPP: datos familia {fid} eliminados")
+    return {"ok": True, "eliminado": fid, "ley": "LFPDPPP art.8"}
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn

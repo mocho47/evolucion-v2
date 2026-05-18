@@ -113,9 +113,33 @@ tr.riesgo-alto:hover td{background:#3d0e0e !important}
 .toast.err{border-color:#ef444440;background:#ef444415;color:#f87171}
 /* Métricas */
 .metrics-text{font-size:1rem;color:#a78bfa;font-weight:700;padding:10px 0;border-bottom:1px solid #1e3a5f;margin-bottom:14px}
+
+/* Login overlay */
+#login-overlay{position:fixed;inset:0;background:#050a14;z-index:9999;display:flex;align-items:center;justify-content:center}
+#login-overlay.hidden{display:none}
+.login-box{background:#0d1829;border:1px solid #7c3aed40;border-radius:16px;padding:40px;width:360px;max-width:90vw;text-align:center}
+.login-box h2{font-size:1.4rem;font-weight:900;color:#fff;margin-bottom:8px}
+.login-box p{color:#64748b;font-size:.9rem;margin-bottom:28px}
+.login-logo{width:52px;height:52px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 20px}
+.login-input{width:100%;background:#050a14;border:1px solid #1e3a5f;border-radius:10px;color:#e2e8f0;padding:12px 16px;font-size:1rem;margin-bottom:16px;outline:none;transition:border .2s}
+.login-input:focus{border-color:#7c3aed}
+.login-btn{width:100%;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;border-radius:10px;color:#fff;padding:13px;font-size:1rem;font-weight:700;cursor:pointer;transition:opacity .2s}
+.login-btn:hover{opacity:.9}
+.login-error{color:#f87171;font-size:.85rem;margin-top:12px;display:none}
 </style>
 </head>
 <body>
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">🛡</div>
+    <h2>Panel <span style="color:#a78bfa">Admin</span></h2>
+    <p>Evolución by Simplex — acceso restringido</p>
+    <input id="login-key-input" class="login-input" type="password" placeholder="Clave de administrador" autocomplete="off">
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="login-err">Clave incorrecta</div>
+  </div>
+</div>
+
 
 <header>
   <div class="logo">
@@ -434,6 +458,45 @@ tr.riesgo-alto:hover td{background:#3d0e0e !important}
 
 <script>
 const BASE = '';
+let adminKey = sessionStorage.getItem('evo_admin_key') || '';
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+function authHeaders() {
+  return { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey };
+}
+
+async function doLogin() {
+  const key = document.getElementById('login-key-input').value.trim();
+  if (!key) return;
+  // Probe the server
+  try {
+    const r = await fetch(BASE + '/api/admin/stats', { headers: { 'X-Admin-Key': key } });
+    if (r.status === 403) {
+      document.getElementById('login-err').style.display = 'block';
+      return;
+    }
+    adminKey = key;
+    sessionStorage.setItem('evo_admin_key', key);
+    document.getElementById('login-overlay').classList.add('hidden');
+    initDashboard();
+  } catch(e) {
+    document.getElementById('login-err').style.display = 'block';
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !document.getElementById('login-overlay').classList.contains('hidden')) {
+    doLogin();
+  }
+});
+
+function checkAuth() {
+  if (adminKey) {
+    document.getElementById('login-overlay').classList.add('hidden');
+    return true;
+  }
+  return false;
+}
 
 // ── Utilidades ────────────────────────────────────────────────────────────────
 function toast(msg, type='ok') {
@@ -476,7 +539,7 @@ function showTab(id, el) {
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 async function loadStats() {
   try {
-    const r = await fetch(BASE + '/api/admin/stats');
+    const r = await fetch(BASE + '/api/admin/stats', {headers: authHeaders()});
     const d = await r.json();
     if (!d.ok) return;
     const s = d.stats;
@@ -535,7 +598,7 @@ async function loadStats() {
 async function loadAlertas() {
   document.getElementById('tabla-alertas').innerHTML = '<tr><td colspan="5" class="empty">Cargando...</td></tr>';
   try {
-    const r = await fetch(BASE + '/api/admin/alertas-criticas');
+    const r = await fetch(BASE + '/api/admin/alertas-criticas', {headers: authHeaders()});
     const d = await r.json();
     if (!d.ok) { document.getElementById('tabla-alertas').innerHTML = '<tr><td colspan="5" class="empty">Error al cargar alertas</td></tr>'; return; }
     const alertas = d.alertas || [];
@@ -570,7 +633,7 @@ async function loadAlertas() {
 
 async function notificarPadre(id) {
   try {
-    const r = await fetch(BASE + `/api/admin/alerta/${id}/notificar`, {method:'POST'});
+    const r = await fetch(BASE + `/api/admin/alerta/${id}/notificar`, {method:'POST', headers: authHeaders()});
     const d = await r.json();
     d.ok ? toast('Notificación enviada al padre') : toast('Error: ' + (d.error || 'Fallo'), 'err');
   } catch(e) { toast('Error de red', 'err'); }
@@ -578,7 +641,7 @@ async function notificarPadre(id) {
 
 async function marcarVista(id, btn) {
   try {
-    const r = await fetch(BASE + `/api/admin/alerta/${id}/marcar-vista`, {method:'POST'});
+    const r = await fetch(BASE + `/api/admin/alerta/${id}/marcar-vista`, {method:'POST', headers: authHeaders()});
     const d = await r.json();
     if (d.ok) {
       const fila = btn.closest('tr');
@@ -605,7 +668,7 @@ function actualizarBadgeAlertas() {
 // ── Operaciones ───────────────────────────────────────────────────────────────
 async function loadFamiliasSelect() {
   try {
-    const r = await fetch(BASE + '/api/admin/familias');
+    const r = await fetch(BASE + '/api/admin/familias', {headers: authHeaders()});
     const d = await r.json();
     const sel = document.getElementById('mod-familia');
     const fams = d.familias || [];
@@ -622,7 +685,7 @@ async function enviarBroadcastWA() {
   try {
     const r = await fetch(BASE + '/api/admin/broadcast-whatsapp', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: {'X-Admin-Key': adminKey, 'Content-Type':'application/json'},
       body: JSON.stringify({mensaje: msg})
     });
     const d = await r.json();
@@ -641,7 +704,7 @@ async function enviarReporteMasivo(btn) {
   btn.disabled = true; btn.textContent = 'Generando reportes...';
   showResult('reporte-result', 'Procesando... esto puede tomar unos segundos', 'info');
   try {
-    const r = await fetch(BASE + '/api/admin/reporte-masivo', {method:'POST'});
+    const r = await fetch(BASE + '/api/admin/reporte-masivo', {method:'POST', headers: authHeaders()});
     const d = await r.json();
     if (d.ok) {
       showResult('reporte-result', `Reportes enviados a ${d.enviados || d.total || '?'} familias`, 'ok');
@@ -657,7 +720,7 @@ async function enviarPreguntaDia(btn) {
   const orig = btn.textContent;
   btn.disabled = true; btn.textContent = 'Enviando...';
   try {
-    const r = await fetch(BASE + '/api/admin/pregunta-dia-masiva', {method:'POST'});
+    const r = await fetch(BASE + '/api/admin/pregunta-dia-masiva', {method:'POST', headers: authHeaders()});
     const d = await r.json();
     if (d.ok) {
       showResult('pregunta-result', `Enviado a ${d.enviados || d.total || '?'} familias con teléfono`, 'ok');
@@ -673,7 +736,7 @@ async function cargarModulosFamilia() {
   const fid = document.getElementById('mod-familia').value;
   if (!fid) return;
   try {
-    const r = await fetch(BASE + `/api/admin/modulos/${fid}`);
+    const r = await fetch(BASE + `/api/admin/modulos/${fid}`, {headers: authHeaders(), headers: authHeaders()});
     const d = await r.json();
     const mods = d.modulos || {};
     document.querySelectorAll('#mod-checks input[type=checkbox]').forEach(cb => {
@@ -690,7 +753,7 @@ async function guardarModulos() {
     modulos[cb.value] = cb.checked;
   });
   try {
-    const r = await fetch(BASE + `/api/admin/modulos/${fid}`, {
+    const r = await fetch(BASE + `/api/admin/modulos/${fid}`, {headers: authHeaders(), 
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({modulos})
@@ -708,7 +771,7 @@ async function guardarModulos() {
 // ── Métricas ──────────────────────────────────────────────────────────────────
 async function loadMetricas() {
   try {
-    const r = await fetch(BASE + '/api/admin/metricas');
+    const r = await fetch(BASE + '/api/admin/metricas', {headers: authHeaders()});
     const d = await r.json();
     if (!d.ok) return;
 
@@ -791,7 +854,7 @@ async function sendAdminChat() {
   try {
     const r = await fetch(BASE + '/api/admin/chat', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: {'X-Admin-Key': adminKey, 'Content-Type':'application/json'},
       body: JSON.stringify({mensaje: msg})
     });
     const d = await r.json();
@@ -811,7 +874,7 @@ async function sendAdminChat() {
 
 // ── Familias ──────────────────────────────────────────────────────────────────
 async function loadFamilias() {
-  const r = await fetch(BASE + '/api/admin/familias');
+  const r = await fetch(BASE + '/api/admin/familias', {headers: authHeaders()});
   const d = await r.json();
   const fams = d.familias || [];
   document.getElementById('tabla-familias').innerHTML = fams.length
@@ -827,7 +890,7 @@ async function loadFamilias() {
 
 // ── Escuelas ──────────────────────────────────────────────────────────────────
 async function loadEscuelas() {
-  const r = await fetch(BASE + '/api/admin/escuelas');
+  const r = await fetch(BASE + '/api/admin/escuelas', {headers: authHeaders()});
   const d = await r.json();
   const esc = d.escuelas || [];
   document.getElementById('tabla-escuelas').innerHTML = esc.length
@@ -874,7 +937,7 @@ async function resetDemo(el) {
   const orig = el.querySelector('.title').textContent;
   el.querySelector('.title').textContent = 'Creando...';
   try {
-    await fetch('/api/ping-demo');
+    await fetch('/api/ping-demo', {headers: authHeaders()});
     el.querySelector('.title').textContent = 'DEMO01 listo';
     setTimeout(() => { el.querySelector('.title').textContent = orig; loadStats(); }, 2000);
   } catch(e) { el.querySelector('.title').textContent = 'Error'; }
@@ -884,7 +947,7 @@ async function sembrarDemo(el) {
   const orig = el.querySelector('.title').textContent;
   el.querySelector('.title').textContent = 'Sembrando...';
   try {
-    const r = await fetch('/api/admin/sembrar-demo', {method:'POST'});
+    const r = await fetch('/api/admin/sembrar-demo', {method:'POST', headers: authHeaders()});
     const d = await r.json();
     el.querySelector('.title').textContent = d.ok ? 'Listo ✓' : 'Error';
     el.querySelector('.desc').textContent = d.ok ? 'DEMO02/5678 activo' : (d.error||'Fallo');
@@ -893,12 +956,17 @@ async function sembrarDemo(el) {
 }
 
 // ── Arranque ──────────────────────────────────────────────────────────────────
-loadStats();
+function initDashboard() {
+  loadStats();
+}
+
+if (checkAuth()) initDashboard();
+
 setInterval(loadStats, 60000);
 // Verificar alertas cada 2 minutos en background para mantener badge actualizado
 setInterval(async () => {
   try {
-    const r = await fetch(BASE + '/api/admin/alertas-criticas');
+    const r = await fetch(BASE + '/api/admin/alertas-criticas', {headers: authHeaders()});
     const d = await r.json();
     if (!d.ok) return;
     const n = (d.alertas || []).length;
@@ -907,6 +975,26 @@ setInterval(async () => {
     else { badge.style.display = 'none'; }
   } catch(e) {}
 }, 120000);
+</script>
+
+<script>
+// Evolucion by Simplex — proteccion de contenido
+(function(){
+  // Deshabilitar clic derecho en produccion
+  const prod = !['localhost','127.0.0.1'].includes(location.hostname);
+  if (prod) {
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && ['u','s','p'].includes(e.key.toLowerCase())) e.preventDefault();
+      if (e.key === 'F12') e.preventDefault();
+    });
+  }
+  // Anti-iframe
+  if (window.top !== window.self) { window.top.location = window.self.location; }
+  // Console warning
+  console.log('%cEvolucion by Simplex', 'color:#7c3aed;font-size:1.5rem;font-weight:900');
+  console.log('%cSoftware propietario. Uso no autorizado es ilegal.', 'color:#ef4444;font-size:.85rem');
+})();
 </script>
 </body>
 </html>

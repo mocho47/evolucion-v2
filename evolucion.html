@@ -1938,5 +1938,25 @@ async function activarSOS(){
   };
 })();
 </script>
+
+<script>
+// Evolucion by Simplex — proteccion de contenido
+(function(){
+  // Deshabilitar clic derecho en produccion
+  const prod = !['localhost','127.0.0.1'].includes(location.hostname);
+  if (prod) {
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && ['u','s','p'].includes(e.key.toLowerCase())) e.preventDefault();
+      if (e.key === 'F12') e.preventDefault();
+    });
+  }
+  // Anti-iframe
+  if (window.top !== window.self) { window.top.location = window.self.location; }
+  // Console warning
+  console.log('%cEvolucion by Simplex', 'color:#7c3aed;font-size:1.5rem;font-weight:900');
+  console.log('%cSoftware propietario. Uso no autorizado es ilegal.', 'color:#ef4444;font-size:.85rem');
+})();
+</script>
 </body>
 </html>
