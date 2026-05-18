@@ -163,6 +163,7 @@ tr.riesgo-alto:hover td{background:#3d0e0e !important}
   <div class="tab" onclick="showTab('familias',this)">Familias</div>
   <div class="tab" onclick="showTab('escuelas',this)">Escuelas</div>
   <div class="tab" onclick="showTab('sistema',this)">Sistema</div>
+  <div class="tab" onclick="showTab('leads', this)">🎯 Leads <span class="tab-badge" id="badge-leads" style="display:none">0</span></div>
 </nav>
 
 <div id="toast-el" class="toast"></div>
@@ -407,6 +408,31 @@ tr.riesgo-alto:hover td{background:#3d0e0e !important}
     </div>
   </div>
 
+  <!-- LEADS -->
+  <div class="panel" id="tab-leads">
+    <div class="card">
+      <div class="card-title">
+        Solicitudes de Demo
+        <button class="refresh-btn" onclick="loadLeads()">↻ Actualizar</button>
+      </div>
+      <table>
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Institución</th>
+          <th>Tel / Email</th>
+          <th>Alumnos</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+        <tbody id="leads-tbody">
+          <tr><td colspan="8" class="empty">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- SISTEMA -->
   <div class="panel" id="tab-sistema">
     <div class="card">
@@ -534,6 +560,7 @@ function showTab(id, el) {
   if (id === 'alertas') loadAlertas();
   if (id === 'metricas') loadMetricas();
   if (id === 'operaciones') loadFamiliasSelect();
+  if (id === 'leads') loadLeads();
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
@@ -920,6 +947,78 @@ async function crearEscuela() {
   }
 }
 
+// ── Leads ─────────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function copiarTel(tel) {
+  navigator.clipboard.writeText(tel);
+  toast('Teléfono copiado');
+}
+
+async function cambiarEstadoLead(rid, estado) {
+  await fetch(BASE + `/api/admin/demo-request/${rid}/estado`, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify({estado})
+  });
+  toast('Estado actualizado');
+  loadLeads();
+}
+
+async function loadLeads() {
+  try {
+    const r = await fetch(BASE + '/api/admin/demo-requests', {headers: authHeaders()});
+    const d = await r.json();
+    if (!d.ok) return;
+    const leads = d.requests || [];
+    const badge = document.getElementById('badge-leads');
+    const nuevos = leads.filter(l => !l.atendido).length;
+    badge.textContent = nuevos;
+    badge.style.display = nuevos > 0 ? 'inline-block' : 'none';
+    const tbody = document.getElementById('leads-tbody');
+    if (!leads.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin solicitudes aún</td></tr>';
+      return;
+    }
+    tbody.innerHTML = leads.map(l => {
+      const fecha = l.creado ? new Date(l.creado * 1000).toLocaleDateString('es-MX') : '—';
+      const estadoKey = l.atendido ? (l.estado || 'contactado') : 'nuevo';
+      const estadoBadge = {
+        'nuevo':        '<span class="badge b-blue">Nuevo</span>',
+        'contactado':   '<span class="badge" style="background:#f59e0b20;color:#f59e0b;border:1px solid #f59e0b40">Contactado</span>',
+        'demo_enviada': '<span class="badge b-purple">Demo enviada</span>',
+        'cerrado':      '<span class="badge b-green">Cerrado ✓</span>',
+        'perdido':      '<span class="badge b-gray">Perdido</span>',
+      }[estadoKey] || '<span class="badge b-blue">Nuevo</span>';
+      return `<tr>
+        <td><strong style="color:#e2e8f0">${escHtml(l.nombre || '—')}</strong></td>
+        <td>${escHtml(l.tipo || '—')}</td>
+        <td>${escHtml(l.institucion || '—')}</td>
+        <td style="font-size:.8rem">${escHtml(l.telefono || '')}${l.email ? '<br>' + escHtml(l.email) : ''}</td>
+        <td>${escHtml(l.alumnos || '—')}</td>
+        <td>${fecha}</td>
+        <td>${estadoBadge}</td>
+        <td>
+          <select onchange="cambiarEstadoLead('${l.id}', this.value)" style="background:#050a14;border:1px solid #1e3a5f;color:#94a3b8;border-radius:6px;padding:4px;font-size:.8rem">
+            <option value="nuevo"${estadoKey==='nuevo'?' selected':''}>Nuevo</option>
+            <option value="contactado"${estadoKey==='contactado'?' selected':''}>Contactado</option>
+            <option value="demo_enviada"${estadoKey==='demo_enviada'?' selected':''}>Demo enviada</option>
+            <option value="cerrado"${estadoKey==='cerrado'?' selected':''}>Cerrado</option>
+            <option value="perdido"${estadoKey==='perdido'?' selected':''}>Perdido</option>
+          </select>
+          ${l.telefono ? `<button onclick="copiarTel('${l.telefono}')" style="background:transparent;border:1px solid #1e3a5f;color:#64748b;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:.75rem;margin-left:4px">📋</button>` : ''}
+          ${l.telefono ? `<a href="https://wa.me/52${l.telefono}" target="_blank" style="background:transparent;border:1px solid #10b98140;color:#10b981;padding:4px 8px;border-radius:6px;font-size:.75rem;text-decoration:none;margin-left:4px">WA</a>` : ''}
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    const tbody = document.getElementById('leads-tbody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="empty">Error al cargar leads</td></tr>';
+  }
+}
+
 // ── Demo helpers ───────────────────────────────────────────────────────────────
 let statsLoaded = false;
 setTimeout(() => {
@@ -958,6 +1057,7 @@ async function sembrarDemo(el) {
 // ── Arranque ──────────────────────────────────────────────────────────────────
 function initDashboard() {
   loadStats();
+  loadLeads();
 }
 
 if (checkAuth()) initDashboard();

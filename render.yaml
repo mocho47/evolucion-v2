@@ -3,15 +3,36 @@ services:
     name: evolucion-v2
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn evolucion_server:app --host 0.0.0.0 --port $PORT
+    startCommand: python evolucion_server.py
     envVars:
+      - key: PORT
+        value: 8080
+      - key: EVO_DB
+        value: /var/data/evolucion.db
+      - key: ADMIN_KEY
+        generateValue: true
+      - key: APP_SECRET
+        generateValue: true
+      - key: EVOLUCION_LICENSE
+        sync: false
       - key: GROQ_API_KEY
         sync: false
       - key: ZAI_API_KEY
         sync: false
-      - key: EVO_DB
-        value: /data/evolucion.db
+      - key: GREEN_API_INSTANCE
+        sync: false
+      - key: GREEN_API_TOKEN
+        sync: false
+      - key: GREEN_API_SERVER
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: EVOLUCION_HOSTS
+        value: evolucion-v2.onrender.com
     disk:
-      name: evolucion-db
-      mountPath: /data
+      name: evolucion-data
+      mountPath: /var/data
       sizeGB: 1
+    healthCheckPath: /health

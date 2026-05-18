@@ -134,6 +134,30 @@ def _verify_admin(request: Request):
     if key != ADMIN_KEY:
         raise HTTPException(403, "Acceso admin no autorizado")
 
+# ── Session tokens (JWT-like, HMAC-signed) ───────────────────────────────────
+def _make_token(miembro_id: str, ttl_hours: int = 72) -> str:
+    exp = int(time.time()) + ttl_hours * 3600
+    payload = f"{miembro_id}:{exp}"
+    sig = hashlib.sha256(f"{payload}:{APP_SECRET}".encode()).hexdigest()[:16]
+    return f"{payload}:{sig}"
+
+def _verify_token(token: str) -> "str | None":
+    """Returns miembro_id if valid, None if invalid/expired."""
+    try:
+        parts = token.split(":")
+        if len(parts) != 3:
+            return None
+        mid, exp_str, sig = parts
+        if int(exp_str) < int(time.time()):
+            return None
+        payload = f"{mid}:{exp_str}"
+        expected = hashlib.sha256(f"{payload}:{APP_SECRET}".encode()).hexdigest()[:16]
+        if sig != expected:
+            return None
+        return mid
+    except Exception:
+        return None
+
 # ── SSE en memoria ────────────────────────────────────────────────────────────
 _sse_queues: dict[str, asyncio.Queue] = {}
 
@@ -856,6 +880,7 @@ class ChatRequest(BaseModel):
     miembro_id: str
     mensaje: str
     familia_id: Optional[str] = None
+    token: Optional[str] = None
 
 class CrearMision(BaseModel):
     familia_id: str
@@ -1098,7 +1123,7 @@ async def registrar_miembro(req: RegistrarMiembro):
             "INSERT INTO miembros VALUES (?,?,?,?,?,?,0,'{}',1,?)",
             (mid, req.familia_id, req.nombre, req.rol, req.edad, pin_hash, time.time()))
         await db.commit()
-    return {"ok": True, "miembro_id": mid, "nombre": req.nombre, "rol": req.rol}
+    return {"ok": True, "miembro_id": mid, "nombre": req.nombre, "rol": req.rol, "token": _make_token(mid)}
 
 @app.get("/api/miembros/{mid}")
 async def ver_miembro(mid: str):
@@ -1147,6 +1172,15 @@ async def chat(req: ChatRequest, request: Request):
         raise HTTPException(429, "Demasiados mensajes. Espera un momento.")
     if req.mensaje and len(req.mensaje) > 2000:
         raise HTTPException(400, "Mensaje demasiado largo (máx 2000 caracteres)")
+    # Token verification (optional for backwards compatibility)
+    _token = req.token
+    if not _token:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            _token = auth_header[7:].strip()
+    if _token:
+        if _verify_token(_token) != req.miembro_id:
+            raise HTTPException(401, "Sesión expirada")
     async with aiosqlite.connect(DB_PATH) as db:
         miembro = await get_miembro(db, req.miembro_id)
         if not miembro:
