@@ -555,7 +555,29 @@ async def startup():
     await init_db()
     await _crear_demo_si_falta()
     asyncio.create_task(_scheduler_semanal())
+    asyncio.create_task(_scheduler_pregunta_diaria())
     logger.info(f"Evolución corriendo — puerto {PORT}")
+
+async def _scheduler_pregunta_diaria():
+    """Envía pregunta del día por WhatsApp cada mañana a las 7am a familias con teléfono."""
+    import datetime
+    while True:
+        try:
+            now = datetime.datetime.now()
+            manana_7am = (now + datetime.timedelta(days=1)).replace(hour=7, minute=0, second=0, microsecond=0)
+            if now.hour < 7:
+                manana_7am = now.replace(hour=7, minute=0, second=0, microsecond=0)
+            await asyncio.sleep((manana_7am - now).total_seconds())
+            async with aiosqlite.connect(DB_PATH) as db:
+                cur = await db.execute("SELECT id FROM familias WHERE telefono_padre IS NOT NULL AND telefono_padre != ''")
+                fids = [r[0] for r in await cur.fetchall()]
+            for fid in fids:
+                try:
+                    await enviar_pregunta_dia(fid)
+                    await asyncio.sleep(2)
+                except Exception: pass
+        except Exception:
+            await asyncio.sleep(3600)
 
 async def _scheduler_semanal():
     """Envía reportes cada lunes a las 8am — corre en background sin bloquear."""
@@ -2234,6 +2256,154 @@ async def completar_mision_padre(mid: str, req: Request):
                 (logro_id, mid, "Padre presente ❤", "Completaste tu primera misión de conexión — eso cambia todo", "heart", time.time()))
         await db.commit()
     return {"ok": True}
+
+# ── Diferenciadores padre ─────────────────────────────────────────────────────
+
+PREGUNTAS_DIA = [
+    "Si pudieras cambiar una sola cosa de tu semana, ¿qué sería?",
+    "¿Qué fue lo más raro que te pasó hoy?",
+    "¿Hay algo que quisieras aprender pero nunca has tenido tiempo?",
+    "Si tuvieras un día sin obligaciones, ¿cómo empezaría?",
+    "¿Cuál es la decisión más difícil que tomaste esta semana?",
+    "¿Hay alguien que te haya sorprendido últimamente?",
+    "¿De qué te arrepientes esta semana? ¿Qué harías diferente?",
+    "¿Cuál es el momento del día en que te sientes más tú mismo?",
+    "Si pudieras decirle algo a tu yo de hace 3 años, ¿qué sería?",
+    "¿Qué es lo que más te cuesta pedir ayuda con?",
+    "¿Hay algo que piensas mucho pero no dices en voz alta?",
+    "¿Cuál fue el momento en que más te sentiste orgulloso esta semana?",
+    "¿Qué canción describe cómo te sientes ahorita?",
+    "Si pudieras estar en cualquier lugar del mundo mañana, ¿dónde estarías?",
+]
+
+@app.get("/api/familia/{fid}/semaforo")
+async def semaforo_familia(fid: str):
+    desde_3d = time.time() - 3 * 86400
+    desde_5d = time.time() - 5 * 86400
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT id, nombre FROM miembros WHERE familia_id=? AND rol IN ('teen','hermano') AND activo=1", (fid,))
+        teens = [dict(r) for r in await cur.fetchall()]
+        resultado = []
+        for t in teens:
+            cur2 = await db.execute(
+                "SELECT score FROM mood_history WHERE miembro_id=? AND creado>=? ORDER BY creado DESC LIMIT 3",
+                (t["id"], desde_3d))
+            moods = [r["score"] for r in await cur2.fetchall()]
+            cur3 = await db.execute(
+                "SELECT id FROM alertas WHERE teen_id=? AND tipo='riesgo_alto' AND creado>=?",
+                (t["id"], desde_3d))
+            riesgo = bool(await cur3.fetchone())
+            cur4 = await db.execute(
+                "SELECT creado FROM conversaciones WHERE miembro_id=? ORDER BY creado DESC LIMIT 1",
+                (t["id"],))
+            ult_conv = await cur4.fetchone()
+            dias_sin = int((time.time() - ult_conv["creado"]) / 86400) if ult_conv else 99
+            cur5 = await db.execute(
+                "SELECT creado FROM conversaciones WHERE miembro_id=? AND creado>=? ORDER BY creado DESC",
+                (t["id"], desde_5d))
+            dias_activos = len(set(
+                __import__('datetime').date.fromtimestamp(r["creado"]).isoformat()
+                for r in await cur5.fetchall()))
+            racha = dias_activos
+            promedio = sum(moods) / len(moods) if moods else None
+            if riesgo:
+                color, emoji = "rojo", "⚠"
+            elif not moods or dias_sin > 4:
+                color, emoji = "gris", "💤"
+            elif promedio < 2.5:
+                color, emoji = "rojo", "😶"
+            elif promedio < 3.5:
+                color, emoji = "amarillo", "😐"
+            else:
+                color, emoji = "verde", "😊"
+            resultado.append({
+                "nombre": t["nombre"], "color": color, "emoji": emoji,
+                "dias_racha": racha, "mood_promedio": promedio
+            })
+    return {"ok": True, "teens": resultado}
+
+@app.get("/api/familia/{fid}/temas-semana")
+async def temas_semana(fid: str):
+    desde = time.time() - 7 * 86400
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            """SELECT c.mensaje FROM conversaciones c
+               JOIN miembros m ON m.id=c.miembro_id
+               WHERE m.familia_id=? AND m.rol IN ('teen','hermano') AND c.creado>=?
+               ORDER BY c.creado DESC LIMIT 20""", (fid, desde))
+        mensajes = [r["mensaje"] for r in await cur.fetchall()]
+    if not mensajes:
+        return {"ok": True, "temas": [], "resumen": None}
+    texto = " | ".join(mensajes[:15])
+    prompt = """Analiza estos mensajes de un adolescente y extrae los TEMAS GENERALES que tocó.
+NO reveles contenido específico. Solo categorías: amigos, familia, escuela, emociones, futuro, deporte, música, relaciones, etc.
+Devuelve JSON: {"temas":["tema1","tema2","tema3"],"resumen":"Una frase neutral de 10 palabras máximo"}
+Solo JSON, sin explicación."""
+    try:
+        raw = await llamar_ia(prompt, texto[:1000])
+        s = raw.find("{"); e = raw.rfind("}") + 1
+        data = json.loads(raw[s:e]) if s >= 0 else {"temas": [], "resumen": None}
+        return {"ok": True, "temas": data.get("temas", [])[:8], "resumen": data.get("resumen")}
+    except Exception:
+        return {"ok": True, "temas": [], "resumen": None}
+
+@app.get("/api/familia/{fid}/pregunta-dia")
+async def pregunta_dia(fid: str):
+    import datetime
+    dia = datetime.date.today().toordinal()
+    pregunta = PREGUNTAS_DIA[dia % len(PREGUNTAS_DIA)]
+    return {"ok": True, "pregunta": pregunta}
+
+@app.post("/api/familia/{fid}/sos")
+async def sos_familiar(fid: str):
+    desde = time.time() - 7 * 86400
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT nombre FROM miembros WHERE familia_id=? AND rol IN ('teen','hermano') AND activo=1 LIMIT 1", (fid,))
+        teen = await cur.fetchone()
+        teen_nombre = teen["nombre"] if teen else "tu teen"
+        cur2 = await db.execute(
+            "SELECT tipo, sugerencia FROM alertas WHERE familia_id=? AND creado>=? ORDER BY creado DESC LIMIT 3",
+            (fid, desde))
+        alertas = [dict(r) for r in await cur2.fetchall()]
+        cur3 = await db.execute(
+            "SELECT score FROM mood_history WHERE miembro_id IN (SELECT id FROM miembros WHERE familia_id=?) AND creado>=? ORDER BY creado DESC LIMIT 5",
+            (fid, desde))
+        moods = [r["score"] for r in await cur3.fetchall()]
+    promedio = sum(moods)/len(moods) if moods else None
+    alertas_txt = ", ".join(a["tipo"] for a in alertas) if alertas else "ninguna registrada"
+    prompt = f"""Eres un psicólogo experto en crisis adolescentes. Un padre está en modo SOS con su teen {teen_nombre}.
+Estado: mood promedio {promedio or 'desconocido'}/5, alertas recientes: {alertas_txt}.
+
+Genera un PROTOCOLO DE CRISIS en 6 pasos numerados, específico y accionable:
+1. Qué hacer en los próximos 5 minutos
+2. Cómo crear el espacio físico y emocional para hablar
+3. Las primeras palabras exactas para abrir la conversación
+4. Qué hacer si el teen se cierra o reacciona con enojo
+5. Señales de que necesita ayuda profesional urgente
+6. Cómo cuidarte tú como padre en este momento
+
+Tono: calmado, concreto, sin tecnicismos. En español México."""
+    protocolo = await llamar_ia(prompt, "Genera el protocolo de crisis para este padre")
+    return {"ok": True, "protocolo": protocolo, "teen": teen_nombre}
+
+@app.post("/api/whatsapp/pregunta-dia/{fid}")
+async def enviar_pregunta_dia(fid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute("SELECT telefono_padre, nombre FROM familias WHERE id=?", (fid,))
+        row = await cur.fetchone()
+    if not row or not row[0]:
+        return {"ok": False, "msg": "Sin teléfono configurado"}
+    import datetime
+    dia = datetime.date.today().toordinal()
+    pregunta = PREGUNTAS_DIA[dia % len(PREGUNTAS_DIA)]
+    msg = f"🌅 *Pregunta del día — Evolución*\n\nPara la cena o el camino:\n\n_{pregunta}_\n\nNo hay respuesta correcta. Solo escucha."
+    ok = await send_whatsapp(row[0], msg)
+    return {"ok": ok, "pregunta": pregunta}
 
 # ── Reportes ──────────────────────────────────────────────────────────────────
 @app.post("/api/reporte/{fid}/enviar")
