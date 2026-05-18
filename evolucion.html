@@ -221,6 +221,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .typing span:nth-child(2){animation-delay:.18s;}
 .typing span:nth-child(3){animation-delay:.36s;}
 @keyframes pulse{0%,60%,100%{transform:translateY(0);opacity:.4;}30%{transform:translateY(-5px);opacity:1;}}
+@keyframes semaforo-pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
 
 /* Mood bar */
 #mood{
@@ -628,6 +629,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
       <div class="hname" id="ph-nombre">Mi familia</div>
       <div class="hstatus padre" id="ph-status">● panel familiar</div>
     </div>
+    <button onclick="activarSOS()" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:.3rem .65rem;font-size:.78rem;font-weight:700;cursor:pointer;letter-spacing:.03em;">SOS</button>
     <a href="/nosotros" title="Acerca de Evolución" style="color:var(--muted,#8888aa);font-size:1.1rem;text-decoration:none;padding:.25rem .4rem;opacity:.6;margin-right:.25rem;">ⓘ</a>
     <button class="hmenu" onclick="salir()" title="Salir">✕</button>
   </div>
@@ -1376,9 +1378,32 @@ async function renderFamilia(){
     setBadge('b-misiones', (r.misiones_completadas||0));
     setBadge('b-alertas', r.alertas_nuevas||0);
 
-    let html = '';
+    // CAMBIO 1 — Semáforo familiar
+    let semaforoHtml = '<div style="display:flex;gap:.75rem;justify-content:center;margin:.5rem 0 1rem;flex-wrap:wrap;" id="semaforo-wrap"></div>';
+    try{
+      const sem = await api(`/familia/${S.fid}/semaforo`);
+      if(sem.ok && sem.teens?.length){
+        const circulos = sem.teens.map(t=>{
+          const colorMap = {verde:'#4ade80', amarillo:'#fbbf24', rojo:'#f87171'};
+          const bg = colorMap[t.color] || '#4a4a6a';
+          const pulseStyle = t.color==='rojo' ? 'animation:semaforo-pulse 1.2s infinite;' : '';
+          const ini = (t.nombre||'?')[0].toUpperCase();
+          return `<div style="display:flex;flex-direction:column;align-items:center;gap:.15rem;">
+            <span style="font-size:.65rem;color:var(--muted2);font-weight:700;">${ini}</span>
+            <div style="width:44px;height:44px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:1.15rem;${pulseStyle}box-shadow:0 0 0 3px ${bg}33;">${t.emoji||''}</div>
+            ${t.dias_racha?`<span style="font-size:.6rem;color:var(--muted2);">${t.dias_racha}d</span>`:''}
+          </div>`;
+        }).join('');
+        semaforoHtml = `<div style="background:var(--surface2);border-radius:12px;padding:.7rem 1rem .5rem;margin-bottom:.75rem;border:1px solid var(--border);">
+          <div style="font-size:.68rem;color:var(--muted2);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;text-align:center;">ESTADO DE LA FAMILIA AHORA</div>
+          <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;" id="semaforo-wrap">${circulos}</div>
+        </div>`;
+      }
+    }catch(e){}
+
+    let html = semaforoHtml;
     if(!_miembros.length){
-      html = '<div class="empty">Comparte el código con tu familia para que se unan.</div>';
+      html += '<div class="empty">Comparte el código con tu familia para que se unan.</div>';
     } else {
       _miembros.forEach(m=>{
         const esPadre = ['padre','madre'].includes(m.rol);
@@ -1397,6 +1422,36 @@ async function renderFamilia(){
       <button class="btn ghost" style="flex:1" onclick="abrirModal('m-familiar')">＋ Familiar</button>
       <button class="btn purple" style="flex:1" onclick="abrirChatPadre()">💬 Consejo</button>
     </div>`;
+
+    // CAMBIO 3 — Misiones de conexión del padre
+    try{
+      const mp = await api(`/padre/${S.mid}/misiones`);
+      if(mp.ok && mp.misiones?.length){
+        let misionesHtml = `<div style="margin-top:.9rem;background:var(--surface2);border-radius:12px;padding:.85rem 1rem;border:1px solid var(--border);">
+          <div style="font-size:.78rem;color:var(--muted2);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem;">TUS MISIONES DE CONEXION</div>`;
+        mp.misiones.forEach(m=>{
+          if(m.completada){
+            misionesHtml += `<div style="background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.15);border-radius:10px;padding:.6rem .8rem;margin-bottom:.45rem;display:flex;align-items:center;gap:.6rem;">
+              <span style="color:var(--accent);font-size:1rem;">✓</span>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:.82rem;font-weight:600;text-decoration:line-through;color:var(--muted2);">${esc(m.titulo)}</div>
+                ${m.impacto?`<div style="font-size:.72rem;color:var(--muted2);margin-top:.1rem;">${esc(m.impacto)}</div>`:''}
+              </div>
+            </div>`;
+          } else {
+            misionesHtml += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.6rem .8rem;margin-bottom:.45rem;">
+              <div style="font-size:.82rem;font-weight:600;margin-bottom:.15rem;">${esc(m.titulo)}</div>
+              ${m.descripcion?`<div style="font-size:.75rem;color:var(--muted2);margin-bottom:.35rem;line-height:1.4;">${esc(m.descripcion)}</div>`:''}
+              ${m.impacto?`<div style="font-size:.72rem;color:#a78bfa;margin-bottom:.35rem;">${esc(m.impacto)}</div>`:''}
+              <button onclick="completarMisionPadre('${m.id}')" style="background:var(--accent-dim);color:var(--accent);border:1px solid rgba(0,229,160,.25);border-radius:6px;padding:.25rem .6rem;font-size:.75rem;font-weight:700;cursor:pointer;">✓ Hecho</button>
+            </div>`;
+          }
+        });
+        misionesHtml += '</div>';
+        html += misionesHtml;
+      }
+    }catch(e){}
+
     if(S.codigo){
       html += `<div style="margin-top:.75rem">
         <div class="code-box">
@@ -1422,6 +1477,19 @@ async function renderFamilia(){
       </div>
       <p style="font-size:.75rem;color:var(--text-dim);margin:.4rem 0 0;">Si tu teen activa una alerta de riesgo, te avisamos aquí al instante.</p>
     </div>`;
+
+    // CAMBIO 4 — Pregunta del día
+    try{
+      const pd = await api(`/familia/${S.fid}/pregunta-dia`);
+      if(pd.ok && pd.pregunta){
+        html += `<div style="margin-top:.9rem;background:linear-gradient(135deg,#1e1b4b,#2d1b69);border-radius:12px;padding:.85rem 1rem;border:1px solid #4c1d95;">
+          <div style="font-size:.78rem;color:#a78bfa;font-weight:600;margin-bottom:.4rem;">PREGUNTA DEL DIA</div>
+          <div style="font-size:.92rem;color:#e9d5ff;line-height:1.5;font-style:italic;">"${esc(pd.pregunta)}"</div>
+          <div style="font-size:.73rem;color:#7c3aed;margin-top:.4rem;">Para la cena o el camino al colegio.</div>
+        </div>`;
+      }
+    }catch(e){}
+
     document.getElementById('padre-content').innerHTML = html;
   }catch(e){document.getElementById('padre-content').innerHTML='<div class="empty">Error al cargar.</div>';}
 }
@@ -1480,6 +1548,18 @@ async function renderAlertas(){
         html += `<div style="background:linear-gradient(135deg,#1e1b4b,#2d1b69);border-radius:12px;padding:.85rem 1rem;margin-bottom:.75rem;border:1px solid #4c1d95;">
   <div style="font-size:.78rem;color:#a78bfa;font-weight:600;letter-spacing:.04em;margin-bottom:.35rem;">ANÁLISIS IA</div>
   <div style="font-size:.88rem;color:#e9d5ff;line-height:1.5;">${esc(ins.insight_texto)}</div>
+</div>`;
+      }
+    }catch(e){}
+    // CAMBIO 2 — Temas de la semana
+    try{
+      const tw = await api(`/familia/${S.fid}/temas-semana`);
+      if(tw.ok && tw.temas?.length){
+        const chips = tw.temas.map(t=>`<span style="background:rgba(139,92,246,.15);color:#a78bfa;border-radius:20px;padding:.25rem .65rem;font-size:.8rem;font-weight:500;">${esc(t)}</span>`).join('');
+        html += `<div style="background:var(--surface2);border-radius:12px;padding:.85rem 1rem;margin-bottom:.75rem;border:1px solid var(--border);">
+  <div style="font-size:.78rem;color:var(--muted2);font-weight:600;margin-bottom:.5rem;">DE QUÉ HABLÓ ESTA SEMANA</div>
+  <div style="display:flex;flex-wrap:wrap;gap:.4rem;">${chips}</div>
+  <p style="font-size:.75rem;color:var(--muted2);margin:.5rem 0 0;">Sin revelar el contenido de sus conversaciones.</p>
 </div>`;
       }
     }catch(e){}
@@ -1801,6 +1881,33 @@ document.getElementById('pin-input')?.addEventListener('keydown',e=>{
 document.getElementById('deso-desc')?.addEventListener('keydown',e=>{
   if(e.key==='Enter'){e.preventDefault();agregarDeseo();}
 });
+
+// ── Misiones del padre ───────────────────────────────────────────────────────
+async function completarMisionPadre(mision_id){
+  await api(`/padre/${S.mid}/mision-completada`,'POST',{mision_id});
+  toast('Misión completada ✓ — eso cuenta');
+  renderFamilia();
+}
+
+// ── SOS ──────────────────────────────────────────────────────────────────────
+async function activarSOS(){
+  toast('Generando protocolo de crisis...');
+  try{
+    const r = await api(`/familia/${S.fid}/sos`,'POST',{});
+    const box = document.getElementById('padre-messages');
+    if(box){
+      const d = document.createElement('div');
+      d.className='msg bot';
+      d.innerHTML=`<div class="bubble" style="max-width:100%;white-space:pre-line;font-size:.88rem;">${esc(r.protocolo||r.mensaje||'Sin respuesta')}</div>`;
+      box.appendChild(d);
+      box.scrollTop=box.scrollHeight;
+      document.getElementById('padre-chat-wrap').style.display='flex';
+      document.getElementById('padre-content').style.display='none';
+    }else{
+      alert(r.protocolo||r.mensaje||'Sin respuesta');
+    }
+  }catch(e){ toast('Error al activar SOS'); }
+}
 
 // ── Voz ──────────────────────────────────────────────────────────────────────
 (function initVoice(){
