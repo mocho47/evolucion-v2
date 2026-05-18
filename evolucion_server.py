@@ -888,6 +888,11 @@ async def app_panel():
     with open(html_path, encoding="utf-8") as f:
         return f.read()
 
+@app.get("/privacidad", response_class=HTMLResponse)
+async def pagina_privacidad():
+    with open(os.path.join(os.path.dirname(__file__), "privacidad.html"), encoding="utf-8") as f:
+        return f.read()
+
 @app.get("/deck/familias", response_class=HTMLResponse)
 async def deck_familias():
     with open(os.path.join(os.path.dirname(__file__), "deck_familias.html"), encoding="utf-8") as f:
