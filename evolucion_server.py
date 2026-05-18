@@ -2534,6 +2534,204 @@ async def maestro_contactar_padre(mid: str, teen_id: str):
     ok = await send_whatsapp(row["telefono_padre"], msg)
     return {"ok": ok, "msg": "Mensaje enviado" if ok else "Error al enviar"}
 
+# ── Admin autónomo ────────────────────────────────────────────────────────────
+
+@app.get("/api/admin/alertas-criticas")
+async def admin_alertas_criticas():
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("""
+            SELECT a.id, a.tipo, a.creado, a.visto,
+                   m.nombre as teen_nombre, f.nombre as familia_nombre,
+                   f.telefono_padre
+            FROM alertas a
+            JOIN miembros m ON m.id=a.teen_id
+            JOIN familias f ON f.id=a.familia_id
+            WHERE a.visto=0
+            ORDER BY a.creado DESC LIMIT 50""")
+        alertas = [dict(r) for r in await cur.fetchall()]
+    return {"ok": True, "alertas": alertas, "total": len(alertas)}
+
+@app.post("/api/admin/alerta/{aid}/notificar")
+async def admin_notificar_alerta(aid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT a.tipo, m.nombre, f.telefono_padre FROM alertas a JOIN miembros m ON m.id=a.teen_id JOIN familias f ON f.id=a.familia_id WHERE a.id=?",
+            (aid,))
+        row = await cur.fetchone()
+    if not row or not row["telefono_padre"]:
+        return {"ok": False, "msg": "Sin teléfono configurado"}
+    msg = (f"🚨 *Evolución — Atención requerida*\n\n"
+           f"Tu teen {row['nombre']} activó una señal de *{row['tipo']}*.\n\n"
+           f"Acércate con calma. No es para alarmarte — es para que no cargue esto solo/a.\n\n"
+           f"Abre la app para ver el guión de conversación → evolucion-v2.onrender.com")
+    ok = await send_whatsapp(row["telefono_padre"], msg)
+    return {"ok": ok}
+
+@app.post("/api/admin/alerta/{aid}/marcar-vista")
+async def admin_marcar_vista(aid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("UPDATE alertas SET visto=1 WHERE id=?", (aid,))
+        await db.commit()
+    return {"ok": True}
+
+@app.post("/api/admin/broadcast-whatsapp")
+async def admin_broadcast(req: Request):
+    body = await req.json()
+    mensaje = body.get("mensaje", "").strip()
+    if not mensaje: raise HTTPException(400, "mensaje requerido")
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute("SELECT telefono_padre FROM familias WHERE telefono_padre IS NOT NULL AND telefono_padre != ''")
+        telefonos = [r[0] for r in await cur.fetchall()]
+    enviados = 0
+    for tel in telefonos:
+        try:
+            ok = await send_whatsapp(tel, mensaje)
+            if ok: enviados += 1
+            await asyncio.sleep(1.5)
+        except Exception: pass
+    return {"ok": True, "enviados": enviados, "total": len(telefonos)}
+
+@app.post("/api/admin/reporte-masivo")
+async def admin_reporte_masivo():
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute("SELECT id, telefono_padre FROM familias WHERE telefono_padre IS NOT NULL AND telefono_padre != ''")
+        familias = [(r[0], r[1]) for r in await cur.fetchall()]
+    enviados = 0
+    for fid, tel in familias:
+        try:
+            from evolucion_reporte import enviar_reporte_whatsapp
+            ok = await enviar_reporte_whatsapp(tel, fid, DB_PATH)
+            if ok: enviados += 1
+            await asyncio.sleep(2)
+        except Exception: pass
+    return {"ok": True, "enviados": enviados, "total": len(familias)}
+
+@app.post("/api/admin/pregunta-dia-masiva")
+async def admin_pregunta_masiva():
+    import datetime
+    dia = datetime.date.today().toordinal()
+    pregunta = PREGUNTAS_DIA[dia % len(PREGUNTAS_DIA)]
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute("SELECT id FROM familias WHERE telefono_padre IS NOT NULL AND telefono_padre != ''")
+        fids = [r[0] for r in await cur.fetchall()]
+    enviados = 0
+    for fid in fids:
+        try:
+            r = await enviar_pregunta_dia(fid)
+            if r.get("ok"): enviados += 1
+            await asyncio.sleep(1)
+        except Exception: pass
+    return {"ok": True, "enviados": enviados, "pregunta": pregunta}
+
+@app.post("/api/admin/modulos/{fid}")
+async def admin_set_modulos(fid: str, req: Request):
+    body = await req.json()
+    modulos = body.get("modulos", {})
+    async with aiosqlite.connect(DB_PATH) as db:
+        for modulo, activo in modulos.items():
+            await db.execute(
+                "INSERT OR REPLACE INTO modulos (familia_id, modulo, activo) VALUES (?,?,?)",
+                (fid, modulo, 1 if activo else 0))
+        await db.commit()
+    return {"ok": True, "modulos_actualizados": len(modulos)}
+
+@app.get("/api/admin/metricas")
+async def admin_metricas():
+    desde_7d = time.time() - 7 * 86400
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        fams = (await (await db.execute("SELECT COUNT(*) FROM familias")).fetchone())[0]
+        fams_activas = (await (await db.execute(
+            "SELECT COUNT(DISTINCT familia_id) FROM conversaciones WHERE creado>=?", (desde_7d,))).fetchone())[0]
+        teens = (await (await db.execute(
+            "SELECT COUNT(*) FROM miembros WHERE rol IN ('teen','hermano') AND activo=1")).fetchone())[0]
+        convs = (await (await db.execute(
+            "SELECT COUNT(*) FROM conversaciones WHERE creado>=?", (desde_7d,))).fetchone())[0]
+        mood_row = await (await db.execute(
+            "SELECT AVG(score) FROM mood_history WHERE creado>=?", (desde_7d,))).fetchone()
+        mood_global = round(mood_row[0], 1) if mood_row[0] else None
+        alertas_sem = (await (await db.execute(
+            "SELECT COUNT(*) FROM alertas WHERE creado>=?", (desde_7d,))).fetchone())[0]
+        misiones_sem = (await (await db.execute(
+            "SELECT COUNT(*) FROM misiones WHERE estado='aprobada' AND aprobado>=?", (desde_7d,))).fetchone())[0]
+        cur_mat = await db.execute(
+            "SELECT materia, COUNT(*) as cnt FROM regularizacion WHERE iniciado>=? GROUP BY materia ORDER BY cnt DESC LIMIT 5",
+            (desde_7d,))
+        top_materias = [dict(r) for r in await cur_mat.fetchall()]
+    retencion = round((fams_activas / max(fams, 1)) * 100, 1)
+    return {"ok": True, "total_familias": fams, "familias_activas_7d": fams_activas,
+            "total_teens": teens, "total_conversaciones": convs,
+            "mood_promedio_global": mood_global, "alertas_semana": alertas_sem,
+            "misiones_aprobadas_semana": misiones_sem, "top_materias": top_materias,
+            "retencion_7d": retencion}
+
+@app.post("/api/admin/chat")
+async def admin_chat(req: Request):
+    body = await req.json()
+    mensaje = body.get("mensaje", "").strip()
+    if not mensaje: raise HTTPException(400, "mensaje requerido")
+
+    # Obtener contexto del sistema para la IA
+    async with aiosqlite.connect(DB_PATH) as db:
+        fams = (await (await db.execute("SELECT COUNT(*) FROM familias")).fetchone())[0]
+        alertas_sin_ver = (await (await db.execute("SELECT COUNT(*) FROM alertas WHERE visto=0")).fetchone())[0]
+        cur_f = await db.execute("SELECT id, nombre, telefono_padre FROM familias ORDER BY creado DESC LIMIT 20")
+        lista_familias = [dict(r) for r in await cur_f.fetchall()]
+
+    familias_txt = "\n".join(f"- {f['nombre']} (id:{f['id']}, tel:{f['telefono_padre'] or 'sin tel'})" for f in lista_familias)
+
+    prompt = f"""Eres el agente administrador autónomo de Evolución by Simplex.
+Tienes acceso completo al sistema. Estado actual:
+- {fams} familias registradas
+- {alertas_sin_ver} alertas sin atender
+- Familias: {familias_txt}
+
+CAPACIDADES QUE PUEDES EJECUTAR (responde qué harías y el endpoint):
+- Enviar WA masivo: POST /api/admin/broadcast-whatsapp
+- Enviar reportes: POST /api/admin/reporte-masivo
+- Enviar pregunta del día: POST /api/admin/pregunta-dia-masiva
+- Ver alertas críticas: GET /api/admin/alertas-criticas
+- Activar módulo: POST /api/admin/modulos/{{fid}}
+- Ver métricas: GET /api/admin/metricas
+- Estadísticas: GET /api/admin/stats
+
+INSTRUCCIÓN DEL ADMIN: {mensaje}
+
+Responde en 2 partes:
+1. Lo que vas a hacer (1-2 líneas directas)
+2. JSON con: {{"accion": "endpoint_a_llamar", "params": {{...}}}} o {{"accion": "ninguna"}} si es consulta
+
+Ejemplo: si piden "envía reportes", responde ejecutando la acción."""
+
+    respuesta_ia = await llamar_ia(prompt, mensaje)
+
+    # Extraer y ejecutar acción si la IA la detectó
+    accion_ejecutada = None
+    try:
+        s = respuesta_ia.rfind("{"); e = respuesta_ia.rfind("}") + 1
+        if s >= 0 and e > s:
+            accion_data = json.loads(respuesta_ia[s:e])
+            accion = accion_data.get("accion", "ninguna")
+            if accion == "/api/admin/reporte-masivo":
+                result = await admin_reporte_masivo()
+                accion_ejecutada = f"Reportes enviados: {result['enviados']}/{result['total']} familias"
+            elif accion == "/api/admin/pregunta-dia-masiva":
+                result = await admin_pregunta_masiva()
+                accion_ejecutada = f"Pregunta enviada: {result['enviados']} familias"
+            elif accion == "/api/admin/broadcast-whatsapp":
+                params = accion_data.get("params", {})
+                if params.get("mensaje"):
+                    result = await admin_broadcast(type('R', (), {'json': lambda s=None: params})())
+                    accion_ejecutada = f"Broadcast enviado: {result['enviados']} familias"
+    except Exception:
+        pass
+
+    # Limpiar JSON de la respuesta visible
+    respuesta_limpia = respuesta_ia[:respuesta_ia.rfind("{")].strip() if "{" in respuesta_ia else respuesta_ia
+    return {"ok": True, "respuesta": respuesta_limpia, "accion_ejecutada": accion_ejecutada}
+
 # ── Reportes ──────────────────────────────────────────────────────────────────
 @app.post("/api/reporte/{fid}/enviar")
 async def enviar_reporte(fid: str):
