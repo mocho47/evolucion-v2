@@ -2405,6 +2405,135 @@ async def enviar_pregunta_dia(fid: str):
     ok = await send_whatsapp(row[0], msg)
     return {"ok": ok, "pregunta": pregunta}
 
+# ── Herramientas maestro ──────────────────────────────────────────────────────
+
+DINAMICAS_SEL = [
+    {"titulo":"El termómetro del grupo","objetivo":"Detectar el estado emocional al inicio","duracion":"3 min","instrucciones":"Dibuja un termómetro en el pizarrón. Pide que cada quien, en silencio, piense un número del 1 al 10 que describe su energía hoy. Levanta la mano quien está entre 1-3, 4-6, 7-10. Observa sin juzgar.","cuando_usar":"Inicio de clase, lunes o después de vacaciones","necesidad":"inicio"},
+    {"titulo":"Una palabra que describe mi semana","objetivo":"Apertura emocional sin presión","duracion":"5 min","instrucciones":"En ronda rápida, cada alumno dice UNA palabra que describe cómo fue su semana. Tú empiezas. No hay comentarios — solo escucha. Si alguien pasa, respeta.","cuando_usar":"Viernes o después de una semana difícil","necesidad":"cierre"},
+    {"titulo":"El error del día","objetivo":"Crear seguridad psicológica","duracion":"5 min","instrucciones":"Comparte un error tuyo reciente — algo real, no perfecto. Luego pregunta: ¿qué aprendiste de un error esta semana? Voluntarios. Celebra cada respuesta con 'eso vale'.","cuando_usar":"Cuando el grupo tiene miedo a equivocarse","necesidad":"conflicto"},
+    {"titulo":"Respiración 4-7-8","objetivo":"Reducir ansiedad grupal en 3 minutos","duracion":"3 min","instrucciones":"Todos de pie o sentados. Inhala contando 4, sostén contando 7, exhala contando 8. Tres rondas en silencio. Sin explicar por qué — solo hazlo.","cuando_usar":"Antes de examen, después de conflicto, grupo muy acelerado","necesidad":"energia_baja"},
+    {"titulo":"Reconocimiento anónimo","objetivo":"Fortalecer vínculos entre pares","duracion":"10 min","instrucciones":"Cada quien escribe el nombre de un compañero en un papel y algo específico que valora de él/ella. Se doblan y se mezclan. El maestro lee algunos en voz alta sin decir quién los escribió.","cuando_usar":"Cuando hay frialdad o conflicto entre compañeros","necesidad":"conflicto"},
+    {"titulo":"El semáforo personal","objetivo":"Autoregulación emocional","duracion":"2 min","instrucciones":"Sin hablar, cada quien levanta 1 dedo (rojo=no puedo hoy), 2 (amarillo=más o menos) o 3 (verde=listo). Solo tú ves los resultados. Actúa según lo que veas.","cuando_usar":"Cualquier inicio de clase","necesidad":"inicio"},
+    {"titulo":"Carta a mi yo futuro","objetivo":"Conectar con motivación interna","duracion":"15 min","instrucciones":"Escribe una carta a tu yo de dentro de 5 años. Cuéntale qué estás viviendo, qué te preocupa, qué esperas. Nadie la lee — es tuya. La sellan en un sobre.","cuando_usar":"Cuando el grupo pierde el sentido de para qué están aquí","necesidad":"energia_baja"},
+    {"titulo":"El barómetro de acuerdos","objetivo":"Reconstruir normas grupales","duracion":"10 min","instrucciones":"Lista en el pizarrón 5 comportamientos del grupo (sin nombres). El grupo vota anónimamente: ¿cuáles queremos cambiar? Solo se trabajan los que el grupo decidió — no los que decides tú.","cuando_usar":"Después de un conflicto grupal o semana difícil","necesidad":"conflicto"},
+    {"titulo":"Storytime: mi momento de orgullo","objetivo":"Aumentar autoestima y cohesión","duracion":"5 min","instrucciones":"Pide voluntarios que compartan en 30 segundos algo de lo que se sienten orgullosos esta semana — académico, personal, deportivo, cualquier cosa. Sin evaluación, solo aplausos.","cuando_usar":"Cierre de semana positiva","necesidad":"cierre"},
+    {"titulo":"Minuto de gratitud","objetivo":"Cierre emocional positivo","duracion":"2 min","instrucciones":"En los últimos 2 minutos, cada quien escribe en su cuaderno 3 cosas concretas por las que está agradecido hoy. No se comparten. Es un ritual de cierre.","cuando_usar":"Último período del día","necesidad":"cierre"},
+]
+
+@app.get("/api/dinamicas")
+async def get_dinamicas(necesidad: str = ""):
+    if necesidad:
+        filtradas = [d for d in DINAMICAS_SEL if d["necesidad"] == necesidad]
+        return {"ok": True, "dinamicas": filtradas or DINAMICAS_SEL}
+    return {"ok": True, "dinamicas": DINAMICAS_SEL}
+
+@app.get("/api/maestro/{mid}/expediente/{teen_id}")
+async def expediente_alumno(mid: str, teen_id: str):
+    desde = time.time() - 30 * 86400
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        # Buscar por id o por nombre parcial
+        cur = await db.execute("SELECT * FROM miembros WHERE id=? AND activo=1", (teen_id,))
+        teen = await cur.fetchone()
+        if not teen:
+            cur = await db.execute(
+                "SELECT * FROM miembros WHERE nombre LIKE ? AND rol IN ('teen','hermano') AND activo=1 LIMIT 1",
+                (f"%{teen_id}%",))
+            teen = await cur.fetchone()
+        if not teen:
+            return {"ok": False, "error": "Alumno no encontrado"}
+        teen = dict(teen)
+        cur2 = await db.execute(
+            "SELECT score FROM mood_history WHERE miembro_id=? AND creado>=? ORDER BY creado DESC",
+            (teen["id"], desde))
+        moods = [r["score"] for r in await cur2.fetchall()]
+        cur3 = await db.execute(
+            "SELECT COUNT(*) FROM alertas WHERE teen_id=? AND creado>=?", (teen["id"], desde))
+        alertas_total = (await cur3.fetchone())[0]
+        cur4 = await db.execute(
+            "SELECT materia FROM regularizacion WHERE teen_id=? AND estado='activa'", (teen["id"],))
+        materias = [r["materia"] for r in await cur4.fetchall()]
+        cur5 = await db.execute(
+            "SELECT tipo FROM aptitudes WHERE teen_id=?", (teen["id"],))
+        aptitudes = list({r["tipo"] for r in await cur5.fetchall()})
+        cur6 = await db.execute(
+            "SELECT titulo FROM logros WHERE miembro_id=? ORDER BY creado DESC LIMIT 5", (teen["id"],))
+        logros = [r["titulo"] for r in await cur6.fetchall()]
+        cur7 = await db.execute(
+            "SELECT titulo FROM metas WHERE teen_id=? AND estado='activa' LIMIT 3", (teen["id"],))
+        metas = [r["titulo"] for r in await cur7.fetchall()]
+        # Calcular racha
+        cur8 = await db.execute(
+            "SELECT creado FROM conversaciones WHERE miembro_id=? ORDER BY creado DESC LIMIT 30", (teen["id"],))
+        convs = await cur8.fetchall()
+    import datetime
+    dias = set(datetime.date.fromtimestamp(r["creado"]).isoformat() for r in convs)
+    racha, dia = 0, datetime.date.today()
+    while dia.isoformat() in dias:
+        racha += 1
+        dia -= datetime.timedelta(days=1)
+    promedio = round(sum(moods)/len(moods), 1) if moods else None
+    return {"ok": True, "expediente": {
+        "nombre": teen["nombre"], "edad": teen["edad"],
+        "mood_promedio": promedio, "racha": racha,
+        "alertas_total": alertas_total, "materias_tutor": materias,
+        "aptitudes": aptitudes[:6], "logros": logros, "metas": metas,
+        "familia_id": teen["familia_id"],
+    }}
+
+@app.post("/api/maestro/{mid}/protocolo/{teen_id}")
+async def protocolo_intervencion(mid: str, teen_id: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT nombre, edad FROM miembros WHERE id=? OR nombre LIKE ?",
+            (teen_id, f"%{teen_id}%"))
+        teen = await cur.fetchone()
+        nombre = teen["nombre"] if teen else teen_id
+        edad = teen["edad"] if teen else 15
+        cur2 = await db.execute(
+            "SELECT tipo FROM alertas WHERE teen_id=? ORDER BY creado DESC LIMIT 3", (teen_id,))
+        alertas = [r["tipo"] for r in await cur2.fetchall()]
+        cur3 = await db.execute(
+            "SELECT score FROM mood_history WHERE miembro_id=? ORDER BY creado DESC LIMIT 5", (teen_id,))
+        moods = [r["score"] for r in await cur3.fetchall()]
+    promedio = round(sum(moods)/len(moods), 1) if moods else None
+    alertas_txt = ", ".join(alertas) if alertas else "sin alertas registradas"
+    prompt = f"""Eres psicólogo escolar con 20 años de experiencia en secundaria y preparatoria en México.
+El alumno {nombre}, {edad} años, muestra: mood promedio {promedio or 'sin datos'}/5, alertas: {alertas_txt}.
+
+Genera un PROTOCOLO DE INTERVENCIÓN DOCENTE en 5 pasos concretos:
+1. Observación inicial: qué observar específicamente en los próximos 3 días
+2. Primer acercamiento: cómo crear el espacio y las palabras exactas para hablar con el alumno
+3. Documentación: qué registrar y cómo (sin invadir privacidad)
+4. Coordinación: cuándo y cómo involucrar a orientación, dirección o padres
+5. Seguimiento: cómo monitorear sin que el alumno se sienta vigilado
+
+Tono: profesional pero humano. Evita tecnicismos. En español México. Máximo 200 palabras."""
+    protocolo = await llamar_ia(prompt, f"Protocolo para {nombre}")
+    return {"ok": True, "protocolo": protocolo, "nombre": nombre}
+
+@app.post("/api/maestro/{mid}/contactar-padre/{teen_id}")
+async def maestro_contactar_padre(mid: str, teen_id: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT m.nombre, f.telefono_padre, f.nombre as familia FROM miembros m JOIN familias f ON f.id=m.familia_id WHERE m.id=?",
+            (teen_id,))
+        row = await cur.fetchone()
+        if not row: return {"ok": False, "msg": "Alumno no encontrado"}
+        cur2 = await db.execute("SELECT nombre FROM maestros WHERE id=?", (mid,))
+        maestro = await cur2.fetchone()
+        maestro_nombre = maestro["nombre"] if maestro else "El maestro/a"
+    if not row["telefono_padre"]:
+        return {"ok": False, "msg": "El padre no tiene teléfono configurado en Evolución"}
+    msg = (f"📚 *Evolución — Mensaje del maestro*\n\n"
+           f"Hola, soy {maestro_nombre}.\n\n"
+           f"Me gustaría tener una conversación sobre {row['nombre']} — "
+           f"no es una emergencia, pero creo que podemos trabajar juntos para apoyarle mejor.\n\n"
+           f"¿Podríamos hablar esta semana?\n\n— Enviado desde Evolución by Simplex")
+    ok = await send_whatsapp(row["telefono_padre"], msg)
+    return {"ok": ok, "msg": "Mensaje enviado" if ok else "Error al enviar"}
+
 # ── Reportes ──────────────────────────────────────────────────────────────────
 @app.post("/api/reporte/{fid}/enviar")
 async def enviar_reporte(fid: str):
