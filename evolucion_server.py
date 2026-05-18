@@ -313,6 +313,34 @@ PASO 6 — AVANZA: Solo cuando domine el básico, sube un nivel.
 
 Primer mensaje: "Ok, {materia}. ¿Qué parte específica te está costando más?" — directo al punto."""
 
+PROMPT_ESPECIAL = """<role>Eres EVOLUCIÓN — compañero que entiende que el cerebro de {nombre} funciona diferente, no menos.</role>
+
+{nombre} tiene {edad} años. Su procesamiento neurológico es distinto al estándar. Eso no es un déficit — es una arquitectura diferente.
+
+<reglas_especial>
+1. INSTRUCCIONES CLARAS Y CORTAS: máximo 1 idea por mensaje. Jamás 3 cosas al mismo tiempo.
+2. TIEMPO DE PROCESAMIENTO: si no responde rápido, no presiones. "Tómate tu tiempo, no hay prisa."
+3. EXTERNALIZACIÓN DE PENSAMIENTO: ayúdale a organizar ideas fuera de su cabeza. "¿Si lo escribieras en 3 palabras, cuáles serían?"
+4. ANCLAJE SENSORIAL: cuando esté saturado, un estímulo concreto. "¿Qué puedes ver/tocar en este momento?"
+5. CERO COMPARACIONES: jamás "los demás hacen esto fácil" ni ninguna variante.
+6. FORTALEZAS PRIMERO: empieza desde lo que SÍ puede hacer, no desde lo que se le dificulta.
+7. CONSISTENCIA Y RUTINA: la previsibilidad reduce ansiedad. Si cambia el tema, avísale.
+8. CELEBRA EL INTENTO: el proceso vale más que el resultado. "Que lo hayas intentado ya cuenta."
+9. DESCANSOS ACTIVOS: si lleva mucho rato en algo, sugiere parar. "Un respiro de 5 minutos aquí."
+10. SIN IRONÍA NI SARCASMO: el lenguaje figurativo puede confundir — sé literal y directo.
+</reglas_especial>
+
+<frameworks>
+- UDL (Universal Design for Learning): múltiples formas de representación, acción y expresión.
+- Modelo de Fuerza (Strength-Based): construye desde las capacidades identificadas, no desde el diagnóstico.
+- Autorregulación Zonas de Regulación: rojo (desbordado), amarillo (alerta), verde (listo), azul (bajo). Identifica la zona antes de actuar.
+- Executive Function Scaffolding: planificación, inicio de tareas, memoria de trabajo — da andamios concretos, no generalidades.
+</frameworks>
+
+<estado>Nombre: {nombre}, {edad} años. Humor: {last_mood}. Contexto: {contexto}.</estado>
+
+Primer mensaje: "Hola {nombre}. ¿Cómo va todo hoy?" — simple, sin presión."""
+
 PROMPT_MAESTRO = """<role>Eres EVOLUCIÓN — aliado integral del docente {nombre}.</role>
 
 Tienes dos dimensiones inseparables: apoyas la práctica pedagógica Y el bienestar personal del maestro.
@@ -985,6 +1013,9 @@ async def chat(req: ChatRequest):
             elif modulos.get("modo_visionario") and perfil_ctx == "visionario":
                 prompt = PROMPT_VISIONARIO.format(nombre=nombre, edad=miembro.get("edad",15),
                     last_mood=last_mood, contexto=contexto)
+            elif modulos.get("modo_especial"):
+                prompt = PROMPT_ESPECIAL.format(nombre=nombre, edad=miembro.get("edad",15),
+                    last_mood=last_mood, contexto=contexto)
             else:
                 prompt = PROMPT_TEEN.format(nombre=nombre, edad=miembro.get("edad",15),
                     last_mood=last_mood, contexto=contexto, acuerdos=acuerdos)
@@ -1031,6 +1062,41 @@ async def mood(req: QuickMood):
         await db.commit()
     etiq = {1:"Notado.",2:"Ok.",3:"Copy.",4:"Bien.",5:"Qué bueno."}
     return {"ok": True, "respuesta": etiq.get(req.score, "Ok.")}
+
+@app.get("/api/mood/{mid}")
+async def get_mood_historia(mid: str, dias: int = 7):
+    desde = time.time() - dias * 86400
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT score, nota, creado FROM mood_history WHERE miembro_id=? AND creado>=? ORDER BY creado ASC",
+            (mid, desde))
+        rows = [dict(r) for r in await cur.fetchall()]
+    promedio = round(sum(r["score"] for r in rows) / len(rows), 1) if rows else None
+    return {"ok": True, "registros": rows, "promedio": promedio}
+
+@app.get("/api/familia/{fid}/qr")
+async def qr_familia(fid: str):
+    try:
+        import qrcode, io
+        async with aiosqlite.connect(DB_PATH) as db:
+            cur = await db.execute("SELECT codigo_acceso, nombre FROM familias WHERE id=?", (fid,))
+            row = await cur.fetchone()
+        if not row:
+            raise HTTPException(404, "Familia no encontrada")
+        codigo, nombre = row
+        qr = qrcode.QRCode(version=1, box_size=8, border=3)
+        qr.add_data(codigo)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="#8b5cf6", back_color="white")
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        buf.seek(0)
+        from fastapi.responses import StreamingResponse as SR
+        return SR(buf, media_type="image/png",
+                  headers={"Content-Disposition": f'inline; filename="qr_{codigo}.png"'})
+    except ImportError:
+        raise HTTPException(500, "qrcode no instalado")
 
 # ── Misiones ──────────────────────────────────────────────────────────────────
 @app.get("/api/misiones/{fid}")
@@ -1094,11 +1160,32 @@ async def aprobar_mision(mid: str, req: AprobarMision):
                 (m["puntos"], m["asignado_a"]))
             cur3 = await db.execute("SELECT puntos_total FROM miembros WHERE id=?", (m["asignado_a"],))
             pts = (await cur3.fetchone())[0]
-            for umbral, titulo in [(500,"Imparable"),(200,"En llamas"),(100,"Centurión"),(50,"Arranque")]:
+            # Logros por umbral de puntos
+            for umbral, titulo, desc in [
+                (500,"Imparable 🔥","500 puntos — eres de los que no paran"),
+                (200,"En llamas ⚡","200 puntos — la consistencia es tu superpoder"),
+                (100,"Centurión 💯","100 puntos — primer gran hito"),
+                (50,"Arranque 🚀","50 puntos — esto apenas empieza"),
+            ]:
                 if pts >= umbral and (pts - m["puntos"]) < umbral:
                     await db.execute("INSERT INTO logros VALUES (?,?,?,?,?,?)",
-                        (str(uuid.uuid4())[:8], m["asignado_a"], titulo,
-                         f"{umbral} puntos acumulados", "star", time.time()))
+                        (str(uuid.uuid4())[:8], m["asignado_a"], titulo, desc, "star", time.time()))
+            # Logros por número de misiones aprobadas
+            cur4 = await db.execute(
+                "SELECT COUNT(*) FROM misiones WHERE asignado_a=? AND estado='aprobada'", (m["asignado_a"],))
+            total_aprobadas = (await cur4.fetchone())[0]
+            for num, titulo, desc in [
+                (1,"Primera misión ⭐","Completaste tu primera misión — ahora ya sabes cómo se siente"),
+                (5,"Racha de 5 🏅","5 misiones completadas — la disciplina se está instalando"),
+                (10,"Décima misión 🏆","10 misiones — eso ya es un hábito, no suerte"),
+                (25,"Veterano 💎","25 misiones — eres parte del 1% que sí cumple"),
+            ]:
+                if total_aprobadas == num:
+                    cur5 = await db.execute(
+                        "SELECT id FROM logros WHERE miembro_id=? AND titulo=?", (m["asignado_a"], titulo))
+                    if not await cur5.fetchone():
+                        await db.execute("INSERT INTO logros VALUES (?,?,?,?,?,?)",
+                            (str(uuid.uuid4())[:8], m["asignado_a"], titulo, desc, "trophy", time.time()))
         await db.commit()
     return {"ok": True, "puntos_asignados": m["puntos"], "mensaje": f"Aprobada — +{m['puntos']} pts"}
 
@@ -1260,6 +1347,13 @@ async def iniciar_regularizacion(req: IniciarRegularizacion):
         await db.execute("UPDATE regularizacion SET estado='pausada' WHERE teen_id=? AND estado='activa'", (req.teen_id,))
         await db.execute("INSERT INTO regularizacion VALUES (?,?,?,?,0,'activa',?)",
             (rid, req.teen_id, req.materia, req.nivel, time.time()))
+        # Logro: primera sesión de tutor
+        cur = await db.execute("SELECT COUNT(*) FROM regularizacion WHERE teen_id=?", (req.teen_id,))
+        total = (await cur.fetchone())[0]
+        if total == 1:
+            await db.execute("INSERT INTO logros VALUES (?,?,?,?,?,?)",
+                (str(uuid.uuid4())[:8], req.teen_id, "Tutor activado 📚",
+                 f"Primera sesión de {req.materia} — decidiste enfrentarlo en lugar de ignorarlo", "book", time.time()))
         await db.commit()
     return {"ok": True, "id": rid, "mensaje": f"Sesión de {req.materia} iniciada. El chat ahora es tu tutor."}
 
