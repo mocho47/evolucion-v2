@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Evolución — El primer asistente de desarrollo humano adolescente para México. Acompañamiento emocional, orientación vocacional y tutoría académica con IA.">
 <title>Evolución — Desarrollo Humano Adolescente</title>
+<!--
+Correo profesional sugerido: contacto@evolucionapp.mx
+Configurar con: Zoho Mail (gratis con dominio propio) o Google Workspace
+Correo de recuperación: anuarm17@gmail.com
+-->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -34,16 +39,24 @@ nav{
   background:rgba(3,3,8,.92);backdrop-filter:blur(12px);
   border-bottom:1px solid var(--border);
   padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between;
+  gap:1rem;
 }
-.nav-logo{font-size:1.1rem;font-weight:900;letter-spacing:-.01em;}
+.nav-logo{font-size:1.1rem;font-weight:900;letter-spacing:-.01em;white-space:nowrap;}
 .nav-logo span{color:var(--accent);}
+.nav-links{display:flex;align-items:center;gap:1.5rem;list-style:none;}
+.nav-links a{font-size:.82rem;font-weight:600;color:var(--muted);text-decoration:none;
+  transition:color .2s;white-space:nowrap;}
+.nav-links a:hover{color:var(--accent);}
 .nav-cta{
   background:var(--accent);color:#030308;border:none;
   padding:.5rem 1.2rem;border-radius:99px;font-weight:700;
   font-size:.85rem;cursor:pointer;text-decoration:none;
-  transition:all .2s;
+  transition:all .2s;white-space:nowrap;
 }
 .nav-cta:hover{background:var(--accent2);transform:translateY(-1px);}
+@media(max-width:700px){
+  .nav-links{display:none;}
+}
 
 /* ── HERO ─────────────────────────────────────────────────── */
 #hero{
@@ -95,6 +108,35 @@ nav{
   box-shadow:0 0 6px var(--accent);animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 
+/* ── CONTADORES / SOCIAL PROOF ───────────────────────────── */
+#stats{
+  background:var(--s1);border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  padding:2.5rem 1.5rem;
+}
+.stats-grid{
+  max-width:1040px;margin:0 auto;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+}
+.stat-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:1.25rem 1rem;border-right:1px solid var(--border);
+  text-align:center;
+}
+.stat-item:last-child{border-right:none;}
+.stat-num{
+  font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;letter-spacing:-.03em;
+  color:var(--accent);line-height:1;margin-bottom:.3rem;
+}
+.stat-num.purple{color:#a78bfa;}
+.stat-label{font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.06em;line-height:1.35;max-width:110px;}
+@media(max-width:600px){
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
+  .stat-item:nth-child(2){border-right:none;}
+  .stat-item:nth-child(3){border-top:1px solid var(--border);}
+  .stat-item:nth-child(4){border-top:1px solid var(--border);border-right:none;}
+}
+
 /* ── SECCIÓN GENÉRICA ─────────────────────────────────────── */
 section{padding:5rem 1.5rem;}
 .container{max-width:1040px;margin:0 auto;}
@@ -103,6 +145,38 @@ section{padding:5rem 1.5rem;}
 .section-title{font-size:clamp(1.7rem,4vw,2.5rem);font-weight:800;
   line-height:1.15;letter-spacing:-.02em;margin-bottom:1rem;}
 .section-sub{font-size:1rem;color:var(--muted);max-width:560px;line-height:1.65;}
+
+/* ── MISIÓN Y VISIÓN ──────────────────────────────────────── */
+#mision{background:var(--bg);}
+.mv-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:3rem;}
+@media(max-width:680px){.mv-grid{grid-template-columns:1fr;}}
+.mv-card{
+  border-radius:var(--r);padding:2.5rem 2rem;position:relative;overflow:hidden;
+}
+.mv-card.green{
+  background:linear-gradient(135deg,rgba(0,229,160,.07) 0%,rgba(0,229,160,.02) 100%);
+  border:1px solid rgba(0,229,160,.25);
+}
+.mv-card.purple{
+  background:linear-gradient(135deg,rgba(124,58,237,.1) 0%,rgba(124,58,237,.02) 100%);
+  border:1px solid rgba(124,58,237,.3);
+}
+.mv-card::before{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:200px;height:200px;border-radius:50%;
+  filter:blur(60px);pointer-events:none;opacity:.35;
+}
+.mv-card.green::before{background:var(--accent);}
+.mv-card.purple::before{background:var(--purple);}
+.mv-eyebrow{
+  font-size:.68rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  margin-bottom:1.1rem;
+}
+.mv-card.green .mv-eyebrow{color:var(--accent);}
+.mv-card.purple .mv-eyebrow{color:#a78bfa;}
+.mv-text{
+  font-size:clamp(1rem,2vw,1.15rem);font-weight:600;line-height:1.65;color:var(--text);
+}
 
 /* ── PROBLEMA ─────────────────────────────────────────────── */
 #problema{background:var(--s1);}
@@ -181,6 +255,63 @@ section{padding:5rem 1.5rem;}
 .priv-title{font-weight:700;font-size:.9rem;margin-bottom:.2rem;}
 .priv-desc{font-size:.8rem;color:var(--muted);line-height:1.5;}
 
+/* ── DEMO REQUEST ─────────────────────────────────────────── */
+#demo-request{
+  background:var(--bg);
+  border-top:1px solid var(--border);
+}
+.demo-inner{
+  max-width:680px;margin:0 auto;
+}
+.demo-form-wrap{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:var(--r);padding:2.5rem 2rem;margin-top:3rem;
+}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+@media(max-width:540px){.form-row{grid-template-columns:1fr;}}
+.form-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem;}
+.form-group label{font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.form-group input,
+.form-group select,
+.form-group textarea{
+  background:#0a0a18;border:1px solid var(--border);
+  border-radius:10px;padding:.75rem 1rem;
+  color:var(--text);font-size:.95rem;font-family:inherit;
+  outline:none;transition:border .2s;
+  -webkit-appearance:none;appearance:none;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus{border-color:var(--accent);}
+.form-group textarea{resize:vertical;min-height:90px;}
+.form-group select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238888aa' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 1rem center;padding-right:2.5rem;
+}
+.form-submit{
+  width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#030308;border:none;padding:1rem;border-radius:99px;
+  font-weight:700;font-size:1rem;cursor:pointer;
+  transition:all .2s;box-shadow:0 8px 28px var(--accent-glow);
+  margin-top:.5rem;
+}
+.form-submit:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 36px var(--accent-glow);}
+.form-submit:disabled{opacity:.55;cursor:not-allowed;}
+.form-note{font-size:.75rem;color:var(--muted2);text-align:center;margin-top:.85rem;}
+.demo-success{
+  display:none;text-align:center;padding:3rem 1.5rem;
+  background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.2);
+  border-radius:var(--r);margin-top:3rem;
+}
+.demo-success.visible{display:block;}
+.demo-success-icon{font-size:2.5rem;margin-bottom:1rem;}
+.demo-success-title{font-size:1.3rem;font-weight:800;color:var(--accent);margin-bottom:.65rem;}
+.demo-success-text{font-size:.95rem;color:var(--muted);line-height:1.65;max-width:420px;margin:0 auto;}
+.form-error{
+  font-size:.8rem;color:#ff6b6b;margin-top:.4rem;display:none;
+}
+.form-error.visible{display:block;}
+
 /* ── CTA FINAL ────────────────────────────────────────────── */
 #cta-final{
   text-align:center;
@@ -198,11 +329,15 @@ footer{
   font-size:.78rem;color:var(--muted2);
 }
 footer strong{color:var(--text);}
+.footer-links{display:flex;gap:1.5rem;justify-content:center;flex-wrap:wrap;margin-top:.65rem;}
+.footer-links a{color:var(--muted2);text-decoration:none;font-size:.75rem;transition:color .2s;}
+.footer-links a:hover{color:var(--accent);}
 
 /* ── RESPONSIVE ───────────────────────────────────────────── */
 @media(max-width:600px){
   .hero-actions{flex-direction:column;align-items:center;}
   .btn-primary,.btn-ghost{width:100%;max-width:320px;text-align:center;}
+  .demo-form-wrap{padding:1.75rem 1.25rem;}
 }
 </style>
 </head>
@@ -211,6 +346,12 @@ footer strong{color:var(--text);}
 <!-- NAV -->
 <nav>
   <div class="nav-logo">EVO<span>LUCIÓN</span></div>
+  <ul class="nav-links">
+    <li><a href="#mision">Misión</a></li>
+    <li><a href="#diferenciadores">Plataforma</a></li>
+    <li><a href="#institucional">Institucional</a></li>
+    <li><a href="#demo-request">Demo</a></li>
+  </ul>
   <a href="/app" class="nav-cta">Ingresar a la plataforma</a>
 </nav>
 
@@ -220,12 +361,53 @@ footer strong{color:var(--text);}
   <h1 class="hero-title">El primer asistente de<br><span>desarrollo humano adolescente</span><br>para México</h1>
   <p class="hero-sub">Acompañamiento emocional, orientación vocacional y tutoría académica personalizada — todo en una conversación continua con el estudiante.</p>
   <div class="hero-actions">
-    <a href="/app" class="btn-primary">Ver demostración</a>
+    <a href="#demo-request" class="btn-primary">Ver demostración</a>
     <a href="#diferenciadores" class="btn-ghost">Conocer más</a>
   </div>
   <div class="hero-note">
     <div class="hero-dot"></div>
     <span>Plataforma activa · Familias reales · Guadalajara, México</span>
+  </div>
+</section>
+
+<!-- CONTADORES / SOCIAL PROOF -->
+<div id="stats">
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div class="stat-num" data-target="12">0</div>
+      <div class="stat-label">Módulos activos</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" data-target="6">0</div>
+      <div class="stat-label">Marcos psicológicos</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num purple" data-target="3">0</div>
+      <div class="stat-label">Tipos de usuario</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num purple">MX</div>
+      <div class="stat-label">México primero</div>
+    </div>
+  </div>
+</div>
+
+<!-- MISIÓN Y VISIÓN -->
+<section id="mision">
+  <div class="container">
+    <div class="section-tag">Propósito</div>
+    <h2 class="section-title">Misión y Visión</h2>
+    <p class="section-sub">Por qué existe Evolución y a dónde va.</p>
+    <div class="mv-grid">
+      <div class="mv-card green">
+        <div class="mv-eyebrow">Misión</div>
+        <p class="mv-text">Acompañar el desarrollo humano de cada adolescente mexicano con inteligencia real — emocional, vocacional y académica — entendiendo quién es, no solo lo que necesita aprender.</p>
+      </div>
+      <div class="mv-card purple">
+        <div class="mv-eyebrow">Visión</div>
+        <p class="mv-text">Que ningún joven en México enfrente solo una crisis emocional, una decisión vocacional o una materia reprobada por falta de acceso a orientación real.</p>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -435,9 +617,82 @@ footer strong{color:var(--text);}
     <p class="cta-sub">Evolución no es un proyecto en papel. Hay conversaciones activas, perfiles construidos y señales detectadas. Lo que viene es la validación institucional.</p>
     <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;">
       <a href="/app" class="btn-primary">Ver plataforma en vivo</a>
-      <a href="mailto:milanmontellanoanuar@gmail.com" class="btn-ghost">Contactar al equipo</a>
+      <a href="mailto:contacto@evolucionapp.mx" class="btn-ghost">Contactar al equipo</a>
     </div>
     <div class="cta-note">Evolución es un proyecto de <strong>Simplex</strong> — Guadalajara, México</div>
+  </div>
+</section>
+
+<!-- DEMO REQUEST -->
+<section id="demo-request">
+  <div class="container">
+    <div class="demo-inner">
+      <div class="section-tag">Captación</div>
+      <h2 class="section-title">Solicitar demo gratuita</h2>
+      <p class="section-sub">Agendamos una sesión personalizada para tu institución. Sin compromisos, sin costo.</p>
+
+      <div class="demo-success" id="demo-success">
+        <div class="demo-success-icon">✓</div>
+        <div class="demo-success-title">Solicitud recibida</div>
+        <p class="demo-success-text">¡Solicitud recibida! Te contactaremos en menos de 24 horas para activar tu demo personalizada.</p>
+      </div>
+
+      <div class="demo-form-wrap" id="demo-form-wrap">
+        <form id="demo-form" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f-nombre">Nombre completo *</label>
+              <input type="text" id="f-nombre" name="nombre" placeholder="Tu nombre" autocomplete="name">
+              <span class="form-error" id="err-nombre">Por favor ingresa tu nombre.</span>
+            </div>
+            <div class="form-group">
+              <label for="f-institucion">Institución / Nombre</label>
+              <input type="text" id="f-institucion" name="institucion" placeholder="Colegio o nombre personal" autocomplete="organization">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f-email">Correo electrónico</label>
+              <input type="email" id="f-email" name="email" placeholder="correo@institucion.edu.mx" autocomplete="email">
+              <span class="form-error" id="err-contacto">Proporciona correo o teléfono.</span>
+            </div>
+            <div class="form-group">
+              <label for="f-telefono">Teléfono / WhatsApp</label>
+              <input type="tel" id="f-telefono" name="telefono" placeholder="33 0000 0000" autocomplete="tel">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f-tipo">Tipo de contacto *</label>
+              <select id="f-tipo" name="tipo">
+                <option value="">— Seleccionar —</option>
+                <option value="padre de familia">Padre de familia</option>
+                <option value="colegio privado">Colegio privado</option>
+                <option value="orientador educativo">Orientador educativo</option>
+                <option value="otro">Otro</option>
+              </select>
+              <span class="form-error" id="err-tipo">Selecciona una opción.</span>
+            </div>
+            <div class="form-group" id="grupo-alumnos">
+              <label for="f-alumnos">Alumnos aproximados</label>
+              <select id="f-alumnos" name="alumnos">
+                <option value="">— Seleccionar —</option>
+                <option value="<50">Menos de 50</option>
+                <option value="50-200">50 a 200</option>
+                <option value="200-500">200 a 500</option>
+                <option value="+500">Más de 500</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="f-mensaje">Mensaje (opcional)</label>
+            <textarea id="f-mensaje" name="mensaje" placeholder="¿Qué te interesa explorar? ¿Hay un contexto específico que debamos saber?"></textarea>
+          </div>
+          <button type="submit" class="form-submit" id="demo-submit">Solicitar demo gratuita</button>
+          <p class="form-note">Sin compromisos. Respuesta en menos de 24h.</p>
+        </form>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -451,8 +706,8 @@ footer strong{color:var(--text);}
       <a href="tel:3326148674" style="display:flex;align-items:center;gap:.6rem;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.3);color:#00e5a0;border-radius:14px;padding:1rem 1.75rem;font-size:1.1rem;font-weight:800;text-decoration:none;">
         📞 33 2614 8674
       </a>
-      <a href="mailto:milanmontellanoanuar@gmail.com" style="display:flex;align-items:center;gap:.6rem;background:#0d0d20;border:1px solid #1a1a35;color:#8888aa;border-radius:14px;padding:1rem 1.75rem;font-size:.95rem;font-weight:700;text-decoration:none;">
-        ✉ milanmontellanoanuar@gmail.com
+      <a href="mailto:contacto@evolucionapp.mx" style="display:flex;align-items:center;gap:.6rem;background:#0d0d20;border:1px solid #1a1a35;color:#8888aa;border-radius:14px;padding:1rem 1.75rem;font-size:.95rem;font-weight:700;text-decoration:none;">
+        ✉ contacto@evolucionapp.mx<br><span style="font-size:.72rem;opacity:.65;">(respuesta en 24h)</span>
       </a>
       <a href="https://wa.me/523326148674" target="_blank" style="display:flex;align-items:center;gap:.6rem;background:#0d0d20;border:1px solid #1a1a35;color:#8888aa;border-radius:14px;padding:1rem 1.75rem;font-size:.95rem;font-weight:700;text-decoration:none;">
         💬 WhatsApp
@@ -467,9 +722,103 @@ footer strong{color:var(--text);}
   </div>
 </section>
 
-<footer style="background:#030308;border-top:1px solid #1a1a35;padding:1.5rem 0;text-align:center;color:#4a4a6a;font-size:.8rem;">
-  <strong style="color:#8888aa;">EVOLUCIÓN</strong> by Simplex &nbsp;·&nbsp; Guadalajara, México &nbsp;·&nbsp; 33 2614 8674 &nbsp;·&nbsp; 2026
+<footer>
+  <strong>EVOLUCIÓN</strong> by Simplex &nbsp;·&nbsp; Guadalajara, México &nbsp;·&nbsp; 33 2614 8674 &nbsp;·&nbsp; 2026
+  <div class="footer-links">
+    <a href="/privacidad">Aviso de Privacidad</a>
+    <a href="/terminos">Términos</a>
+    <a href="/app">Plataforma</a>
+    <a href="mailto:contacto@evolucionapp.mx">contacto@evolucionapp.mx</a>
+  </div>
 </footer>
+
+<script>
+/* ── Animated counters ─────────────────────────────────────── */
+(function(){
+  const nums = document.querySelectorAll('.stat-num[data-target]');
+  if(!nums.length) return;
+  const obs = new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(!e.isIntersecting) return;
+      const el = e.target;
+      const target = parseInt(el.dataset.target,10);
+      const duration = 900;
+      const step = 16;
+      const steps = duration/step;
+      let current = 0;
+      const inc = target/steps;
+      const timer = setInterval(()=>{
+        current += inc;
+        if(current >= target){ current = target; clearInterval(timer); }
+        el.textContent = Math.floor(current);
+      }, step);
+      obs.unobserve(el);
+    });
+  },{threshold:.4});
+  nums.forEach(n=>obs.observe(n));
+})();
+
+/* ── Demo form ─────────────────────────────────────────────── */
+(function(){
+  const form    = document.getElementById('demo-form');
+  const wrap    = document.getElementById('demo-form-wrap');
+  const success = document.getElementById('demo-success');
+  const submit  = document.getElementById('demo-submit');
+  if(!form) return;
+
+  form.addEventListener('submit', async e=>{
+    e.preventDefault();
+    // Reset errors
+    document.querySelectorAll('.form-error').forEach(el=>el.classList.remove('visible'));
+
+    const nombre    = form.nombre.value.trim();
+    const email     = form.email.value.trim();
+    const telefono  = form.telefono.value.trim();
+    const tipo      = form.tipo.value;
+    const institucion = form.institucion.value.trim();
+    const alumnos   = form.alumnos.value;
+    const mensaje   = form.mensaje.value.trim();
+
+    // Validate
+    let ok = true;
+    if(!nombre){
+      document.getElementById('err-nombre').classList.add('visible');
+      ok = false;
+    }
+    if(!email && !telefono){
+      document.getElementById('err-contacto').classList.add('visible');
+      ok = false;
+    }
+    if(!tipo){
+      document.getElementById('err-tipo').classList.add('visible');
+      ok = false;
+    }
+    if(!ok) return;
+
+    submit.disabled = true;
+    submit.textContent = 'Enviando...';
+
+    try{
+      const res = await fetch('/api/demo-request',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({nombre,email,telefono,institucion,tipo,alumnos,mensaje})
+      });
+      if(!res.ok){
+        const err = await res.json().catch(()=>({}));
+        throw new Error(err.detail || 'Error al enviar');
+      }
+      wrap.style.display = 'none';
+      success.classList.add('visible');
+      success.scrollIntoView({behavior:'smooth',block:'center'});
+    } catch(err){
+      submit.disabled = false;
+      submit.textContent = 'Solicitar demo gratuita';
+      alert('Error al enviar: ' + err.message + '\n\nEscríbenos directamente: contacto@evolucionapp.mx');
+    }
+  });
+})();
+</script>
 
 </body>
 </html>

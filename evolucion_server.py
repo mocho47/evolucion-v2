@@ -626,6 +626,12 @@ async def init_db():
                 id TEXT PRIMARY KEY, maestro_id TEXT NOT NULL,
                 score INTEGER NOT NULL, nota TEXT, creado REAL
             );
+            CREATE TABLE IF NOT EXISTS demo_requests (
+                id TEXT PRIMARY KEY,
+                nombre TEXT, email TEXT, telefono TEXT,
+                institucion TEXT, tipo TEXT, alumnos TEXT,
+                mensaje TEXT, creado REAL, atendido INTEGER DEFAULT 0
+            );
         """)
         # Migraciones incrementales (no fallan si ya existen)
         for migration in [
@@ -666,7 +672,7 @@ async def _scheduler_pregunta_diaria():
                 try:
                     await enviar_pregunta_dia(fid)
                     await asyncio.sleep(2)
-                except Exception: pass
+                except Exception as e: logger.debug(f"pregunta-dia fid error: {e}")
         except Exception:
             await asyncio.sleep(3600)
 
@@ -942,6 +948,46 @@ async def manifest():
 async def health():
     return {"status": "ok", "producto": "Evolución", "version": "2.0"}
 
+# ── Demo requests ─────────────────────────────────────────────────────────────
+@app.post("/api/demo-request")
+async def solicitar_demo(req: Request):
+    """Recibe solicitudes de demo desde la landing page."""
+    ip = req.client.host
+    if not _rate_check(f"demo:{ip}", 3, 3600):
+        raise HTTPException(429, "Demasiadas solicitudes")
+    body = await req.json()
+    nombre     = body.get("nombre", "").strip()[:100]
+    email      = body.get("email", "").strip()[:100]
+    telefono   = "".join(c for c in str(body.get("telefono", "")) if c.isdigit())[:13]
+    institucion = body.get("institucion", "").strip()[:200]
+    tipo       = body.get("tipo", "otro")[:50]
+    alumnos    = body.get("alumnos", "")[:20]
+    mensaje    = body.get("mensaje", "").strip()[:500]
+    if not nombre or not (email or telefono):
+        raise HTTPException(400, "Nombre y contacto requeridos")
+    rid = str(uuid.uuid4())[:8].upper()
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "INSERT INTO demo_requests (id,nombre,email,telefono,institucion,tipo,alumnos,mensaje,creado,atendido) VALUES (?,?,?,?,?,?,?,?,?,0)",
+            (rid, nombre, email, telefono, institucion, tipo, alumnos, mensaje, time.time()))
+        await db.commit()
+    # Notificar al admin vía WhatsApp si está configurado
+    if GREEN_INSTANCE and telefono:
+        asyncio.create_task(send_whatsapp("3326148674",
+            f"NUEVA DEMO SOLICITADA\nNombre: {nombre}\nTipo: {tipo}\nTel: {telefono}\nEmail: {email}\nInst: {institucion}"))
+    logger.info(f"Demo request {rid}: {nombre} / {tipo}")
+    return {"ok": True, "id": rid, "msg": "Solicitud recibida. Te contactamos en menos de 24h."}
+
+@app.get("/api/admin/demo-requests")
+async def admin_demo_requests(request: Request):
+    """Lista las últimas 50 solicitudes de demo (requiere X-Admin-Key)."""
+    _verify_admin(request)
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM demo_requests ORDER BY creado DESC LIMIT 50")
+        rows = [dict(r) for r in await cur.fetchall()]
+    return {"ok": True, "requests": rows, "total": len(rows)}
+
 # ── Helpers perfil y aptitudes ────────────────────────────────────────────────
 def detectar_perfil_mensaje(texto: str) -> Optional[str]:
     t = texto.lower()
@@ -966,8 +1012,7 @@ async def extraer_aptitudes_ia(db, teen_id: str, mensaje: str, respuesta: str):
             await db.execute(
                 "INSERT OR IGNORE INTO aptitudes VALUES (?,?,?,?,1,?,?)",
                 (eid, teen_id, apt, f"Detectado en conversación", time.time(), "conversacion"))
-    except Exception:
-        pass
+    except Exception as e: logger.debug(f"aptitud detect error: {e}")
 
 async def get_modulos_familia(db, fid: str) -> dict:
     cur = await db.execute("SELECT modulo, activo FROM modulos WHERE familia_id=?", (fid,))
@@ -1191,8 +1236,7 @@ async def chat(req: ChatRequest, request: Request):
                 nuevo_ctx = json.loads(ctx_txt[s:e])
                 await db.execute("UPDATE miembros SET active_context=? WHERE id=?",
                     (json.dumps(nuevo_ctx, ensure_ascii=False), req.miembro_id))
-        except Exception:
-            pass
+        except Exception as e: logger.debug(f"context update error: {e}")
 
         # Extracción asíncrona de aptitudes
         if rol in ("teen","hermano"):
@@ -2279,7 +2323,7 @@ async def misiones_docente(mid: str):
     completadas = []
     if row:
         try: completadas = json.loads(row[0] or "{}").get("misiones_completadas", [])
-        except Exception: pass
+        except Exception as e: logger.debug(f"misiones ctx parse: {e}")
     misiones = [dict(m, completada=m["id"] in completadas) for m in MISIONES_DOCENTE]
     return {"ok": True, "misiones": misiones}
 
@@ -2341,7 +2385,7 @@ async def misiones_padre(mid: str):
     completadas = []
     if row:
         try: completadas = json.loads(row[0] or "{}").get("misiones_padre_completadas", [])
-        except Exception: pass
+        except Exception as e: logger.debug(f"misiones padre ctx parse: {e}")
     misiones = [dict(m, completada=m["id"] in completadas) for m in MISIONES_PADRE]
     return {"ok": True, "misiones": misiones}
 
@@ -2703,7 +2747,7 @@ async def admin_broadcast(req: Request):
             ok = await send_whatsapp(tel, mensaje)
             if ok: enviados += 1
             await asyncio.sleep(1.5)
-        except Exception: pass
+        except Exception as e: logger.debug(f"broadcast send error: {e}")
     return {"ok": True, "enviados": enviados, "total": len(telefonos)}
 
 @app.post("/api/admin/reporte-masivo")
@@ -2719,7 +2763,7 @@ async def admin_reporte_masivo(request: Request):
             ok = await enviar_reporte_whatsapp(tel, fid, DB_PATH)
             if ok: enviados += 1
             await asyncio.sleep(2)
-        except Exception: pass
+        except Exception as e: logger.debug(f"reporte send error: {e}")
     return {"ok": True, "enviados": enviados, "total": len(familias)}
 
 @app.post("/api/admin/pregunta-dia-masiva")
@@ -2737,7 +2781,7 @@ async def admin_pregunta_masiva(request: Request):
             r = await enviar_pregunta_dia(fid)
             if r.get("ok"): enviados += 1
             await asyncio.sleep(1)
-        except Exception: pass
+        except Exception as e: logger.debug(f"pregunta masiva send error: {e}")
     return {"ok": True, "enviados": enviados, "pregunta": pregunta}
 
 
@@ -2858,8 +2902,7 @@ Ejemplo: si piden "envía reportes", responde ejecutando la acción."""
                             if await send_whatsapp(_tel, params['mensaje']): _bc_enviados += 1
                             await asyncio.sleep(1.5)
                         accion_ejecutada = f'Broadcast enviado: {_bc_enviados} familias'
-    except Exception:
-        pass
+    except Exception as e: logger.debug(f"admin chat action error: {e}")
 
     # Limpiar JSON de la respuesta visible
     respuesta_limpia = respuesta_ia[:respuesta_ia.rfind("{")].strip() if "{" in respuesta_ia else respuesta_ia
