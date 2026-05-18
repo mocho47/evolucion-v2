@@ -537,11 +537,13 @@ async def init_db():
                 score INTEGER NOT NULL, nota TEXT, creado REAL
             );
         """)
-        # Migración: telefono_padre en familias (no falla si ya existe)
-        try:
-            await db.execute("ALTER TABLE familias ADD COLUMN telefono_padre TEXT DEFAULT ''")
-        except Exception:
-            pass
+        # Migraciones incrementales (no fallan si ya existen)
+        for migration in [
+            "ALTER TABLE familias ADD COLUMN telefono_padre TEXT DEFAULT ''",
+            "ALTER TABLE maestros ADD COLUMN active_context TEXT DEFAULT '{}'",
+        ]:
+            try: await db.execute(migration)
+            except Exception: pass
         await db.commit()
 
 @app.on_event("startup")
@@ -1951,6 +1953,287 @@ async def pagina_terminos():
     p = os.path.join(os.path.dirname(__file__), "terminos.html")
     with open(p, encoding="utf-8") as f:
         return f.read()
+
+# ── Diferenciadores ───────────────────────────────────────────────────────────
+
+MISIONES_DOCENTE = [
+    {"id":"d1","titulo":"Llama por nombre","descripcion":"Llama por nombre a 3 alumnos que no han participado esta semana","impacto":"Pertenencia y visibilidad"},
+    {"id":"d2","titulo":"Comparte algo personal","descripcion":"Comparte algo no académico con el grupo — un hobby, un recuerdo, una pregunta","impacto":"Conexión humana"},
+    {"id":"d3","titulo":"Pregunta directa al callado","descripcion":"Identifica al alumno más callado y hazle una pregunta abierta con tiempo de espera","impacto":"Inclusión real"},
+    {"id":"d4","titulo":"Celebra el error","descripcion":"Cuando alguien se equivoque hoy, di en voz alta por qué ese error fue valioso","impacto":"Seguridad psicológica"},
+    {"id":"d5","titulo":"Cierre del día","descripcion":"Dedica los últimos 3 minutos a que cada alumno diga en una palabra cómo se va","impacto":"Autoconciencia grupal"},
+    {"id":"d6","titulo":"Nota de reconocimiento","descripcion":"Escribe un mensaje de reconocimiento específico a un alumno que lo necesite","impacto":"Motivación intrínseca"},
+]
+
+MISIONES_PADRE = [
+    {"id":"p1","titulo":"Pregunta sin juzgar","descripcion":"Hoy pregúntale cómo está sin ofrecer consejo ni solución — solo escucha","impacto":"Confianza"},
+    {"id":"p2","titulo":"Recuerdo compartido","descripcion":"Comparte un recuerdo tuyo de cuando tenías su edad — algo real, no perfecto","impacto":"Empatía intergeneracional"},
+    {"id":"p3","titulo":"Validación pura","descripcion":"La próxima vez que se queje, di solo 'tiene sentido que te sientas así' antes de cualquier cosa","impacto":"Regulación emocional"},
+    {"id":"p4","titulo":"Tiempo de calidad 15 min","descripcion":"15 minutos haciendo algo que él/ella elija, sin teléfono, sin agenda","impacto":"Vínculo"},
+    {"id":"p5","titulo":"Carta de fortalezas","descripcion":"Escribe 3 fortalezas reales que ves en tu teen — dáselas por escrito o mensaje","impacto":"Autoestima auténtica"},
+]
+
+@app.get("/api/streak/{mid}")
+async def get_streak(mid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute(
+            "SELECT creado FROM conversaciones WHERE miembro_id=? ORDER BY creado DESC",
+            (mid,))
+        rows = await cur.fetchall()
+    if not rows:
+        return {"ok": True, "racha": 0, "max_racha": 0, "mensaje": "Aún sin racha — empieza hoy"}
+    import datetime
+    dias_con_actividad = set()
+    for (ts,) in rows:
+        d = datetime.date.fromtimestamp(ts).isoformat()
+        dias_con_actividad.add(d)
+    hoy = datetime.date.today()
+    racha = 0
+    dia = hoy
+    while dia.isoformat() in dias_con_actividad:
+        racha += 1
+        dia -= datetime.timedelta(days=1)
+    # calcular max racha histórica
+    sorted_dias = sorted(dias_con_actividad, reverse=True)
+    max_racha, cur_r = 0, 0
+    prev = None
+    for d in sorted(dias_con_actividad):
+        dt = datetime.date.fromisoformat(d)
+        if prev and (dt - prev).days == 1:
+            cur_r += 1
+        else:
+            cur_r = 1
+        max_racha = max(max_racha, cur_r)
+        prev = dt
+    emojis = {0:"Empieza hoy 💪", 1:"1 día — buen inicio 🌱", 3:"3 días seguidos 🔥", 7:"1 semana 🏆", 14:"2 semanas 💎", 30:"Un mes 👑"}
+    mejor = max((v for k,v in emojis.items() if racha>=k), default="Empieza hoy 💪")
+    return {"ok": True, "racha": racha, "max_racha": max_racha, "mensaje": mejor}
+
+@app.get("/api/teen/{mid}/future-me")
+async def get_future_me(mid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute("SELECT active_context FROM miembros WHERE id=?", (mid,))
+        row = await cur.fetchone()
+    if not row: return {"ok": False, "vision": ""}
+    try:
+        ctx = json.loads(row[0] or "{}")
+        return {"ok": True, "vision": ctx.get("future_me", "")}
+    except:
+        return {"ok": True, "vision": ""}
+
+@app.post("/api/teen/{mid}/future-me")
+async def save_future_me(mid: str, req: Request):
+    body = await req.json()
+    vision = body.get("vision", "").strip()
+    if not vision: raise HTTPException(400, "vision requerida")
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute("SELECT active_context FROM miembros WHERE id=?", (mid,))
+        row = await cur.fetchone()
+        try: ctx = json.loads(row[0] or "{}") if row else {}
+        except: ctx = {}
+        ctx["future_me"] = vision
+        await db.execute("UPDATE miembros SET active_context=? WHERE id=?",
+            (json.dumps(ctx, ensure_ascii=False), mid))
+        await db.commit()
+    return {"ok": True, "mensaje": "Visión guardada"}
+
+@app.post("/api/alerta/{aid}/bridge")
+async def bridge_builder(aid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            "SELECT a.tipo, a.sugerencia, m.nombre, m.edad FROM alertas a JOIN miembros m ON m.id=a.teen_id WHERE a.id=?",
+            (aid,))
+        row = await cur.fetchone()
+        if not row: raise HTTPException(404, "Alerta no encontrada")
+        tipo, sugerencia, nombre, edad = row["tipo"], row["sugerencia"], row["nombre"], row["edad"]
+    prompt = f"""Eres un experto en comunicación padres-adolescentes.
+Un teen de {edad} años llamado {nombre} mostró una señal de tipo "{tipo}".
+Sugerencia del sistema: {sugerencia}
+
+Escribe un GUIÓN EXACTO de 4-6 líneas que el padre puede usar para iniciar la conversación.
+Reglas del guión:
+- Primera línea: cómo acercarse físicamente y crear el momento (no por WhatsApp)
+- Segunda línea: frase de apertura EXACTA que no genere defensividad
+- Tercera línea: qué hacer si el teen se cierra o dice "estoy bien"
+- Cuarta línea: qué NO decir bajo ninguna circunstancia
+- Quinta línea: cómo cerrar aunque no haya diálogo (presencia sin presión)
+
+Formato: directo, práctico, en español México. Sin introducciones. Solo el guión."""
+    script = await llamar_ia(prompt, f"Genera el guión para hablar con {nombre} sobre {tipo}")
+    return {"ok": True, "script": script, "nombre": nombre, "tipo": tipo}
+
+@app.get("/api/familia/{fid}/insights")
+async def insights_familia(fid: str):
+    desde = time.time() - 14 * 86400
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            """SELECT m.nombre, mh.score, mh.creado
+               FROM mood_history mh JOIN miembros m ON m.id=mh.miembro_id
+               WHERE m.familia_id=? AND m.rol IN ('teen','hermano') AND mh.creado>=?
+               ORDER BY mh.creado DESC""", (fid, desde))
+        registros = [dict(r) for r in await cur.fetchall()]
+        cur2 = await db.execute(
+            "SELECT COUNT(*) FROM alertas WHERE familia_id=? AND creado>=? AND visto=0",
+            (fid, desde))
+        alertas_nuevas = (await cur2.fetchone())[0]
+        cur3 = await db.execute(
+            "SELECT COUNT(*) FROM misiones WHERE familia_id=? AND estado='aprobada' AND aprobado>=?",
+            (fid, desde))
+        misiones_semana = (await cur3.fetchone())[0]
+    if not registros:
+        return {"ok": True, "insight_texto": None}
+    scores = [r["score"] for r in registros]
+    promedio = sum(scores) / len(scores)
+    ultimos3 = scores[:3]
+    tendencia = "bajando" if len(ultimos3)>=3 and all(ultimos3[i]<=ultimos3[i+1] for i in range(len(ultimos3)-1)) else \
+                "subiendo" if len(ultimos3)>=3 and all(ultimos3[i]>=ultimos3[i+1] for i in range(len(ultimos3)-1)) else "estable"
+    insight = []
+    if promedio < 2.5:
+        insight.append(f"El estado emocional promedio de las últimas 2 semanas es bajo ({promedio:.1f}/5). Este es un buen momento para estar más presente.")
+    elif promedio >= 4:
+        insight.append(f"Tu teen ha estado bien — promedio {promedio:.1f}/5 en 2 semanas. Celebra eso con él/ella.")
+    if tendencia == "bajando" and len(ultimos3) >= 3:
+        insight.append("Los últimos 3 registros muestran una tendencia a la baja. Acércate hoy con curiosidad, no con preguntas.")
+    if alertas_nuevas > 0:
+        insight.append(f"{alertas_nuevas} señales sin revisar — ábrelas en el tab Señales.")
+    if misiones_semana > 0:
+        insight.append(f"Tu teen completó {misiones_semana} misiones esta semana. Eso merece reconocimiento directo.")
+    return {"ok": True, "insight_texto": " ".join(insight) if insight else None}
+
+@app.get("/api/escuela/{eid}/heatmap")
+async def heatmap_escuela(eid: str):
+    desde = time.time() - 7 * 86400
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            """SELECT m.id, m.nombre, m.familia_id
+               FROM miembros m JOIN escuela_familias ef ON ef.familia_id=m.familia_id
+               WHERE ef.escuela_id=? AND m.rol IN ('teen','hermano') AND m.activo=1""", (eid,))
+        alumnos = [dict(r) for r in await cur.fetchall()]
+        resultado = []
+        for a in alumnos:
+            cur2 = await db.execute(
+                "SELECT score, creado FROM mood_history WHERE miembro_id=? AND creado>=? ORDER BY creado DESC",
+                (a["id"], desde))
+            moods = [dict(r) for r in await cur2.fetchall()]
+            cur3 = await db.execute(
+                "SELECT tipo FROM alertas WHERE teen_id=? AND tipo='riesgo_alto' AND creado>=?",
+                (a["id"], desde))
+            riesgo = bool(await cur3.fetchone())
+            dias_sin = 0
+            if moods:
+                import datetime
+                ultimo = datetime.date.fromtimestamp(moods[0]["creado"])
+                dias_sin = (datetime.date.today() - ultimo).days
+            promedio = round(sum(m["score"] for m in moods)/len(moods), 1) if moods else None
+            resultado.append({
+                "nombre": a["nombre"].split()[0],
+                "mood_promedio": promedio,
+                "riesgo": riesgo,
+                "dias_sin_registro": dias_sin,
+            })
+    promedio_grupo = round(sum(a["mood_promedio"] for a in resultado if a["mood_promedio"])/
+                          max(1, sum(1 for a in resultado if a["mood_promedio"])), 1)
+    return {"ok": True, "alumnos": resultado, "promedio_grupo": promedio_grupo,
+            "alertas_count": sum(1 for a in resultado if a["riesgo"])}
+
+@app.get("/api/maestro/{mid}/misiones-docente")
+async def misiones_docente(mid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute(
+            "SELECT active_context FROM maestros WHERE id=?", (mid,))
+        row = await cur.fetchone()
+    completadas = []
+    if row:
+        try: completadas = json.loads(row[0] or "{}").get("misiones_completadas", [])
+        except: pass
+    misiones = [dict(m, completada=m["id"] in completadas) for m in MISIONES_DOCENTE]
+    return {"ok": True, "misiones": misiones}
+
+@app.post("/api/maestro/{mid}/mision-completada")
+async def completar_mision_docente(mid: str, req: Request):
+    body = await req.json()
+    mision_id = body.get("mision_id", "")
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute("SELECT active_context FROM maestros WHERE id=?", (mid,))
+        row = await cur.fetchone()
+        try: ctx = json.loads(row[0] or "{}") if row else {}
+        except: ctx = {}
+        completadas = ctx.get("misiones_completadas", [])
+        if mision_id not in completadas:
+            completadas.append(mision_id)
+        ctx["misiones_completadas"] = completadas
+        await db.execute("UPDATE maestros SET active_context=? WHERE id=?",
+            (json.dumps(ctx), mid))
+        await db.commit()
+    return {"ok": True}
+
+@app.get("/api/escuela/{eid}/reporte-semana")
+async def reporte_semana_escuela(eid: str):
+    desde = time.time() - 7 * 86400
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute(
+            """SELECT mh.score, mh.creado FROM mood_history mh
+               JOIN miembros m ON m.id=mh.miembro_id
+               JOIN escuela_familias ef ON ef.familia_id=m.familia_id
+               WHERE ef.escuela_id=? AND mh.creado>=?""", (eid, desde))
+        moods = [dict(r) for r in await cur.fetchall()]
+        cur2 = await db.execute(
+            """SELECT COUNT(*) FROM alertas a JOIN miembros m ON m.id=a.teen_id
+               JOIN escuela_familias ef ON ef.familia_id=m.familia_id
+               WHERE ef.escuela_id=? AND a.tipo='riesgo_alto' AND a.creado>=?""", (eid, desde))
+        alertas = (await cur2.fetchone())[0]
+        cur3 = await db.execute(
+            """SELECT r.materia, COUNT(*) as cnt FROM regularizacion r
+               JOIN miembros m ON m.id=r.teen_id
+               JOIN escuela_familias ef ON ef.familia_id=m.familia_id
+               WHERE ef.escuela_id=? AND r.iniciado>=?
+               GROUP BY r.materia ORDER BY cnt DESC LIMIT 1""", (eid, desde))
+        materia_row = await cur3.fetchone()
+    promedio = round(sum(m["score"] for m in moods)/len(moods), 1) if moods else 0
+    materia_top = materia_row["materia"] if materia_row else "ninguna"
+    prompt = f"""Genera un resumen semanal de grupo escolar en 3-4 líneas, en tono profesional y humano.
+Datos: promedio emocional del grupo {promedio}/5, {len(moods)} registros de mood esta semana, {alertas} señales de atención, materia con más consultas: {materia_top}.
+Incluye: estado general del grupo, qué necesita atención, y una recomendación concreta para el maestro. Sin bullet points — párrafo fluido."""
+    resumen = await llamar_ia(prompt, "Genera el reporte semanal del grupo")
+    return {"ok": True, "resumen_texto": resumen, "promedio_grupo": promedio, "alertas": alertas}
+
+@app.get("/api/padre/{mid}/misiones")
+async def misiones_padre(mid: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute(
+            "SELECT active_context, familia_id FROM miembros WHERE id=?", (mid,))
+        row = await cur.fetchone()
+    completadas = []
+    if row:
+        try: completadas = json.loads(row[0] or "{}").get("misiones_padre_completadas", [])
+        except: pass
+    misiones = [dict(m, completada=m["id"] in completadas) for m in MISIONES_PADRE]
+    return {"ok": True, "misiones": misiones}
+
+@app.post("/api/padre/{mid}/mision-completada")
+async def completar_mision_padre(mid: str, req: Request):
+    body = await req.json()
+    mision_id = body.get("mision_id", "")
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute("SELECT active_context FROM miembros WHERE id=?", (mid,))
+        row = await cur.fetchone()
+        try: ctx = json.loads(row[0] or "{}") if row else {}
+        except: ctx = {}
+        completadas = ctx.get("misiones_padre_completadas", [])
+        if mision_id not in completadas: completadas.append(mision_id)
+        ctx["misiones_padre_completadas"] = completadas
+        await db.execute("UPDATE miembros SET active_context=? WHERE id=?",
+            (json.dumps(ctx), mid))
+        logro_id = str(uuid.uuid4())[:8]
+        if len(completadas) == 1:
+            await db.execute("INSERT OR IGNORE INTO logros VALUES (?,?,?,?,?,?)",
+                (logro_id, mid, "Padre presente ❤", "Completaste tu primera misión de conexión — eso cambia todo", "heart", time.time()))
+        await db.commit()
+    return {"ok": True}
 
 # ── Reportes ──────────────────────────────────────────────────────────────────
 @app.post("/api/reporte/{fid}/enviar")
