@@ -605,6 +605,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   <div class="dpts" id="d-pts"></div>
   <div class="dbar"><div class="dbar-fill" id="d-bar" style="width:0%"></div></div>
   <div class="dnext" id="d-next"></div>
+  <div id="d-mood" style="display:none;font-size:1.25rem;letter-spacing:.1rem;margin:.4rem 0 .1rem;line-height:1;"></div>
   <div class="dsec">Mi espacio</div>
   <button class="ditem" onclick="cerrarMenu();verMisiones()">📋 Mis misiones</button>
   <button class="ditem" onclick="cerrarMenu();verMetas()">🎯 Mis metas</button>
@@ -962,6 +963,22 @@ async function cargarPerfilBadge(){
       badgeEl.classList.add('hidden');
     }
   }catch(e){}
+  cargarMoodDrawer();
+}
+
+async function cargarMoodDrawer(){
+  if(!S.mid) return;
+  try{
+    const r = await api(`/mood/${S.mid}`);
+    const registros = r.registros || r.moods || r.data || [];
+    if(!registros.length) return;
+    const ultimos = registros.slice(-7);
+    const emojis = ultimos.map(m => MOODS[m.score] || '').filter(Boolean);
+    if(!emojis.length) return;
+    const el = document.getElementById('d-mood');
+    el.textContent = emojis.join('');
+    el.style.display = 'block';
+  }catch(e){/* silencioso si el endpoint no existe */}
 }
 
 async function primerMensaje(){
@@ -1114,13 +1131,46 @@ async function verMetas(){
   try{
     const r = await api(`/metas/${S.mid}`);
     const metas = r.metas || [];
-    if(metas.length){
-      const txt = metas.map(m=>`🎯 ${m.titulo}${m.plazo?' · '+esc(m.plazo):''}  ${m.progreso}%`).join('\n');
-      addBot('Tus metas activas:\n' + txt);
-    } else {
-      addBot('Sin metas activas. Usa "＋ Meta nueva" del menú para agregar una.');
-    }
+    if(!metas.length){addBot('Sin metas activas. Usa "＋ Meta nueva" del menú para agregar una.');return;}
+    const box = document.getElementById('messages');
+    const wrapper = document.createElement('div');
+    wrapper.className = 'msg bot';
+    let cards = `<div style="font-size:.78rem;color:var(--muted2);margin-bottom:.45rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Tus metas (${metas.length})</div>`;
+    metas.forEach(m=>{
+      const prog = Math.min(100, Math.max(0, m.progreso||0));
+      cards += `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:.65rem .8rem;margin-bottom:.45rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">
+          <span style="font-weight:700;font-size:.9rem;">🎯 ${esc(m.titulo)}</span>
+          <span style="font-size:.75rem;color:var(--muted2);">${prog}%</span>
+        </div>
+        ${m.plazo?`<div style="font-size:.72rem;color:var(--muted2);margin-bottom:.35rem;">📅 ${esc(m.plazo)}</div>`:''}
+        <div style="background:var(--border);border-radius:99px;height:6px;overflow:hidden;margin-bottom:.45rem;">
+          <div style="background:#8b5cf6;height:100%;border-radius:99px;width:${prog}%;transition:width .4s ease;"></div>
+        </div>
+        <button class="btn sm" style="background:var(--purple-dim);color:#c4b5fd;border:1px solid var(--purple);font-size:.75rem;padding:.3rem .65rem;" onclick="avanzarMeta('${m.id}', this)">＋10% Avanzar</button>
+      </div>`;
+    });
+    wrapper.innerHTML = `<div class="bubble">${cards}</div><div class="mtime">${hora()}</div>`;
+    box.appendChild(wrapper);
+    scroll();
   }catch(e){addBot('No pude cargar tus metas.');}
+}
+
+async function avanzarMeta(metaId, btn){
+  try{
+    btn.disabled = true;
+    btn.textContent = '...';
+    await api(`/metas/${metaId}/avanzar`,'PUT',{});
+    toast('¡Avanzaste en tu meta! +10%');
+    btn.textContent = '✓';
+    btn.style.background = 'var(--accent-dim)';
+    btn.style.color = 'var(--accent)';
+    btn.style.border = '1px solid var(--accent)';
+  }catch(e){
+    btn.disabled = false;
+    btn.textContent = '＋10% Avanzar';
+    toast('Error al actualizar la meta.');
+  }
 }
 
 async function crearMeta(){
@@ -1141,8 +1191,33 @@ async function verDeseos(){
   try{
     const r = await api(`/deseos/${S.mid}`);
     if(!r.deseos?.length){addBot('Sin deseos en tu lista. Usa "＋ Agregar deseo" del menú.');return;}
-    const txt = r.deseos.map(d=>`✨ ${esc(d.descripcion)}${d.puntos_necesarios?' — necesitas '+d.puntos_necesarios+'pts':''} · tienes ${d.puntos_total||0}pts`).join('\n');
-    addBot(txt);
+    const ptsActuales = S.pts || 0;
+    const box = document.getElementById('messages');
+    const wrapper = document.createElement('div');
+    wrapper.className = 'msg bot';
+    let cards = `<div style="font-size:.78rem;color:var(--muted2);margin-bottom:.45rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Lista de deseos (${r.deseos.length})</div>`;
+    r.deseos.forEach(d=>{
+      const necesarios = d.puntos_necesarios || 0;
+      const actuales   = d.puntos_total || ptsActuales;
+      const cumplido   = necesarios > 0 && actuales >= necesarios;
+      const prog       = necesarios > 0 ? Math.min(100, Math.round((actuales / necesarios) * 100)) : 100;
+      const barColor   = cumplido ? 'var(--accent)' : '#8b5cf6';
+      const barBg      = cumplido ? 'rgba(0,229,160,.15)' : 'var(--purple-dim)';
+      const borderCol  = cumplido ? 'var(--accent2)' : 'var(--border)';
+      cards += `<div style="background:var(--surface2);border:1px solid ${borderCol};border-radius:12px;padding:.65rem .8rem;margin-bottom:.45rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+          <span style="font-weight:700;font-size:.88rem;">✨ ${esc(d.descripcion)}</span>
+          ${cumplido?'<span style="font-size:.72rem;color:var(--accent);font-weight:700;">¡Listo! ✓</span>':''}
+        </div>
+        ${necesarios>0?`<div style="font-size:.72rem;color:var(--muted2);margin-bottom:.3rem;">${actuales} / ${necesarios} puntos${cumplido?' · ¡Ya tienes suficientes!':' · te faltan '+(necesarios-actuales)+'pts'}</div>
+        <div style="background:var(--border);border-radius:99px;height:6px;overflow:hidden;">
+          <div style="background:${barColor};height:100%;border-radius:99px;width:${prog}%;transition:width .4s ease;"></div>
+        </div>`:'<div style="font-size:.72rem;color:var(--muted2);">Sin costo en puntos definido</div>'}
+      </div>`;
+    });
+    wrapper.innerHTML = `<div class="bubble">${cards}</div><div class="mtime">${hora()}</div>`;
+    box.appendChild(wrapper);
+    scroll();
   }catch(e){addBot('Sin conexión.');}
 }
 
@@ -1162,10 +1237,20 @@ async function agregarDeseo(){
 }
 
 async function verLogros(){
-  const r = await api(`/logros/${S.mid}`);
-  if(!r.logros?.length){addBot('Sin logros aún. Completa misiones para ganarlos.');return;}
-  const txt = '⭐ ' + r.logros.map(l=>l.titulo).join(' · ⭐ ');
-  addBot(txt);
+  try{
+    const r = await api(`/logros/${S.mid}`);
+    if(!r.logros?.length){addBot('Sin logros aún. Completa misiones para ganarlos.');return;}
+    const box = document.getElementById('messages');
+    const d = document.createElement('div');
+    d.className = 'msg bot';
+    const badges = r.logros.map(l=>{
+      const ic = l.icono || '⭐';
+      return `<div style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-radius:20px;padding:.3rem .7rem;font-size:.78rem;font-weight:600;display:inline-flex;align-items:center;gap:.25rem;">${ic} ${esc(l.titulo)}${l.descripcion?'<span style="opacity:.75;font-weight:400;font-size:.72rem"> · '+esc(l.descripcion)+'</span>':''}</div>`;
+    }).join('');
+    d.innerHTML = `<div class="bubble"><div style="font-size:.78rem;color:var(--muted2);margin-bottom:.45rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Tus logros (${r.logros.length})</div><div style="display:flex;flex-wrap:wrap;gap:.4rem;margin:.1rem 0">${badges}</div></div><div class="mtime">${hora()}</div>`;
+    box.appendChild(d);
+    scroll();
+  }catch(e){addBot('Sin logros aún. Completa misiones para ganarlos.');}
 }
 
 function tutor(){
@@ -1185,7 +1270,7 @@ async function iniciarRegularizacion(){
     cerrarModal('m-regular');
     const msg = `Quiero regularizarme en ${materia}${tema?' — especialmente en '+tema:''}. Estoy en ${grado}.`;
     document.getElementById('txt').value = msg;
-    enviar();
+    setTimeout(()=>{ enviar(); }, 150);
   }catch(e){errEl.textContent='Error al iniciar. Intenta de nuevo.';}
 }
 
