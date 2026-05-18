@@ -591,7 +591,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
     <button class="mb" onclick="mood(5)" title="Fuego">🔥</button>
   </div>
   <div id="input-area">
-    <button id="mic-btn" onclick="toggleMic()" title="Habla" style="display:none">🎙</button>
+    <button id="mic-btn" onclick="toggleMic()" title="Habla" style="display:flex">🎙</button>
     <textarea id="txt" rows="1" placeholder="¿Qué tienes en la cabeza?"
       oninput="resize(this)" onkeydown="tecla(event)"></textarea>
     <button id="sbtn" onclick="enviar()">↑</button>
@@ -606,6 +606,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   <div class="dbar"><div class="dbar-fill" id="d-bar" style="width:0%"></div></div>
   <div class="dnext" id="d-next"></div>
   <div id="d-mood" style="display:none;font-size:1.25rem;letter-spacing:.1rem;margin:.4rem 0 .1rem;line-height:1;"></div>
+  <div id="d-streak"></div>
   <div class="dsec">Mi espacio</div>
   <button class="ditem" onclick="cerrarMenu();verMisiones()">📋 Mis misiones</button>
   <button class="ditem" onclick="cerrarMenu();verMetas()">🎯 Mis metas</button>
@@ -614,6 +615,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   <button class="ditem" onclick="cerrarMenu();abrirModal('m-deseo')">＋ Agregar deseo</button>
   <button class="ditem" onclick="cerrarMenu();verLogros()">⭐ Logros</button>
   <button class="ditem" onclick="cerrarMenu();tutor()">📚 Tutor escolar</button>
+  <button class="ditem" onclick="cerrarMenu();abrirFuturoYo()">🌟 Mi futuro yo</button>
   <div style="flex:1"></div>
   <button class="ditem" style="color:var(--muted2)" onclick="salir()">← Salir</button>
 </div>
@@ -783,6 +785,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);
     <div class="err" id="deso-err"></div>
     <button class="btn" onclick="agregarDeseo()">Agregar</button>
     <button class="btn ghost" onclick="cerrarModal('m-deseo')">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal futuro yo -->
+<div class="modal-bg" id="m-futuro">
+  <div class="modal-box">
+    <h3>Tu futuro yo a los 25</h3>
+    <p style="font-size:.82rem;color:var(--text-dim);margin-bottom:.75rem">¿Cómo te imaginas viviendo a los 25? ¿Dónde estás, qué haces, cómo te sientes? Escribe sin filtros — esto es solo tuyo.</p>
+    <textarea id="fy-texto" rows="5" placeholder="A los 25 años yo..." style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:.65rem;border-radius:8px;font-size:.88rem;resize:none;font-family:inherit;box-sizing:border-box;"></textarea>
+    <div class="err" id="fy-err"></div>
+    <button class="btn purple" onclick="guardarFuturoYo()">Guardar mi visión</button>
+    <button class="btn ghost" onclick="cerrarModal('m-futuro')">Cancelar</button>
   </div>
 </div>
 
@@ -979,6 +993,39 @@ async function cargarMoodDrawer(){
     el.textContent = emojis.join('');
     el.style.display = 'block';
   }catch(e){/* silencioso si el endpoint no existe */}
+  cargarStreak();
+}
+
+async function cargarStreak(){
+  if(!S.mid) return;
+  try{
+    const r = await api(`/streak/${S.mid}`);
+    if(!r.ok || !r.racha) return;
+    const racha = r.racha;
+    const color = racha >= 7 ? '#f59e0b' : '#f97316';
+    const el = document.getElementById('d-streak');
+    el.innerHTML = `<div style="font-size:.78rem;font-weight:700;color:${color};margin:.3rem 0 .1rem;">🔥 ${racha} día${racha!==1?'s':''} seguido${racha!==1?'s':''}</div>`;
+    if(r.mensaje){
+      el.innerHTML += `<div style="font-size:.68rem;color:var(--muted2);margin-bottom:.15rem;">${esc(r.mensaje)}</div>`;
+    }
+  }catch(e){/* silencioso */}
+}
+
+async function abrirFuturoYo(){
+  try{
+    const r = await api(`/teen/${S.mid}/future-me`);
+    if(r.vision) document.getElementById('fy-texto').value = r.vision;
+  }catch(e){}
+  abrirModal('m-futuro');
+}
+
+async function guardarFuturoYo(){
+  const texto = document.getElementById('fy-texto').value.trim();
+  if(!texto){document.getElementById('fy-err').textContent='Escribe algo.';return;}
+  await api(`/teen/${S.mid}/future-me`,'POST',{vision:texto});
+  cerrarModal('m-futuro');
+  toast('Visión guardada ✓');
+  addBot('Lo guardé. Cuando hablemos de tus decisiones, esto va a importar.');
 }
 
 async function primerMensaje(){
@@ -1426,6 +1473,16 @@ async function renderAlertas(){
         '<div class="empty">Sin señales recientes.<br>Todo tranquilo. 🟢</div>';return;
     }
     let html = '';
+    // Insights IA de mood
+    try{
+      const ins = await api(`/familia/${S.fid}/insights`);
+      if(ins.insight_texto){
+        html += `<div style="background:linear-gradient(135deg,#1e1b4b,#2d1b69);border-radius:12px;padding:.85rem 1rem;margin-bottom:.75rem;border:1px solid #4c1d95;">
+  <div style="font-size:.78rem;color:#a78bfa;font-weight:600;letter-spacing:.04em;margin-bottom:.35rem;">ANÁLISIS IA</div>
+  <div style="font-size:.88rem;color:#e9d5ff;line-height:1.5;">${esc(ins.insight_texto)}</div>
+</div>`;
+      }
+    }catch(e){}
     r.alertas.forEach(a=>{
       const nivel = a.tipo?.includes('vital')||a.tipo?.includes('alto') ? 'al-alto'
                   : a.tipo?.includes('medio') ? 'al-medio' : 'al-bajo';
@@ -1434,10 +1491,22 @@ async function renderAlertas(){
         <div class="al-tipo" style="color:${color}">${esc(a.tipo||'señal')}</div>
         <div style="font-size:.85rem">${esc(a.resumen||'')}</div>
         ${a.sugerencia?`<div class="al-sugg">${esc(a.sugerencia)}</div>`:''}
+        <div style="margin-top:.55rem">
+          <button class="btn ghost" style="font-size:.75rem;padding:.35rem .75rem;width:auto;border-color:rgba(167,139,250,.3);color:#a78bfa;" onclick="bridgeBuilder('${a.id}','${esc(a.tipo||'señal')}')">💬 Cómo hablar con él/ella</button>
+        </div>
       </div>`;
     });
     document.getElementById('padre-content').innerHTML = html;
   }catch(e){document.getElementById('padre-content').innerHTML='<div class="empty">Error al cargar.</div>';}
+}
+
+async function bridgeBuilder(aid, tipo){
+  toast('Generando guión de conversación...');
+  try{
+    const r = await api(`/alerta/${aid}/bridge`,'POST',{});
+    addBot(r.script || r.mensaje || 'No se pudo generar el guión.', false, 'padre-messages');
+    abrirChatPadre();
+  }catch(e){ toast('Error al generar guión'); }
 }
 
 async function renderAcuerdos(){
