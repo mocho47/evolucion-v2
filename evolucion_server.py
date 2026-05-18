@@ -552,7 +552,28 @@ async def startup():
         logger.info("DB migrada desde NEXUS Teens")
     await init_db()
     await _crear_demo_si_falta()
+    asyncio.create_task(_scheduler_semanal())
     logger.info(f"Evolución corriendo — puerto {PORT}")
+
+async def _scheduler_semanal():
+    """Envía reportes cada lunes a las 8am — corre en background sin bloquear."""
+    import datetime
+    while True:
+        try:
+            now = datetime.datetime.now()
+            # Calcular segundos hasta el próximo lunes 8am
+            dias_hasta_lunes = (7 - now.weekday()) % 7 or 7
+            proximo = now.replace(hour=8, minute=0, second=0, microsecond=0) + datetime.timedelta(days=dias_hasta_lunes)
+            espera = (proximo - now).total_seconds()
+            await asyncio.sleep(espera)
+            try:
+                from evolucion_reporte import enviar_reportes_todas_familias
+                await enviar_reportes_todas_familias(DB_PATH)
+                logger.info("Reportes semanales enviados")
+            except Exception as e:
+                logger.error(f"Error reportes semanales: {e}")
+        except Exception:
+            await asyncio.sleep(3600)  # si algo falla, reintenta en 1h
 
 async def _crear_demo_si_falta():
     """Crea familia DEMO01 y miembros demo si no existen — sobrevive reinicios."""
@@ -1930,6 +1951,32 @@ async def pagina_terminos():
     p = os.path.join(os.path.dirname(__file__), "terminos.html")
     with open(p, encoding="utf-8") as f:
         return f.read()
+
+# ── Reportes ──────────────────────────────────────────────────────────────────
+@app.post("/api/reporte/{fid}/enviar")
+async def enviar_reporte(fid: str):
+    try:
+        from evolucion_reporte import enviar_reporte_whatsapp
+        async with aiosqlite.connect(DB_PATH) as db:
+            cur = await db.execute("SELECT telefono_padre FROM familias WHERE id=?", (fid,))
+            row = await cur.fetchone()
+        if not row or not row[0]:
+            return {"ok": False, "msg": "No hay teléfono configurado para esta familia"}
+        ok = await enviar_reporte_whatsapp(row[0], fid, DB_PATH)
+        return {"ok": ok, "msg": "Reporte enviado" if ok else "Error al enviar"}
+    except Exception as e:
+        return {"ok": False, "msg": str(e)}
+
+@app.get("/api/reporte/{fid}/pdf")
+async def ver_reporte_pdf(fid: str):
+    try:
+        from evolucion_reporte import generar_reporte_pdf
+        from fastapi.responses import Response
+        pdf_bytes = await generar_reporte_pdf(fid, DB_PATH)
+        return Response(content=pdf_bytes, media_type="application/pdf",
+                        headers={"Content-Disposition": f"inline; filename=reporte_{fid}.pdf"})
+    except Exception as e:
+        raise HTTPException(500, str(e))
 
 # ── WhatsApp endpoints ────────────────────────────────────────────────────────
 @app.get("/api/whatsapp/estado")
