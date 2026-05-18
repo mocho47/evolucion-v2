@@ -152,6 +152,49 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   padding:.5rem 1.2rem;border-radius:99px;font-size:.82rem;font-weight:600;
   opacity:0;transition:opacity .25s;pointer-events:none;z-index:500;white-space:nowrap;}
 #toast.on{opacity:1;}
+
+/* HEATMAP */
+.heatmap-header{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:.9rem 1rem;margin-bottom:.65rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;}
+.heatmap-header .hm-stat{font-size:.78rem;color:var(--muted2);}
+.heatmap-header .hm-stat strong{color:var(--text);font-size:.95rem;}
+.heatmap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:.5rem;margin-bottom:.65rem;}
+.alumno-card{border-radius:12px;padding:.7rem .5rem;display:flex;flex-direction:column;align-items:center;gap:.3rem;position:relative;cursor:default;border:1px solid transparent;transition:transform .15s;}
+.alumno-card:hover{transform:scale(1.04);}
+.alumno-card .ac-emoji{font-size:1.5rem;line-height:1;}
+.alumno-card .ac-nombre{font-size:.67rem;font-weight:700;text-align:center;line-height:1.2;word-break:break-word;color:var(--text);}
+.alumno-card .ac-badge{position:absolute;top:.3rem;right:.3rem;background:var(--danger);color:#fff;font-size:.53rem;font-weight:800;padding:.1rem .3rem;border-radius:99px;line-height:1.3;}
+.alumno-card.riesgo{background:rgba(255,64,96,.2);border-color:rgba(255,64,96,.4);}
+.alumno-card.sin-registro{background:rgba(255,171,0,.13);border-color:rgba(255,171,0,.28);}
+.alumno-card.bien{background:rgba(0,229,160,.12);border-color:rgba(0,229,160,.22);}
+.alumno-card.sin-datos{background:var(--surface);border-color:var(--border);}
+
+/* MISIONES */
+.mision-item{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:1rem;margin-bottom:.6rem;display:flex;gap:.9rem;align-items:flex-start;transition:border .2s,opacity .2s;}
+.mision-item.done{opacity:.5;border-color:var(--accent);}
+.mision-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.75rem;transition:all .2s;margin-top:.1rem;}
+.mision-check.done{background:var(--accent);border-color:var(--accent);color:#030308;}
+.mision-body{flex:1;}
+.mision-titulo{font-weight:700;font-size:.88rem;margin-bottom:.3rem;color:var(--text);}
+.mision-desc{font-size:.78rem;color:var(--muted2);line-height:1.5;}
+.impacto-chip{display:inline-block;margin-top:.4rem;font-size:.67rem;font-weight:700;
+  padding:.15rem .5rem;border-radius:99px;letter-spacing:.02em;}
+.impacto-alto{background:rgba(0,229,160,.15);color:var(--accent);border:1px solid rgba(0,229,160,.3);}
+.impacto-medio{background:rgba(0,128,255,.12);color:var(--blue);border:1px solid rgba(0,128,255,.22);}
+.impacto-bajo{background:var(--surface2);color:var(--muted2);border:1px solid var(--border);}
+
+/* MODAL REPORTE */
+#modal-reporte{position:fixed;inset:0;background:rgba(3,3,8,.88);z-index:900;
+  display:none;align-items:center;justify-content:center;padding:1.25rem;}
+#modal-reporte.open{display:flex;}
+.modal-box{background:var(--surface2);border:1px solid var(--border);border-radius:20px;
+  padding:1.5rem;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;position:relative;}
+.modal-box h3{font-size:1rem;font-weight:800;margin-bottom:1rem;color:var(--blue);}
+.modal-close{position:absolute;top:.9rem;right:1rem;background:none;border:none;color:var(--muted2);
+  cursor:pointer;font-size:1.2rem;line-height:1;}
+.reporte-texto{font-size:.87rem;line-height:1.78;color:var(--text);white-space:pre-wrap;}
 </style>
 </head>
 <body>
@@ -194,14 +237,25 @@ html,body{height:100%;background:var(--bg);color:var(--text);
     <button style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:.82rem;" onclick="salir()">✕</button>
   </div>
   <div class="tab-bar">
-    <button class="tab active" id="tab-resumen"   onclick="switchTab('resumen')">Resumen</button>
-    <button class="tab"        id="tab-alertas"   onclick="switchTab('alertas')">Alertas</button>
-    <button class="tab"        id="tab-aptitudes" onclick="switchTab('aptitudes')">Aptitudes</button>
-    <button class="tab"        id="tab-rezago"    onclick="switchTab('rezago')">Rezago</button>
-    <button class="tab"        id="tab-bienestar" onclick="switchTab('bienestar')">Bienestar</button>
-    <button class="tab"        id="tab-coaching"  onclick="switchTab('coaching')">Coaching IA</button>
+    <button class="tab active" id="tab-resumen"     onclick="switchTab('resumen')">Resumen</button>
+    <button class="tab"        id="tab-alertas"     onclick="switchTab('alertas')">Alertas</button>
+    <button class="tab"        id="tab-temperatura" onclick="switchTab('temperatura')">Temperatura</button>
+    <button class="tab"        id="tab-misiones"    onclick="switchTab('misiones')">Misiones</button>
+    <button class="tab"        id="tab-aptitudes"   onclick="switchTab('aptitudes')">Aptitudes</button>
+    <button class="tab"        id="tab-rezago"      onclick="switchTab('rezago')">Rezago</button>
+    <button class="tab"        id="tab-bienestar"   onclick="switchTab('bienestar')">Bienestar</button>
+    <button class="tab"        id="tab-coaching"    onclick="switchTab('coaching')">Coaching IA</button>
   </div>
   <div id="content"></div>
+</div>
+
+<!-- MODAL REPORTE SEMANAL -->
+<div id="modal-reporte">
+  <div class="modal-box">
+    <h3>📊 Reporte semanal del grupo</h3>
+    <button class="modal-close" onclick="cerrarReporte()">✕</button>
+    <div id="reporte-body"><div class="reporte-texto">Cargando...</div></div>
+  </div>
 </div>
 
 <!-- TOAST -->
@@ -209,10 +263,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 
 <script>
 const BASE = '';
-let M = {mid:'', nombre:'', escuela_nombre:'', materia:'', grado:''};
+let M = {mid:'', nombre:'', escuela_nombre:'', escuela_id:'', materia:'', grado:''};
 let _panel = null;
 let _tabActual = 'resumen';
 let _chatInit = false;
+let _misiones = null;
 
 function save(){ localStorage.setItem('evo_maestro', JSON.stringify(M)); }
 function load(){
@@ -243,7 +298,7 @@ async function accederConId(mid){
   try{
     const r = await api(`/maestros/${mid}`);
     if(!r.ok){document.getElementById('l-err').textContent='ID no válido.';return;}
-    M={mid:r.id, nombre:r.nombre, escuela_nombre:r.escuela_nombre||'', materia:r.materia||'', grado:r.grado||''};
+    M={mid:r.id, nombre:r.nombre, escuela_nombre:r.escuela_nombre||'', escuela_id:r.escuela_id||'', materia:r.materia||'', grado:r.grado||''};
     save();
     entrarPanel();
   }catch(e){document.getElementById('l-err').textContent='Sin conexión.';}
@@ -299,10 +354,12 @@ function renderTab(tab, silencioso=false){
   const p = _panel;
   if(!p) return;
   switch(tab){
-    case 'resumen':   renderResumen(p); break;
-    case 'alertas':   renderAlertas(p); break;
-    case 'aptitudes': renderAptitudes(p); break;
-    case 'rezago':    renderRezago(p); break;
+    case 'resumen':     renderResumen(p); break;
+    case 'alertas':     renderAlertas(p); break;
+    case 'aptitudes':   renderAptitudes(p); break;
+    case 'rezago':      renderRezago(p); break;
+    case 'temperatura': renderTemperatura(); break;
+    case 'misiones':    renderMisiones(); break;
   }
 }
 
@@ -573,10 +630,199 @@ function switchTab(tab){ _tabActual=tab; document.querySelectorAll('.tab').forEa
   if(!chatTabs.includes(tab)){ document.getElementById('content').style.overflow='';document.getElementById('content').style.padding='.75rem';document.getElementById('content').style.display='block';document.getElementById('content').style.flexDirection=''; }
   if(tab==='coaching'){ renderCoaching(); return; }
   if(tab==='bienestar'){ document.getElementById('content').style.overflow='auto';document.getElementById('content').style.padding='.75rem';document.getElementById('content').style.display='block';renderBienestar(); return; }
+  if(tab==='temperatura'){ document.getElementById('content').style.overflow='auto';document.getElementById('content').style.padding='.75rem';document.getElementById('content').style.display='block';renderTemperatura(); return; }
+  if(tab==='misiones'){ document.getElementById('content').style.overflow='auto';document.getElementById('content').style.padding='.75rem';document.getElementById('content').style.display='block';renderMisiones(); return; }
   if(_panel) renderTab(tab); else { document.getElementById('content').innerHTML='<div class="empty">Cargando...</div>';cargarPanel(); }
 }
 
-function salir(){ M={mid:'',nombre:'',escuela_nombre:'',materia:'',grado:''};localStorage.removeItem('evo_maestro');document.getElementById('s-panel').classList.remove('active');document.getElementById('s-login').classList.add('active');document.getElementById('l-mid').value='';document.getElementById('l-err').textContent=''; }
+// ─── TEMPERATURA DEL GRUPO (HEATMAP) ─────────────────────────────────────────
+async function renderTemperatura(){
+  const el = document.getElementById('content');
+  el.innerHTML = '<div class="empty">Cargando temperatura del grupo...</div>';
+
+  // Necesitamos escuela_id. Si no lo tenemos en M, lo obtenemos del servidor.
+  let eid = M.escuela_id;
+  if(!eid){
+    try{
+      const rm = await api(`/maestros/${M.mid}`);
+      if(rm.ok && rm.escuela_id){ eid = rm.escuela_id; M.escuela_id = eid; save(); }
+    }catch(e){}
+  }
+  if(!eid){
+    el.innerHTML = '<div class="empty">No se encontró el ID de escuela.<br>Contacta al administrador.</div>';
+    return;
+  }
+
+  try{
+    const r = await api(`/escuela/${eid}/heatmap`);
+    if(!r.ok){
+      el.innerHTML = '<div class="empty">No hay datos de temperatura todavía.</div>';
+      return;
+    }
+    const alumnos = r.alumnos || [];
+    const promedio = r.promedio_grupo ?? '—';
+    const alertas  = r.alertas_count ?? 0;
+
+    const moodEmoji = v => {
+      if(v===null||v===undefined) return '😶';
+      if(v < 2)  return '😶';
+      if(v < 3)  return '😐';
+      if(v < 4)  return '🙂';
+      if(v < 5)  return '😊';
+      return '🔥';
+    };
+
+    const cardClass = a => {
+      if(a.riesgo)                return 'riesgo';
+      if((a.dias_sin_registro||0) > 3) return 'sin-registro';
+      if((a.mood_promedio||0) >= 4)    return 'bien';
+      return 'sin-datos';
+    };
+
+    const cards = alumnos.length === 0
+      ? '<div class="empty" style="grid-column:1/-1">Ningún alumno ha registrado estado hoy.</div>'
+      : alumnos.map(a => `
+          <div class="alumno-card ${cardClass(a)}" title="${esc(a.nombre)}">
+            ${a.riesgo ? '<div class="ac-badge">⚠ Señal</div>' : ''}
+            <div class="ac-emoji">${moodEmoji(a.mood_promedio)}</div>
+            <div class="ac-nombre">${esc((a.nombre||'').split(' ')[0])}</div>
+          </div>`).join('');
+
+    const promedioColor = (promedio !== '—' && promedio >= 4) ? 'var(--accent)'
+      : (promedio !== '—' && promedio >= 3) ? 'var(--blue)'
+      : (promedio !== '—' && promedio >= 2) ? 'var(--gold)'
+      : 'var(--danger)';
+
+    el.innerHTML = `
+      <div class="heatmap-header">
+        <div>
+          <div style="font-weight:800;font-size:.95rem;margin-bottom:.15rem;">Temperatura del grupo hoy</div>
+          <div class="hm-stat">Promedio: <strong style="color:${promedioColor}">${promedio !== '—' ? promedio+' / 5' : '—'}</strong>
+            &nbsp;·&nbsp; Señales: <strong style="color:${alertas>0?'var(--danger)':'var(--accent)'};">${alertas}</strong>
+          </div>
+        </div>
+        <button onclick="renderTemperatura()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted2);padding:.4rem .85rem;border-radius:8px;cursor:pointer;font-size:.78rem;font-family:inherit;">↻ Actualizar</button>
+      </div>
+      <div class="heatmap-grid">${cards}</div>
+      <div class="info-card" style="margin-top:.2rem;">
+        <div style="font-size:.73rem;color:var(--muted2);line-height:1.75;">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:rgba(255,64,96,.5);margin-right:.35rem;"></span>Riesgo activo &nbsp;
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:rgba(255,171,0,.5);margin-right:.35rem;"></span>Sin registro +3 días &nbsp;
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:rgba(0,229,160,.4);margin-right:.35rem;"></span>Mood ≥ 4 &nbsp;
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);margin-right:.35rem;"></span>Sin datos
+        </div>
+      </div>
+      <div style="margin-top:.65rem;">
+        <button onclick="abrirReporte()" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--blue);padding:.85rem;border-radius:12px;cursor:pointer;font-size:.88rem;font-weight:700;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:.5rem;">
+          📊 Ver reporte semanal del grupo
+        </button>
+      </div>`;
+  }catch(e){
+    el.innerHTML = '<div class="empty">Error al cargar la temperatura del grupo.</div>';
+  }
+}
+
+// ─── MISIONES DOCENTES ────────────────────────────────────────────────────────
+async function renderMisiones(){
+  const el = document.getElementById('content');
+  el.innerHTML = '<div class="empty">Cargando misiones...</div>';
+  try{
+    const r = await api(`/maestro/${M.mid}/misiones-docente`);
+    if(!r.ok){
+      el.innerHTML = '<div class="empty">No hay misiones disponibles por ahora.</div>';
+      return;
+    }
+    _misiones = r.misiones || [];
+    pintarMisiones(el);
+  }catch(e){
+    el.innerHTML = '<div class="empty">Error al cargar misiones.</div>';
+  }
+}
+
+function pintarMisiones(el){
+  const misiones = _misiones || [];
+  if(misiones.length === 0){
+    el.innerHTML = '<div class="empty">No hay misiones disponibles por ahora.<br>Vuelve mañana.</div>';
+    return;
+  }
+  const completadas = misiones.filter(m=>m.completada).length;
+  el.innerHTML = `
+    <div class="info-card" style="margin-bottom:.65rem;">
+      <div class="ic-title"><span class="ico">🎯</span> Misiones de conexión docente</div>
+      <p style="font-size:.78rem;color:var(--muted2);line-height:1.5;">Acciones concretas para fortalecer el vínculo con tu grupo. Márcalas conforme las realices.</p>
+      <div style="margin-top:.5rem;font-size:.8rem;color:var(--muted2);">Completadas: <strong style="color:var(--accent)">${completadas} / ${misiones.length}</strong></div>
+    </div>
+    ${misiones.map(m => `
+      <div class="mision-item${m.completada?' done':''}" id="mision-${m.id}">
+        <div class="mision-check${m.completada?' done':''}" onclick="toggleMision('${m.id}',${m.completada})">${m.completada?'✓':''}</div>
+        <div class="mision-body">
+          <div class="mision-titulo">${esc(m.titulo)}</div>
+          <div class="mision-desc">${esc(m.descripcion||'')}</div>
+          ${m.impacto ? `<span class="impacto-chip impacto-${esc(m.impacto.toLowerCase())}">${esc(m.impacto)}</span>` : ''}
+        </div>
+      </div>`).join('')}`;
+}
+
+async function toggleMision(misionId, yaCompletada){
+  if(yaCompletada) return; // solo se puede marcar como completada, no deshacer
+  try{
+    const r = await api(`/maestro/${M.mid}/mision-completada`,'POST',{mision_id: misionId});
+    if(r.ok || r.ok===undefined){
+      // Actualizar estado local
+      if(_misiones){
+        const m = _misiones.find(x=>String(x.id)===String(misionId));
+        if(m) m.completada = true;
+      }
+      const el = document.getElementById('content');
+      pintarMisiones(el);
+      toast('✓ Misión completada');
+    }
+  }catch(e){ toast('Error al guardar.'); }
+}
+
+// ─── REPORTE SEMANAL ──────────────────────────────────────────────────────────
+async function abrirReporte(){
+  const modal = document.getElementById('modal-reporte');
+  const body  = document.getElementById('reporte-body');
+  modal.classList.add('open');
+  body.innerHTML = '<div class="reporte-texto">Cargando reporte...</div>';
+
+  let eid = M.escuela_id;
+  if(!eid){
+    try{
+      const rm = await api(`/maestros/${M.mid}`);
+      if(rm.ok && rm.escuela_id){ eid = rm.escuela_id; M.escuela_id = eid; save(); }
+    }catch(e){}
+  }
+  if(!eid){
+    body.innerHTML = '<div class="reporte-texto" style="color:var(--danger)">No se encontró el ID de escuela.</div>';
+    return;
+  }
+  try{
+    const r = await api(`/escuela/${eid}/reporte-semana`);
+    if(r.ok && r.resumen_texto){
+      body.innerHTML = `<div class="reporte-texto">${esc(r.resumen_texto)}</div>`;
+    } else {
+      body.innerHTML = '<div class="reporte-texto" style="color:var(--muted2)">No hay suficientes datos para generar el reporte esta semana.</div>';
+    }
+  }catch(e){
+    body.innerHTML = '<div class="reporte-texto" style="color:var(--danger)">Error al obtener el reporte.</div>';
+  }
+}
+
+function cerrarReporte(){
+  document.getElementById('modal-reporte').classList.remove('open');
+}
+
+// cerrar modal al hacer click fuera del box
+document.addEventListener('click', e=>{
+  const modal = document.getElementById('modal-reporte');
+  if(modal && modal.classList.contains('open') && e.target === modal){
+    modal.classList.remove('open');
+  }
+});
+
+function salir(){ M={mid:'',nombre:'',escuela_nombre:'',escuela_id:'',materia:'',grado:''};localStorage.removeItem('evo_maestro');document.getElementById('s-panel').classList.remove('active');document.getElementById('s-login').classList.add('active');document.getElementById('l-mid').value='';document.getElementById('l-err').textContent=''; }
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function hora(){ const d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
