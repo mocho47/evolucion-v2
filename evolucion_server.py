@@ -883,9 +883,12 @@ async def ver_familia(fid: str):
         acuerdos = [dict(r) for r in await cur4.fetchall()]
         cur5 = await db.execute("SELECT COUNT(*) FROM alertas WHERE familia_id=? AND visto=0", (fid,))
         alertas_nuevas = (await cur5.fetchone())[0]
+        cur6 = await db.execute("SELECT telefono_padre FROM familias WHERE id=?", (fid,))
+        frow = await cur6.fetchone()
+        telefono_padre = frow["telefono_padre"] if frow else ""
     return {"ok": True, "miembros": miembros, "misiones_pendientes": pendientes,
             "misiones_completadas": completadas, "acuerdos_activos": acuerdos,
-            "alertas_nuevas": alertas_nuevas}
+            "alertas_nuevas": alertas_nuevas, "telefono_padre": telefono_padre or ""}
 
 # ── Chat ──────────────────────────────────────────────────────────────────────
 @app.post("/api/chat")

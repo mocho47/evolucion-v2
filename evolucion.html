@@ -1274,6 +1274,22 @@ async function renderFamilia(){
         </div>
       </div>`;
     }
+    const tel = r.telefono_padre||'';
+    const telMask = tel ? `···${tel.slice(-4)}` : 'No configurado';
+    const telColor = tel ? '#4ade80' : '#f97316';
+    html += `<div style="margin-top:.9rem;background:var(--surface2);border-radius:12px;padding:.85rem 1rem;border:1px solid var(--border);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem;">
+        <span style="font-size:.82rem;color:var(--text-dim);font-weight:600;letter-spacing:.04em;">ALERTAS WHATSAPP</span>
+        <span style="font-size:.78rem;color:${telColor};font-weight:600;">${tel ? '● Activo' : '● Sin configurar'}</span>
+      </div>
+      <div style="display:flex;gap:.5rem;align-items:center;">
+        <input id="wa-tel" type="tel" placeholder="33 2614 8674" value="${tel}"
+          style="flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.55rem .8rem;border-radius:8px;font-size:.9rem;outline:none;"
+          maxlength="15">
+        <button class="btn purple" style="padding:.5rem .9rem;font-size:.83rem;white-space:nowrap;" onclick="guardarTelefono()">Guardar</button>
+      </div>
+      <p style="font-size:.75rem;color:var(--text-dim);margin:.4rem 0 0;">Si tu teen activa una alerta de riesgo, te avisamos aquí al instante.</p>
+    </div>`;
     document.getElementById('padre-content').innerHTML = html;
   }catch(e){document.getElementById('padre-content').innerHTML='<div class="empty">Error al cargar.</div>';}
 }
@@ -1602,6 +1618,16 @@ function toast(msg){
   el.textContent=msg; el.classList.add('on');
   clearTimeout(_toastTimer);
   _toastTimer=setTimeout(()=>el.classList.remove('on'),2200);
+}
+
+async function guardarTelefono(){
+  const raw = (document.getElementById('wa-tel')?.value||'').replace(/\D/g,'');
+  if(!raw || (raw.length!==10 && raw.length!==12 && raw.length!==13)){
+    toast('Ingresa un número válido (10 dígitos)'); return;
+  }
+  const r = await api(`/familia/${S.fid}/telefono`,{method:'POST',body:JSON.stringify({telefono:raw})});
+  if(r.ok){ toast('WhatsApp guardado ✓'); renderFamilia(); }
+  else toast('Error al guardar');
 }
 
 // Enter en campos de login
