@@ -752,8 +752,9 @@ async def _crear_demo_si_falta():
         if row:
             return  # ya existe
         fid = "demo-fam-01"
-        await db.execute("INSERT OR IGNORE INTO familias VALUES (?,?,?,?)",
-                         (fid, "Familia Demo Evolución", "DEMO01", time.time()))
+        await db.execute(
+            "INSERT OR IGNORE INTO familias (id, nombre, codigo_acceso, creado) VALUES (?,?,?,?)",
+            (fid, "Familia Demo Evolución", "DEMO01", time.time()))
         pin_hash = hashlib.sha256("1234".encode()).hexdigest()
         await db.execute(
             "INSERT OR IGNORE INTO miembros VALUES (?,?,?,?,?,?,0,'{}',1,?)",
