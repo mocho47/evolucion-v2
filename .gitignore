@@ -15,3 +15,8 @@ PDFs/
 presentaciones/
 config/
 dev/
+
+# Scripts con credenciales hardcoded (uso local únicamente)
+render_setup.py
+patch_*.py
+fix_*.py
