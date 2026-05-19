@@ -48,6 +48,7 @@ app.add_middleware(CORSMiddleware,
     allow_credentials=True)
 
 DB_PATH      = os.getenv("EVO_DB",      os.path.join(os.path.dirname(__file__), "evolucion.db"))
+os.makedirs(os.path.dirname(os.path.abspath(DB_PATH)), exist_ok=True)
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 ZAI_API_KEY  = os.getenv("ZAI_API_KEY",  "")
 PORT         = int(os.getenv("PORT", "8080"))
