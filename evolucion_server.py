@@ -988,6 +988,11 @@ async def comunicado_padres():
     with open(os.path.join(os.path.dirname(__file__), "comunicado_padres.html"), encoding="utf-8") as f:
         return f.read()
 
+@app.get("/arranque", response_class=HTMLResponse)
+async def arranque_escolar():
+    with open(os.path.join(os.path.dirname(__file__), "arranque_escolar.html"), encoding="utf-8") as f:
+        return f.read()
+
 @app.get("/manifest.json")
 async def manifest():
     return {

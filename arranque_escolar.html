@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución — Guía de Arranque Escolar</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --verde:#16a34a;--verde-dim:#f0fdf4;--azul:#2563eb;--azul-dim:#eff6ff;
+  --morado:#7c3aed;--gris:#374151;--borde:#e5e7eb;--text:#1a1a2e;--muted:#6b7280;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:#f9fafb;color:var(--text);min-height:100vh;}
+
+/* Header */
+.header{background:linear-gradient(135deg,#065f46,#047857);color:#fff;
+  padding:2rem 1.5rem;text-align:center;}
+.header h1{font-size:1.8rem;font-weight:900;letter-spacing:-.02em;}
+.header h1 span{color:#6ee7b7;}
+.header p{margin-top:.5rem;opacity:.85;font-size:.95rem;}
+.badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
+  border-radius:99px;padding:.3rem .9rem;font-size:.72rem;font-weight:700;
+  letter-spacing:.06em;margin-bottom:.75rem;}
+
+/* Container */
+.container{max-width:800px;margin:0 auto;padding:1.5rem 1rem;}
+
+/* Sección */
+.seccion{background:#fff;border:1px solid var(--borde);border-radius:16px;
+  padding:1.5rem;margin-bottom:1.25rem;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.seccion-titulo{display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;
+  padding-bottom:.75rem;border-bottom:2px solid var(--borde);}
+.seccion-ico{font-size:1.4rem;}
+.seccion-titulo h2{font-size:1rem;font-weight:800;}
+.seccion-titulo p{font-size:.75rem;color:var(--muted);margin-top:.1rem;}
+
+/* Tarjeta de acceso */
+.tarjeta-acceso{display:flex;gap:1rem;align-items:center;
+  border:1.5px solid var(--borde);border-radius:12px;padding:1rem;margin-bottom:.75rem;
+  background:#fafafa;}
+.tarjeta-acceso.verde{border-color:rgba(22,163,74,.3);background:#f0fdf4;}
+.tarjeta-acceso.azul{border-color:rgba(37,99,235,.3);background:#eff6ff;}
+.tarjeta-acceso.morado{border-color:rgba(124,58,237,.3);background:#faf5ff;}
+.tarjeta-acceso.naranja{border-color:rgba(234,88,12,.3);background:#fff7ed;}
+.ta-qr{flex-shrink:0;}
+.ta-qr img{width:80px;height:80px;border-radius:8px;border:1px solid var(--borde);}
+.ta-info{flex:1;}
+.ta-label{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--muted);margin-bottom:.25rem;}
+.ta-titulo{font-size:.92rem;font-weight:700;margin-bottom:.2rem;}
+.ta-url{font-size:.75rem;color:var(--azul);word-break:break-all;margin-bottom:.15rem;}
+.ta-desc{font-size:.72rem;color:var(--muted);line-height:1.4;}
+.ta-chip{display:inline-block;background:var(--verde-dim);border:1px solid rgba(22,163,74,.25);
+  color:var(--verde);border-radius:99px;padding:.15rem .6rem;font-size:.65rem;font-weight:700;margin-top:.3rem;}
+
+/* Pasos */
+.pasos{display:flex;flex-direction:column;gap:.65rem;}
+.paso{display:flex;gap:.85rem;align-items:flex-start;}
+.paso-n{width:26px;height:26px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.68rem;font-weight:800;margin-top:.1rem;}
+.paso-n.verde{background:var(--verde);color:#fff;}
+.paso-n.azul{background:var(--azul);color:#fff;}
+.paso-n.morado{background:var(--morado);color:#fff;}
+.paso-t{font-size:.85rem;font-weight:700;margin-bottom:.2rem;}
+.paso-d{font-size:.75rem;color:var(--muted);line-height:1.5;}
+.paso-code{background:#1e293b;color:#6ee7b7;border-radius:6px;padding:.3rem .6rem;
+  font-family:monospace;font-size:.82rem;display:inline-block;margin-top:.3rem;}
+
+/* Demo box */
+.demo-box{background:#1e293b;border-radius:12px;padding:1rem 1.25rem;color:#e2e8f0;}
+.demo-box .demo-row{display:flex;justify-content:space-between;align-items:center;
+  padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.08);}
+.demo-box .demo-row:last-child{border-bottom:none;}
+.demo-label{font-size:.72rem;color:#94a3b8;}
+.demo-val{font-size:.85rem;font-weight:700;color:#6ee7b7;font-family:monospace;}
+
+/* Roles */
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;}
+.rol{border:1.5px solid var(--borde);border-radius:12px;padding:1rem;}
+.rol-ico{font-size:1.3rem;margin-bottom:.4rem;}
+.rol-t{font-size:.85rem;font-weight:700;margin-bottom:.3rem;}
+.rol-d{font-size:.72rem;color:var(--muted);line-height:1.5;}
+.rol li{margin-left:1rem;margin-bottom:.2rem;}
+
+/* WhatsApp CTA */
+.wa-cta{background:linear-gradient(135deg,#065f46,#047857);color:#fff;
+  border-radius:16px;padding:1.5rem;text-align:center;margin-bottom:1.25rem;}
+.wa-cta h3{font-size:1rem;font-weight:800;margin-bottom:.5rem;}
+.wa-cta p{font-size:.8rem;opacity:.85;margin-bottom:1rem;line-height:1.5;}
+.wa-btn{display:inline-block;background:#25d366;color:#fff;border-radius:10px;
+  padding:.7rem 1.5rem;font-weight:800;font-size:.88rem;text-decoration:none;cursor:pointer;border:none;}
+.wa-btn:hover{background:#128c7e;}
+
+/* Requisitos técnicos */
+.req-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+.req{background:#fafafa;border:1px solid var(--borde);border-radius:10px;
+  padding:.85rem 1rem;}
+.req-ico{font-size:1.1rem;margin-bottom:.3rem;}
+.req-t{font-size:.8rem;font-weight:700;margin-bottom:.15rem;}
+.req-d{font-size:.7rem;color:var(--muted);line-height:1.4;}
+
+/* Footer */
+.footer{text-align:center;padding:1.5rem;color:var(--muted);font-size:.72rem;}
+
+@media(max-width:520px){
+  .tarjeta-acceso{flex-direction:column;}
+  .ta-qr img{width:100px;height:100px;}
+  .roles,.req-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge">PAQUETE ESCOLAR · PILOTO 2026</div>
+  <h1>Evolución<span>.</span></h1>
+  <p>Guía completa de arranque para directores, maestros, padres y alumnos</p>
+</div>
+
+<div class="container">
+
+<!-- SECCIÓN 1: LINKS RÁPIDOS -->
+<div class="seccion">
+  <div class="seccion-titulo">
+    <span class="seccion-ico">🔗</span>
+    <div>
+      <h2>Accesos rápidos — escanea o toca</h2>
+      <p>Todos los links del paquete escolar en un solo lugar</p>
+    </div>
+  </div>
+
+  <div class="tarjeta-acceso azul">
+    <div class="ta-qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://evolucion-v2.onrender.com/deck/director&color=2563eb" alt="QR Director"></div>
+    <div class="ta-info">
+      <div class="ta-label">Para el director</div>
+      <div class="ta-titulo">Presentación institucional</div>
+      <div class="ta-url">evolucion-v2.onrender.com/deck/director</div>
+      <div class="ta-desc">Deck completo: problema, solución, herramientas del maestro, privacidad, propuesta de piloto con 3 grupos.</div>
+      <span class="ta-chip" style="background:#eff6ff;border-color:rgba(37,99,235,.25);color:#2563eb;">9 slides · 5 min</span>
+    </div>
+  </div>
+
+  <div class="tarjeta-acceso verde">
+    <div class="ta-qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://evolucion-v2.onrender.com/deck/familias&color=16a34a" alt="QR Familias"></div>
+    <div class="ta-info">
+      <div class="ta-label">Para padres de familia</div>
+      <div class="ta-titulo">Presentación familiar</div>
+      <div class="ta-url">evolucion-v2.onrender.com/deck/familias</div>
+      <div class="ta-desc">Qué gana la familia: semáforo, temas de la semana, pregunta del día, modo SOS, privacidad total.</div>
+      <span class="ta-chip">Para enviar por WhatsApp a padres</span>
+    </div>
+  </div>
+
+  <div class="tarjeta-acceso" style="border-color:rgba(124,58,237,.3);background:#faf5ff;">
+    <div class="ta-qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://evolucion-v2.onrender.com/deck/teens&color=7c3aed" alt="QR Teens"></div>
+    <div class="ta-info">
+      <div class="ta-label">Para los alumnos</div>
+      <div class="ta-titulo">Presentación teens</div>
+      <div class="ta-url">evolucion-v2.onrender.com/deck/teens</div>
+      <div class="ta-desc">Su espacio, su herramienta. Streak, logros, módulos cognitivos. Para mostrar en el salón.</div>
+      <span class="ta-chip" style="background:#faf5ff;border-color:rgba(124,58,237,.25);color:#7c3aed;">Proyectar en clase</span>
+    </div>
+  </div>
+
+  <div class="tarjeta-acceso naranja">
+    <div class="ta-qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://evolucion-v2.onrender.com/comunicado&color=ea580c" alt="QR Comunicado"></div>
+    <div class="ta-info">
+      <div class="ta-label">Documento oficial</div>
+      <div class="ta-titulo">Comunicado para padres (imprimible)</div>
+      <div class="ta-url">evolucion-v2.onrender.com/comunicado</div>
+      <div class="ta-desc">Carta institucional firmada por maestro y director. Incluye espacio para el código de grupo de cada salón.</div>
+      <span class="ta-chip" style="background:#fff7ed;border-color:rgba(234,88,12,.25);color:#ea580c;">Imprimir · Firmar · Distribuir</span>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN 2: DEMO EN VIVO -->
+<div class="seccion">
+  <div class="seccion-titulo">
+    <span class="seccion-ico">🎮</span>
+    <div>
+      <h2>Demo en vivo — pruébalo ahora</h2>
+      <p>Credenciales para mostrar el sistema completo sin datos reales</p>
+    </div>
+  </div>
+  <div class="tarjeta-acceso verde" style="margin-bottom:1rem;">
+    <div class="ta-qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://evolucion-v2.onrender.com/app&color=16a34a" alt="QR App"></div>
+    <div class="ta-info">
+      <div class="ta-label">App principal</div>
+      <div class="ta-titulo">Teens + Padres</div>
+      <div class="ta-url">evolucion-v2.onrender.com/app</div>
+      <div class="ta-desc">Escribe el código de familia para entrar. Usa las credenciales demo de abajo para probarlo en vivo.</div>
+    </div>
+  </div>
+  <div class="demo-box">
+    <div class="demo-row"><span class="demo-label">Código de familia (demo)</span><span class="demo-val">DEMO01</span></div>
+    <div class="demo-row"><span class="demo-label">PIN de padre</span><span class="demo-val">1234</span></div>
+    <div class="demo-row"><span class="demo-label">Panel maestro</span><span class="demo-val">evolucion-v2.onrender.com/maestro</span></div>
+    <div class="demo-row"><span class="demo-label">Nota</span><span class="demo-label" style="text-align:right;max-width:200px;">La primera apertura puede tardar 30s — el servidor despierta</span></div>
+  </div>
+</div>
+
+<!-- SECCIÓN 3: CÓMO ARRANCAR POR ROL -->
+<div class="seccion">
+  <div class="seccion-titulo">
+    <span class="seccion-ico">🚀</span>
+    <div>
+      <h2>Cómo crear el ambiente completo</h2>
+      <p>Pasos exactos por rol para el funcionamiento óptimo</p>
+    </div>
+  </div>
+
+  <p style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.85rem;">👨‍🏫 El maestro — primero</p>
+  <div class="pasos" style="margin-bottom:1.5rem;">
+    <div class="paso">
+      <div class="paso-n verde">1</div>
+      <div><div class="paso-t">Abre el panel del maestro</div><div class="paso-d">Ve a <strong>evolucion-v2.onrender.com/maestro</strong> desde tu celular o computadora. Selecciona "Soy Maestro" y regístrate con tu nombre, materia y número de WhatsApp.</div></div>
+    </div>
+    <div class="paso">
+      <div class="paso-n verde">2</div>
+      <div><div class="paso-t">Crea tu código de grupo</div><div class="paso-d">En el panel maestro → "Mis Grupos" → "Crear grupo". Se genera un código único (ej: <span class="paso-code">GMAT-001</span>) que compartes con los padres de ese grupo.</div></div>
+    </div>
+    <div class="paso">
+      <div class="paso-n verde">3</div>
+      <div><div class="paso-t">Repite para los 3 grupos</div><div class="paso-d">Crea un código distinto para cada grupo (1°A, 1°B, 2°C, etc). Así el heatmap te muestra cada grupo por separado.</div></div>
+    </div>
+  </div>
+
+  <p style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.85rem;">👨‍👩‍👧 Los padres — segundo</p>
+  <div class="pasos" style="margin-bottom:1.5rem;">
+    <div class="paso">
+      <div class="paso-n azul">1</div>
+      <div><div class="paso-t">Abren la app</div><div class="paso-d">El padre va a <strong>evolucion-v2.onrender.com/app</strong> desde su celular. Toca "Crear familia".</div></div>
+    </div>
+    <div class="paso">
+      <div class="paso-n azul">2</div>
+      <div><div class="paso-t">Ingresan el código del grupo</div><div class="paso-d">El código que les mandó el maestro (del comunicado oficial o por WhatsApp). Eso los conecta al grupo del maestro automáticamente.</div></div>
+    </div>
+    <div class="paso">
+      <div class="paso-n azul">3</div>
+      <div><div class="paso-t">Crean su cuenta familiar</div><div class="paso-d">Nombre de la familia, su número de WhatsApp (para recibir el semáforo y preguntas del día) y un PIN de 4 dígitos que compartirán con su hijo.</div></div>
+    </div>
+    <div class="paso">
+      <div class="paso-n azul">4</div>
+      <div><div class="paso-t">Agregan al teen</div><div class="paso-d">Desde el menú padre → "Agregar familiar" → nombre del hijo/a y su edad. El sistema asigna el perfil cognitivo correcto automáticamente.</div></div>
+    </div>
+  </div>
+
+  <p style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.85rem;">👦 El teen — tercero</p>
+  <div class="pasos" style="margin-bottom:1.5rem;">
+    <div class="paso">
+      <div class="paso-n morado">1</div>
+      <div><div class="paso-t">Entra a la app</div><div class="paso-d">Misma URL: <strong>evolucion-v2.onrender.com/app</strong>. Toca "Soy Teen, quiero entrar".</div></div>
+    </div>
+    <div class="paso">
+      <div class="paso-n morado">2</div>
+      <div><div class="paso-t">Usa el código de su familia</div><div class="paso-d">El mismo código que crearon sus papás. El sistema lo reconoce como miembro teen de esa familia.</div></div>
+    </div>
+    <div class="paso">
+      <div class="paso-n morado">3</div>
+      <div><div class="paso-t">¡Listo para hablar!</div><div class="paso-d">Su espacio privado aparece inmediatamente. La IA lo saluda por nombre y le pregunta cómo está. Sus conversaciones son 100% privadas — nadie más las lee.</div></div>
+    </div>
+  </div>
+
+  <p style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.85rem;">🏫 El maestro — después del arranque</p>
+  <div class="pasos">
+    <div class="paso">
+      <div class="paso-n verde">✓</div>
+      <div><div class="paso-t">El heatmap aparece solo</div><div class="paso-d">Cuando los teens empiezan a usar la app, el panel maestro muestra automáticamente el heatmap verde/amarillo/rojo de cada alumno.</div></div>
+    </div>
+    <div class="paso">
+      <div class="paso-n verde">✓</div>
+      <div><div class="paso-t">Reportes cada lunes</div><div class="paso-d">El sistema genera y envía por WhatsApp un resumen del bienestar del grupo cada lunes a las 8am.</div></div>
+    </div>
+    <div class="paso">
+      <div class="paso-n verde">✓</div>
+      <div><div class="paso-t">Alertas en tiempo real</div><div class="paso-d">Si algún teen activa una alerta (riesgo), el maestro recibe notificación inmediata por WhatsApp con el protocolo de 5 pasos.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN 4: REQUISITOS TÉCNICOS -->
+<div class="seccion">
+  <div class="seccion-titulo">
+    <span class="seccion-ico">📱</span>
+    <div>
+      <h2>Requisitos para el funcionamiento óptimo</h2>
+      <p>Lo que necesitan maestro, padres y alumnos</p>
+    </div>
+  </div>
+  <div class="req-grid">
+    <div class="req">
+      <div class="req-ico">📶</div>
+      <div class="req-t">Conexión a internet</div>
+      <div class="req-d">WiFi o datos móviles. Funciona con señal básica — no requiere alta velocidad.</div>
+    </div>
+    <div class="req">
+      <div class="req-ico">🌐</div>
+      <div class="req-t">Cualquier navegador</div>
+      <div class="req-d">Chrome, Safari, Firefox. No hay app que instalar. Se abre directo desde el navegador del celular.</div>
+    </div>
+    <div class="req">
+      <div class="req-ico">📲</div>
+      <div class="req-t">WhatsApp activo</div>
+      <div class="req-d">El padre debe registrar su número de WhatsApp para recibir el semáforo diario y las preguntas del día.</div>
+    </div>
+    <div class="req">
+      <div class="req-ico">🔐</div>
+      <div class="req-t">PIN de 4 dígitos</div>
+      <div class="req-d">El padre crea un PIN al registrarse. El teen usa ese mismo PIN para entrar. Simple y seguro.</div>
+    </div>
+    <div class="req">
+      <div class="req-ico">⏱️</div>
+      <div class="req-t">Primera apertura: 30-60 seg</div>
+      <div class="req-d">El servidor puede tardar en despertar si no ha tenido actividad en 15 min. Solo la primera vez.</div>
+    </div>
+    <div class="req">
+      <div class="req-ico">💾</div>
+      <div class="req-t">Sin almacenamiento local</div>
+      <div class="req-d">No ocupa espacio en el celular. Todo está en la nube. Los datos se guardan aunque cambien de dispositivo.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN 5: MENSAJE WHATSAPP PARA COPIAR -->
+<div class="seccion">
+  <div class="seccion-titulo">
+    <span class="seccion-ico">💬</span>
+    <div>
+      <h2>Mensaje listo para enviar por WhatsApp</h2>
+      <p>Copia y pega al grupo de padres de cada salón</p>
+    </div>
+  </div>
+  <div style="background:#f0fdf4;border:1.5px solid rgba(22,163,74,.3);border-radius:12px;padding:1.1rem;margin-bottom:.75rem;">
+    <p style="font-size:.72rem;font-weight:700;color:var(--verde);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.05em;">Mensaje para el grupo de padres</p>
+    <p id="msg-padres" style="font-size:.82rem;line-height:1.6;color:var(--text);white-space:pre-wrap;">Buenos días, padres de familia del grupo ___.
+
+Les comparto que nuestra escuela iniciará un programa piloto de bienestar emocional para sus hijos usando la plataforma *Evolución*.
+
+Para participar solo necesitan:
+1️⃣ Abrir este link desde su celular: evolucion-v2.onrender.com/app
+2️⃣ Tocar "Crear familia" y usar el código: *___________*
+3️⃣ Agregar a su hijo/a y crear un PIN de 4 dígitos
+
+La participación es voluntaria y sin costo. Las conversaciones de sus hijos son 100% privadas.
+
+Para más información: evolucion-v2.onrender.com/deck/familias</p>
+    <button onclick="copiar('msg-padres')" style="margin-top:.75rem;background:var(--verde);color:#fff;border:none;border-radius:8px;padding:.5rem 1rem;font-size:.78rem;font-weight:700;cursor:pointer;">Copiar mensaje</button>
+  </div>
+
+  <div style="background:#eff6ff;border:1.5px solid rgba(37,99,235,.3);border-radius:12px;padding:1.1rem;">
+    <p style="font-size:.72rem;font-weight:700;color:var(--azul);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.05em;">Mensaje para el director</p>
+    <p id="msg-director" style="font-size:.82rem;line-height:1.6;color:var(--text);white-space:pre-wrap;">Estimado director,
+
+Le comparto la presentación de la plataforma *Evolución* que propongo implementar como piloto en mis 3 grupos:
+
+📊 Presentación completa (5 min):
+evolucion-v2.onrender.com/deck/director
+
+🎮 Demo en vivo:
+evolucion-v2.onrender.com/app
+(código demo: DEMO01 · PIN: 1234)
+
+La propuesta es iniciar sin costo para la institución, con 3 grupos, y generar un reporte de impacto al mes 1.
+
+Quedo a sus órdenes para presentarlo cuando usted disponga.</p>
+    <button onclick="copiar('msg-director')" style="margin-top:.75rem;background:var(--azul);color:#fff;border:none;border-radius:8px;padding:.5rem 1rem;font-size:.78rem;font-weight:700;cursor:pointer;">Copiar mensaje</button>
+  </div>
+</div>
+
+<!-- CTA WHATSAPP -->
+<div class="wa-cta">
+  <h3>Comparte esta guía completa</h3>
+  <p>Envía este link por WhatsApp al maestro, director o a quien necesite el paquete completo. Todo está aquí.</p>
+  <button class="wa-btn" onclick="compartirWA()">Compartir por WhatsApp</button>
+</div>
+
+<div class="footer">
+  Evolución by SIMPLEX · Guadalajara, Jalisco · 2026<br>
+  contacto@evolucionapp.mx · evolucion-v2.onrender.com
+</div>
+
+</div><!-- /container -->
+
+<script>
+function copiar(id){
+  const txt = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(txt).then(()=>{
+    alert('Mensaje copiado. Pégalo en WhatsApp.');
+  }).catch(()=>{
+    const ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('Mensaje copiado.');
+  });
+}
+function compartirWA(){
+  const url = encodeURIComponent('https://evolucion-v2.onrender.com/arranque');
+  const txt = encodeURIComponent('Guía completa de arranque para el piloto de Evolución en tu escuela 👇');
+  window.open('https://wa.me/?text='+txt+'%0A'+url,'_blank');
+}
+</script>
+</body>
+</html>
