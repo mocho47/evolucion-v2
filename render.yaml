@@ -14,7 +14,9 @@ services:
       - key: APP_SECRET
         generateValue: true
       - key: EVOLUCION_LICENSE
-        sync: false
+        value: c8a52e135697200eb2fd6285afcf286e
+      - key: EVOLUCION_INSTANCE
+        value: 291fb821c672ea40
       - key: GROQ_API_KEY
         sync: false
       - key: ZAI_API_KEY
