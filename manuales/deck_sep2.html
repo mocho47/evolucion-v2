@@ -60,6 +60,13 @@ h2 em.green{color:var(--accent);}
 .card-ico{font-size:1.5rem;margin-bottom:.5rem;}
 .card-t{font-weight:700;font-size:.88rem;margin-bottom:.3rem;}
 .card-d{font-size:.78rem;color:var(--muted);line-height:1.5;}
+.proto-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;max-width:900px;width:100%;margin-top:1.2rem;}
+.proto-card{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:.9rem 1rem;text-align:left;}
+.proto-num{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.3rem;}
+.proto-ia{font-size:.8rem;font-weight:700;color:#3b82f6;margin-bottom:.2rem;}
+.proto-desc{font-size:.72rem;color:var(--muted);line-height:1.4;}
+.proto-card.done{border-color:#3b82f6;background:rgba(59,130,246,.08);}
+.proto-card.done .proto-num{color:#3b82f6;}
 
 /* 4 partes */
 .cuatro{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;max-width:780px;width:100%;margin-top:1.25rem;}
@@ -255,6 +262,47 @@ h2 em.green{color:var(--accent);}
     <div class="card blue"><div class="card-ico">🔒</div><div class="card-t">Cero acceso a conversaciones</div><div class="card-d">Ni maestros, ni directivos, ni SEP acceden al contenido de las conversaciones individuales. Solo tendencias anónimas.</div></div>
     <div class="card blue"><div class="card-ico">📋</div><div class="card-t">Protocolo de crisis documentado</div><div class="card-d">Cuando el sistema detecta riesgo vital, activa automáticamente a padres, orientador y figura de confianza de la institución.</div></div>
   </div>
+</div>
+
+<!-- 7b. HISTORIA DE DESARROLLO -->
+<div class="slide slide-dark">
+  <div class="tag blue">Historia real</div>
+  <h2>2 años construyendo<br><em>hasta llegar a lo que hoy funciona</em></h2>
+  <div class="proto-grid">
+    <div class="proto-card">
+      <div class="proto-num">Prototipo 1</div>
+      <div class="proto-ia">ChatGPT + código manual</div>
+      <div class="proto-desc">Primera idea: chatbot básico. Sin estructura pedagógica real. Descartado en semanas.</div>
+    </div>
+    <div class="proto-card">
+      <div class="proto-num">Prototipo 2</div>
+      <div class="proto-ia">Copilot + React</div>
+      <div class="proto-desc">Interfaz atractiva, lógica frágil. No sobrevivió prueba con familias reales.</div>
+    </div>
+    <div class="proto-card">
+      <div class="proto-num">Prototipo 3</div>
+      <div class="proto-ia">Gemini + Django</div>
+      <div class="proto-desc">IA sólida, arquitectura incorrecta. Los módulos cognitivos no se conectaban entre sí.</div>
+    </div>
+    <div class="proto-card">
+      <div class="proto-num">Prototipo 4</div>
+      <div class="proto-ia">Cursor AI + Flask</div>
+      <div class="proto-desc">Panel padre funcional por primera vez. Base de datos inestable bajo uso real.</div>
+    </div>
+    <div class="proto-card">
+      <div class="proto-num">Prototipo 5</div>
+      <div class="proto-ia">Claude + FastAPI v1</div>
+      <div class="proto-desc">6 módulos cognitivos reales integrados. Faltaba seguridad, escalabilidad y panel institucional.</div>
+    </div>
+    <div class="proto-card done">
+      <div class="proto-num">Prototipo 6 — Versión actual</div>
+      <div class="proto-ia">Claude Code autónomo</div>
+      <div class="proto-desc">Sistema completo: teens, padres, maestros, admin. 104 endpoints. Familias reales activas hoy.</div>
+    </div>
+  </div>
+  <p style="font-size:.75rem;color:var(--muted);margin-top:1rem;max-width:680px;text-align:center;">
+    No es una idea — es una solución validada a través de 2 años de iteración real con familias y educadores de Guadalajara.
+  </p>
 </div>
 
 <!-- 8. RUTA DE IMPLEMENTACIÓN -->

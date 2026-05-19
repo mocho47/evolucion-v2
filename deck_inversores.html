@@ -95,6 +95,19 @@ h2 em.green{color:var(--accent);}
 .tl-t{font-weight:700;font-size:.9rem;margin-bottom:.2rem;}
 .tl-d{font-size:.78rem;color:var(--muted);line-height:1.4;}
 
+/* Prototipos / Historia */
+.proto-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;max-width:900px;width:100%;margin-top:1.2rem;}
+.proto-card{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:.9rem 1rem;text-align:left;}
+.proto-num{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.3rem;}
+.proto-ia{font-size:.8rem;font-weight:700;color:var(--gold);margin-bottom:.2rem;}
+.proto-desc{font-size:.72rem;color:var(--muted);line-height:1.4;}
+.proto-card.done{border-color:var(--gold);background:var(--gold-dim);}
+.proto-card.done .proto-num{color:var(--gold);}
+.historia-bar{display:flex;align-items:center;gap:1rem;margin:.8rem 0 1.2rem;max-width:700px;}
+.hbar-seg{height:8px;border-radius:4px;flex:1;background:var(--border);}
+.hbar-seg.activo{background:linear-gradient(90deg,#f59e0b,#22c55e);}
+.hbar-label{font-size:.65rem;color:var(--muted);white-space:nowrap;}
+
 /* Uso de fondos */
 .uso-grid{display:flex;flex-wrap:wrap;gap:.85rem;justify-content:center;margin-top:1.5rem;max-width:760px;width:100%;}
 .uso-item{background:var(--s1);border:1px solid var(--border);border-radius:12px;
@@ -231,7 +244,58 @@ h2 em.green{color:var(--accent);}
   </div>
 </div>
 
-<!-- 7. TIMELINE -->
+<!-- 7. HISTORIA DE DESARROLLO -->
+<div class="slide slide-dark">
+  <div class="tag gold">Historia real</div>
+  <h2>2 años de prueba y error<br><em>antes de la versión que hoy funciona</em></h2>
+  <div class="historia-bar">
+    <span class="hbar-label">2024</span>
+    <div class="hbar-seg activo"></div>
+    <div class="hbar-seg activo"></div>
+    <div class="hbar-seg activo"></div>
+    <div class="hbar-seg activo"></div>
+    <div class="hbar-seg activo"></div>
+    <div class="hbar-seg activo" style="background:#22c55e;"></div>
+    <span class="hbar-label">2026 — Listo</span>
+  </div>
+  <div class="proto-grid">
+    <div class="proto-card">
+      <div class="proto-num">Prototipo 1</div>
+      <div class="proto-ia">ChatGPT + código manual</div>
+      <div class="proto-desc">Primera idea: chatbot de texto plano. Sin estructura, sin perfiles. Abandonado al mes.</div>
+    </div>
+    <div class="proto-card">
+      <div class="proto-num">Prototipo 2</div>
+      <div class="proto-ia">Copilot + React</div>
+      <div class="proto-desc">Frontend complejo, backend frágil. Demasiada deuda técnica para escalar.</div>
+    </div>
+    <div class="proto-card">
+      <div class="proto-num">Prototipo 3</div>
+      <div class="proto-ia">Gemini + Django</div>
+      <div class="proto-desc">Buena IA, mala arquitectura. Los módulos cognitivos no integraban con el perfil del teen.</div>
+    </div>
+    <div class="proto-card">
+      <div class="proto-num">Prototipo 4</div>
+      <div class="proto-ia">Cursor AI + Flask</div>
+      <div class="proto-desc">Panel padre funcional por primera vez. Base de datos inestable. Descartado tras prueba real con familias.</div>
+    </div>
+    <div class="proto-card">
+      <div class="proto-num">Prototipo 5</div>
+      <div class="proto-ia">Claude + FastAPI inicial</div>
+      <div class="proto-desc">Primeros 6 módulos cognitivos reales. Funciona, pero sin seguridad ni escalabilidad.</div>
+    </div>
+    <div class="proto-card done">
+      <div class="proto-num">Prototipo 6 — Actual</div>
+      <div class="proto-ia">Claude Code autónomo</div>
+      <div class="proto-desc">104 endpoints. 6 perfiles. Anti-piracy. Bot WhatsApp. Deploy en Render. Familias reales activas.</div>
+    </div>
+  </div>
+  <p style="font-size:.75rem;color:var(--muted);margin-top:1rem;max-width:680px;text-align:center;">
+    Cada prototipo falló en algo distinto. Eso es precisamente lo que construyó el conocimiento que ningún competidor puede comprar.
+  </p>
+</div>
+
+<!-- 8. TIMELINE -->
 <div class="slide slide-dark">
   <div class="tag gold">Hoja de ruta</div>
   <h2>Milestones claros<br><em>con evidencia en cada paso</em></h2>
