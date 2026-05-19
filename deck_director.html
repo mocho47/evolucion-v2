@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución — Para Directores</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#030308;--s1:#080814;--s2:#0d0d1f;--border:#1a1a35;
+  --accent:#3b82f6;--accent2:#2563eb;--accent-dim:rgba(59,130,246,.1);
+  --green:#22c55e;--green-dim:rgba(34,197,94,.1);
+  --gold:#f59e0b;--gold-dim:rgba(245,158,11,.1);
+  --text:#eeeef8;--muted:#8888aa;--muted2:#4a4a6a;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;overflow:hidden;}
+#deck{width:100%;height:100%;position:relative;}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;
+  align-items:center;justify-content:center;padding:3rem 2rem;text-align:center;}
+.slide.active{display:flex;}
+.slide-dark{background:radial-gradient(ellipse at 50% 0%,rgba(59,130,246,.07) 0%,transparent 70%);}
+#nav{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:1rem;z-index:100;
+  background:rgba(8,8,20,.9);backdrop-filter:blur(10px);
+  border:1px solid var(--border);border-radius:99px;padding:.5rem 1.25rem;}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:var(--muted2);cursor:pointer;transition:all .2s;}
+.nav-dot.on{background:var(--accent);box-shadow:0 0 6px var(--accent);}
+#prev,#next{background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:.15rem .4rem;transition:color .15s;}
+#prev:hover,#next:hover{color:var(--accent);}
+#slide-n{font-size:.7rem;color:var(--muted2);min-width:36px;text-align:center;}
+.logo{font-size:.95rem;font-weight:900;letter-spacing:-.01em;position:fixed;top:1.25rem;left:1.5rem;}
+.logo span{color:var(--accent);}
+.logo-tag{font-size:.6rem;color:var(--muted2);letter-spacing:.06em;position:fixed;top:1.25rem;right:1.5rem;}
+.tag{display:inline-block;background:var(--accent-dim);border:1px solid rgba(59,130,246,.3);
+  color:var(--accent);border-radius:99px;padding:.3rem .9rem;font-size:.72rem;font-weight:700;letter-spacing:.06em;margin-bottom:1.5rem;}
+.tag.green{background:var(--green-dim);border-color:rgba(34,197,94,.3);color:var(--green);}
+.tag.gold{background:var(--gold-dim);border-color:rgba(245,158,11,.3);color:var(--gold);}
+h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:900;line-height:1.1;letter-spacing:-.03em;margin-bottom:1rem;max-width:700px;}
+h1 em{font-style:normal;color:var(--accent);}
+h2{font-size:clamp(1.4rem,3.5vw,2.2rem);font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-bottom:.85rem;max-width:680px;}
+h2 em{font-style:normal;color:var(--accent);}
+h2 em.green{color:var(--green);}
+.sub{font-size:clamp(.9rem,2vw,1.1rem);color:var(--muted);max-width:560px;line-height:1.65;margin-bottom:1.5rem;}
+.grid{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:1.5rem;max-width:900px;width:100%;}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1.25rem 1.4rem;text-align:left;flex:1;min-width:220px;max-width:280px;}
+.card.blue{border-color:rgba(59,130,246,.3);background:var(--accent-dim);}
+.card.green{border-color:rgba(34,197,94,.25);background:var(--green-dim);}
+.card-ico{font-size:1.5rem;margin-bottom:.5rem;}
+.card-t{font-weight:700;font-size:.88rem;margin-bottom:.3rem;}
+.card-d{font-size:.78rem;color:var(--muted);line-height:1.5;}
+.metrics{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:1.5rem;max-width:860px;}
+.metric{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1.5rem;text-align:center;flex:1;min-width:140px;max-width:180px;}
+.metric.hl{border-color:rgba(59,130,246,.4);background:var(--accent-dim);}
+.m-n{font-size:2.2rem;font-weight:900;color:var(--accent);line-height:1;}
+.m-l{font-size:.72rem;color:var(--muted);margin-top:.4rem;line-height:1.4;}
+/* Semáforo visual */
+.semaforo{display:flex;gap:1.5rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap;}
+.sem-col{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1.2rem 1.5rem;min-width:160px;text-align:left;}
+.sem-dot{width:14px;height:14px;border-radius:50%;display:inline-block;margin-right:.5rem;}
+.sem-t{font-size:.85rem;font-weight:700;margin-bottom:.4rem;display:flex;align-items:center;}
+.sem-d{font-size:.72rem;color:var(--muted);line-height:1.4;}
+/* Herramientas maestro */
+.tools{display:grid;grid-template-columns:repeat(2,1fr);gap:.85rem;max-width:760px;width:100%;margin-top:1.2rem;}
+.tool{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;text-align:left;display:flex;gap:.75rem;align-items:flex-start;}
+.tool-ico{font-size:1.4rem;flex-shrink:0;}
+.tool-t{font-weight:700;font-size:.85rem;margin-bottom:.2rem;}
+.tool-d{font-size:.72rem;color:var(--muted);line-height:1.4;}
+/* Pasos piloto */
+.pasos{display:flex;flex-direction:column;gap:.7rem;max-width:640px;width:100%;margin-top:1.2rem;text-align:left;}
+.paso{display:flex;gap:1rem;align-items:flex-start;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:.9rem 1.1rem;}
+.paso-n{width:28px;height:28px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);color:var(--accent);font-size:.7rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.paso-t{font-weight:700;font-size:.85rem;margin-bottom:.15rem;}
+.paso-d{font-size:.72rem;color:var(--muted);line-height:1.4;}
+/* Privacidad */
+.priv{display:flex;flex-direction:column;gap:.65rem;max-width:620px;width:100%;margin-top:1.2rem;}
+.priv-item{display:flex;gap:.75rem;align-items:center;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;text-align:left;}
+.priv-icon{font-size:1.2rem;flex-shrink:0;}
+.priv-t{font-size:.82rem;font-weight:700;}
+.priv-d{font-size:.72rem;color:var(--muted);}
+/* CTA */
+.cta-box{background:var(--accent-dim);border:2px solid var(--accent);border-radius:18px;padding:2rem 2.5rem;max-width:560px;width:100%;margin-top:1.5rem;}
+.cta-box h3{font-size:1.2rem;font-weight:800;margin-bottom:.75rem;}
+.cta-url{font-size:1rem;color:var(--accent);font-weight:700;word-break:break-all;}
+.cta-demo{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:.6rem 1rem;margin-top:.75rem;font-size:.78rem;color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="logo">Evolución<span>.</span></div>
+<div class="logo-tag">INSTITUCIÓN EDUCATIVA</div>
+<div id="deck">
+
+<!-- 1. PORTADA -->
+<div class="slide active">
+  <div class="tag">Para Directores · Secundaria</div>
+  <h1>Su escuela,<br><em>con una ventaja real</em></h1>
+  <p class="sub">La primera plataforma de inteligencia artificial para el bienestar emocional de adolescentes — diseñada para funcionar con maestros, padres e institución al mismo tiempo.</p>
+  <p style="font-size:.75rem;color:var(--muted2);margin-top:.5rem;">Presione → para avanzar · Desarrollado por SIMPLEX · Guadalajara</p>
+</div>
+
+<!-- 2. EL PROBLEMA REAL -->
+<div class="slide slide-dark">
+  <div class="tag">La realidad en sus aulas</div>
+  <h2>Lo que no se ve<br><em>es lo que más afecta</em></h2>
+  <div class="metrics">
+    <div class="metric hl"><div class="m-n">7 de 10</div><div class="m-l">adolescentes mexicanos reportan ansiedad o tristeza persistente (INEGI 2023)</div></div>
+    <div class="metric"><div class="m-n">68%</div><div class="m-l">de los casos de riesgo nunca llegan al orientador — los teens no piden ayuda en persona</div></div>
+    <div class="metric"><div class="m-n">3 min</div><div class="m-l">es todo el tiempo que un maestro promedio puede dedicar a cada alumno por día</div></div>
+    <div class="metric"><div class="m-n">1 de 4</div><div class="m-l">jóvenes experimenta un episodio de crisis emocional durante el ciclo escolar</div></div>
+  </div>
+</div>
+
+<!-- 3. QUÉ ES EVOLUCIÓN -->
+<div class="slide">
+  <div class="tag green">La solución</div>
+  <h2>Evolución detecta, acompaña<br><em class="green">y conecta a quien puede ayudar</em></h2>
+  <div class="grid">
+    <div class="card blue">
+      <div class="card-ico">🧠</div>
+      <div class="card-t">IA especializada en adolescentes</div>
+      <div class="card-d">El teen habla libremente. La IA entiende el contexto, aplica módulos de psicología cognitiva real (Erikson, Siegel, UDL) y construye un perfil de bienestar.</div>
+    </div>
+    <div class="card blue">
+      <div class="card-ico">📊</div>
+      <div class="card-t">Datos para el maestro, no opiniones</div>
+      <div class="card-d">Usted ve un heatmap de su grupo: verde, amarillo, rojo. Sin leer conversaciones. Sin violar privacidad. Con información accionable.</div>
+    </div>
+    <div class="card blue">
+      <div class="card-ico">👨‍👩‍👧</div>
+      <div class="card-t">Puente familia–escuela automático</div>
+      <div class="card-d">El padre recibe el "tema de la semana" de su hijo — sin revelar el contenido — y una pregunta del día para conectar. La escuela ya no está sola.</div>
+    </div>
+    <div class="card blue">
+      <div class="card-ico">🚨</div>
+      <div class="card-t">Protocolo de crisis real</div>
+      <div class="card-d">Si el sistema detecta riesgo vital, activa automáticamente al padre, al orientador y a la figura de confianza del alumno. No hay zona ciega.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. HERRAMIENTAS DEL MAESTRO -->
+<div class="slide slide-dark">
+  <div class="tag">Para usted, maestro</div>
+  <h2>Todo lo que necesita<br><em>en una pantalla</em></h2>
+  <div class="tools">
+    <div class="tool">
+      <div class="tool-ico">🗺️</div>
+      <div><div class="tool-t">Heatmap del grupo</div><div class="tool-d">Vista de burbuja verde/amarillo/rojo de cada alumno. Un vistazo y sabe quién necesita atención esta semana.</div></div>
+    </div>
+    <div class="tool">
+      <div class="tool-ico">📋</div>
+      <div><div class="tool-t">Expediente del alumno</div><div class="tool-d">Historial de mood, logros, alertas y contexto — sin revelar conversaciones privadas.</div></div>
+    </div>
+    <div class="tool">
+      <div class="tool-ico">🛡️</div>
+      <div><div class="tool-t">Protocolo de intervención IA</div><div class="tool-d">5 pasos concretos generados por IA para abordar al alumno según su perfil específico.</div></div>
+    </div>
+    <div class="tool">
+      <div class="tool-ico">💬</div>
+      <div><div class="tool-t">Contacto directo al padre</div><div class="tool-d">Un clic envía un mensaje por WhatsApp al padre del alumno — con el tono y el contexto correctos.</div></div>
+    </div>
+    <div class="tool">
+      <div class="tool-ico">🎯</div>
+      <div><div class="tool-t">Banco de dinámicas SEL</div><div class="tool-d">10 actividades de aprendizaje socioemocional listas para usar, filtradas por necesidad del grupo.</div></div>
+    </div>
+    <div class="tool">
+      <div class="tool-ico">📈</div>
+      <div><div class="tool-t">Reporte semanal del grupo</div><div class="tool-d">IA genera el resumen de bienestar de su grupo cada lunes. Ideal para compartir con dirección.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. SEMÁFORO FAMILIAR -->
+<div class="slide">
+  <div class="tag">Visibilidad sin invasión</div>
+  <h2>El semáforo familiar<br><em>cambia la comunicación escuela–hogar</em></h2>
+  <p class="sub">Los padres ven el estado emocional de su hijo en tiempo real. La institución ve el estado del grupo. Nadie ve las conversaciones privadas.</p>
+  <div class="semaforo">
+    <div class="sem-col" style="border-color:rgba(34,197,94,.3)">
+      <div class="sem-t"><span class="sem-dot" style="background:#22c55e"></span>Verde</div>
+      <div class="sem-d">El teen está bien. El padre lo sabe. No hay acción urgente. La relación se fortalece con la pregunta del día.</div>
+    </div>
+    <div class="sem-col" style="border-color:rgba(245,158,11,.3)">
+      <div class="sem-t"><span class="sem-dot" style="background:#f59e0b"></span>Amarillo</div>
+      <div class="sem-d">Hay algo que merece atención. El maestro recibe una dinámica sugerida. El padre recibe el "tema de la semana" para abordarlo en casa.</div>
+    </div>
+    <div class="sem-col" style="border-color:rgba(239,68,68,.3)">
+      <div class="sem-t"><span class="sem-dot" style="background:#ef4444"></span>Rojo</div>
+      <div class="sem-d">Alerta activada. Protocolo de 6 pasos para el padre. Notificación al orientador. Guión exacto de conversación generado por IA.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 6. PRIVACIDAD TOTAL -->
+<div class="slide slide-dark">
+  <div class="tag">Privacidad y legalidad</div>
+  <h2>La institución<br><em>nunca ve el contenido privado</em></h2>
+  <div class="priv">
+    <div class="priv-item">
+      <div class="priv-icon">🔒</div>
+      <div><div class="priv-t">Conversaciones 100% privadas</div><div class="priv-d">Ni maestros, ni director, ni SEP, ni nadie accede a lo que el teen escribe. Solo el teen y su IA.</div></div>
+    </div>
+    <div class="priv-item">
+      <div class="priv-icon">📋</div>
+      <div><div class="priv-t">Cumplimiento LFPDPPP</div><div class="priv-d">Aviso de privacidad publicado. Datos en servidores cifrados. Borrado bajo solicitud garantizado.</div></div>
+    </div>
+    <div class="priv-item">
+      <div class="priv-icon">👨‍🏫</div>
+      <div><div class="priv-t">El maestro ve tendencias, no contenido</div><div class="priv-d">Heatmap, alertas y expediente muestran patrones de bienestar — jamás fragmentos de conversación.</div></div>
+    </div>
+    <div class="priv-item">
+      <div class="priv-icon">✅</div>
+      <div><div class="priv-t">Consentimiento informado de padres</div><div class="priv-d">El acceso del teen requiere que el padre cree la cuenta familiar y acepte los términos. La escuela no registra a nadie por su cuenta.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 7. EL PILOTO - PROPUESTA -->
+<div class="slide">
+  <div class="tag gold">Propuesta concreta</div>
+  <h2>Piloto con <em>3 grupos</em><br>sin costo para la institución</h2>
+  <p class="sub">El maestro ya está comprometido. Solo necesitamos la autorización de dirección y un comunicado a los padres.</p>
+  <div class="pasos">
+    <div class="paso">
+      <div class="paso-n">1</div>
+      <div><div class="paso-t">Dirección autoriza el piloto</div><div class="paso-d">Sin costo, sin instalaciones, sin cambio de infraestructura. La plataforma ya está en producción.</div></div>
+    </div>
+    <div class="paso">
+      <div class="paso-n">2</div>
+      <div><div class="paso-t">Comunicado a padres de los 3 grupos</div><div class="paso-d">El maestro distribuye el comunicado oficial con código de acceso único por grupo. Los padres registran la familia en 5 minutos.</div></div>
+    </div>
+    <div class="paso">
+      <div class="paso-n">3</div>
+      <div><div class="paso-t">Los teens entran solos</div><div class="paso-d">Una vez que el padre crea la cuenta, el teen usa su propio acceso desde su celular. No hay app que instalar — funciona en el navegador.</div></div>
+    </div>
+    <div class="paso">
+      <div class="paso-n">4</div>
+      <div><div class="paso-t">El maestro tiene su panel desde el día 1</div><div class="paso-d">Heatmap del grupo activo desde que hay datos. Reportes automáticos cada lunes.</div></div>
+    </div>
+    <div class="paso">
+      <div class="paso-n">5</div>
+      <div><div class="paso-t">Reporte de impacto al mes 1</div><div class="paso-d">Datos reales de bienestar del grupo. La dirección decide si expande al resto de la escuela.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 8. POR QUÉ AHORA -->
+<div class="slide slide-dark">
+  <div class="tag">La oportunidad</div>
+  <h2>La escuela que actúa hoy<br><em>define el estándar de mañana</em></h2>
+  <div class="grid">
+    <div class="card">
+      <div class="card-ico">🏆</div>
+      <div class="card-t">Primera en GDL</div>
+      <div class="card-d">La institución que pilotee primero construye el caso de éxito que se publica. Primeros datos, primera credencial.</div>
+    </div>
+    <div class="card">
+      <div class="card-ico">📊</div>
+      <div class="card-t">Datos propios del plantel</div>
+      <div class="card-d">Los datos de bienestar de sus alumnos son suyos. Usted los usa para reportes, para mejorar el programa y para SEP.</div>
+    </div>
+    <div class="card">
+      <div class="card-ico">👨‍🏫</div>
+      <div class="card-t">Herramienta real para sus maestros</div>
+      <div class="card-d">No es capacitación — es una herramienta que funciona desde el día 1 sin cambiar la carga de trabajo del docente.</div>
+    </div>
+    <div class="card">
+      <div class="card-ico">🏛️</div>
+      <div class="card-t">Alineado con SEP 2025-2030</div>
+      <div class="card-d">El Plan de Estudios 2022 exige atención socioemocional. Evolución es la implementación práctica de lo que ya es obligatorio en papel.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 9. CTA FINAL -->
+<div class="slide" style="background:radial-gradient(ellipse at 50% 40%,rgba(59,130,246,.1) 0%,transparent 65%);">
+  <div class="tag green">Siguiente paso</div>
+  <h2>La decisión es simple:<br><em class="green">¿lo intentamos con 3 grupos?</em></h2>
+  <p class="sub">Sin costo. Sin riesgo. Con datos reales en 30 días.</p>
+  <div class="cta-box">
+    <h3>Acceso inmediato al demo</h3>
+    <div class="cta-url">evolucion-v2.onrender.com</div>
+    <div class="cta-demo">
+      Demo familiar: código <strong>DEMO01</strong> · PIN <strong>1234</strong><br>
+      Panel maestro: misma URL → Soy Maestro
+    </div>
+    <p style="font-size:.72rem;color:var(--muted);margin-top:.75rem;">
+      El maestro de su escuela puede presentarle el sistema en vivo hoy mismo.<br>
+      Contacto: <strong>contacto@evolucionapp.mx</strong>
+    </p>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<div id="nav">
+  <button id="prev">‹</button>
+  <div id="dots"></div>
+  <span id="slide-n">1 / 9</span>
+  <button id="next">›</button>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const dots = document.getElementById('dots');
+const slideN = document.getElementById('slide-n');
+let cur = 0;
+slides.forEach((_,i)=>{
+  const d = document.createElement('div');
+  d.className='nav-dot'+(i===0?' on':'');
+  d.onclick=()=>go(i);
+  dots.appendChild(d);
+});
+function go(n){
+  slides[cur].classList.remove('active');
+  dots.children[cur].classList.remove('on');
+  cur=(n+slides.length)%slides.length;
+  slides[cur].classList.add('active');
+  dots.children[cur].classList.add('on');
+  slideN.textContent=(cur+1)+' / '+slides.length;
+}
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' ')go(cur+1);
+  if(e.key==='ArrowLeft')go(cur-1);
+});
+let tx=0;
+document.addEventListener('touchstart',e=>tx=e.touches[0].clientX);
+document.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-tx;
+  if(Math.abs(dx)>40)go(dx<0?cur+1:cur-1);
+});
+</script>
+</body>
+</html>

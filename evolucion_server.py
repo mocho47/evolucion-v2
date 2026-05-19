@@ -978,6 +978,16 @@ async def deck_teens2():
     with open(os.path.join(os.path.dirname(__file__), "deck_teens2.html"), encoding="utf-8") as f:
         return f.read()
 
+@app.get("/deck/director", response_class=HTMLResponse)
+async def deck_director():
+    with open(os.path.join(os.path.dirname(__file__), "deck_director.html"), encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/comunicado", response_class=HTMLResponse)
+async def comunicado_padres():
+    with open(os.path.join(os.path.dirname(__file__), "comunicado_padres.html"), encoding="utf-8") as f:
+        return f.read()
+
 @app.get("/manifest.json")
 async def manifest():
     return {
