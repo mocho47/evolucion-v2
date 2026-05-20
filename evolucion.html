@@ -925,14 +925,16 @@ async function reentrar(){
   if(!S.mid){mostrar('c-regresar');return;}
   document.getElementById('r-err').textContent = 'Verificando...';
   try{
-    const r = await api(`/miembros/${S.mid}`);
-    if(!r.ok){
-      document.getElementById('r-err').textContent = 'Sesión expirada. Crea una cuenta nueva.';
-      S = {mid:'',fid:'',nombre:'',rol:'',pts:0,codigo:'',pin:''};
+    const resp = await fetch('/api/miembros/'+S.mid,
+      {headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'}});
+    if(resp.status===404||resp.status===401||resp.status===403){
+      S = {mid:'',fid:'',nombre:'',rol:'',pts:0,codigo:'',pin:'',token:''};
       save();
       mostrar('c-quien');
       return;
     }
+    if(!resp.ok){mostrar('c-regresar');document.getElementById('r-err').textContent='Sin conexión.';return;}
+    const r = await resp.json();
     S.pts = r.puntos_total || 0;
     S.fid = r.familia_id || S.fid;
     S.nombre = r.nombre || S.nombre;
@@ -941,7 +943,7 @@ async function reentrar(){
     entrar();
   }catch(e){
     mostrar('c-regresar');
-    document.getElementById('r-err').textContent = 'Sin conexión.';
+    document.getElementById('r-err').textContent = 'Sin conexión. Verifica tu internet.';
   }
 }
 
