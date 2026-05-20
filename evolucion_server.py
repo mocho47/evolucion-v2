@@ -1128,7 +1128,7 @@ async def registrar_familia(req: RegistrarFamilia):
     fid = str(uuid.uuid4())[:8]
     codigo = req.codigo_acceso or str(uuid.uuid4())[:6].upper()
     async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute("INSERT INTO familias VALUES (?,?,?,?)", (fid, req.nombre, codigo, time.time()))
+        await db.execute("INSERT INTO familias (id, nombre, codigo_acceso, creado) VALUES (?,?,?,?)", (fid, req.nombre, codigo, time.time()))
         await db.commit()
     return {"ok": True, "familia_id": fid, "codigo_acceso": codigo}
 
