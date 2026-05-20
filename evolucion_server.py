@@ -56,7 +56,7 @@ except (PermissionError, OSError):
     os.makedirs(os.path.dirname(os.path.abspath(DB_PATH)), exist_ok=True)
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 ZAI_API_KEY  = os.getenv("ZAI_API_KEY",  "")
-PORT         = int(os.getenv("PORT", "8080"))
+PORT         = int(os.getenv("PORT") or "10000")
 ADMIN_KEY    = os.getenv("ADMIN_KEY", hashlib.sha256(b"evolucion-admin-2026").hexdigest()[:20])
 APP_SECRET   = os.getenv("APP_SECRET", hashlib.sha256(b"evo-secret-2026").hexdigest())
 
