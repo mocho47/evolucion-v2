@@ -1747,12 +1747,14 @@ class RegistrarMaestro(BaseModel):
 async def registrar_maestro(req: RegistrarMaestro):
     mid = str(uuid.uuid4())[:8]
     async with aiosqlite.connect(DB_PATH) as db:
-        cur = await db.execute("SELECT id FROM escuelas WHERE id=?", (req.escuela_id,))
-        if not await cur.fetchone():
+        cur = await db.execute("SELECT id FROM escuelas WHERE id=? OR codigo=?", (req.escuela_id, req.escuela_id.upper()))
+        row = await cur.fetchone()
+        if not row:
             raise HTTPException(404, "Escuela no encontrada")
+        escuela_id_real = row[0]
         await db.execute(
             "INSERT INTO maestros (id, escuela_id, nombre, materia, grado, activo, creado) VALUES (?,?,?,?,?,1,?)",
-            (mid, req.escuela_id, req.nombre, req.materia, req.grado, time.time()))
+            (mid, escuela_id_real, req.nombre, req.materia, req.grado, time.time()))
         await db.commit()
     return {"ok": True, "maestro_id": mid, "nombre": req.nombre}
 
