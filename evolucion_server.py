@@ -56,7 +56,7 @@ except (PermissionError, OSError):
     os.makedirs(os.path.dirname(os.path.abspath(DB_PATH)), exist_ok=True)
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 ZAI_API_KEY  = os.getenv("ZAI_API_KEY",  "")
-PORT         = int(os.getenv("PORT") or "10000")
+PORT         = int(os.getenv("PORT", "10000"))
 ADMIN_KEY    = os.getenv("ADMIN_KEY", hashlib.sha256(b"evolucion-admin-2026").hexdigest()[:20])
 APP_SECRET   = os.getenv("APP_SECRET", hashlib.sha256(b"evo-secret-2026").hexdigest())
 
@@ -133,6 +133,10 @@ def _rate_check(key: str, limit: int, window: int = 60) -> bool:
         return False
     _rate_store[key].append(now)
     return True
+
+# ── PIN helper ───────────────────────────────────────────────────────────────
+def _hash_pin(pin: str) -> str:
+    return hashlib.sha256(pin.encode()).hexdigest()
 
 # ── Admin auth ─────────────────────────────────────────────────────────────
 def _verify_admin(request: Request):
@@ -553,7 +557,7 @@ PROMPT_MAESTRO_BIENESTAR = """<role>Eres EVOLUCIÓN en modo bienestar docente.</
 Estado reportado: {estado}
 Historial de la sesión: {historial_txt}
 
-Primera vez que abre este espacio: "Este es tu espacio. ¿Qué te está pesando hoy?"</p>"""
+Primera vez que abre este espacio: "Este es tu espacio. ¿Qué te está pesando hoy?"""
 
 PROMPT_PADRE = """Eres el aliado de {nombre} en la crianza de {teen}.
 
@@ -993,11 +997,6 @@ async def arranque_escolar():
     with open(os.path.join(os.path.dirname(__file__), "arranque_escolar.html"), encoding="utf-8") as f:
         return f.read()
 
-@app.get("/privacidad", response_class=HTMLResponse)
-async def privacidad():
-    with open(os.path.join(os.path.dirname(__file__), "privacidad.html"), encoding="utf-8") as f:
-        return f.read()
-
 @app.get("/precios", response_class=HTMLResponse)
 async def precios():
     with open(os.path.join(os.path.dirname(__file__), "precios.html"), encoding="utf-8") as f:
@@ -1149,7 +1148,7 @@ async def buscar_familia(codigo: str, request: Request):
 @app.post("/api/miembros")
 async def registrar_miembro(req: RegistrarMiembro):
     mid = str(uuid.uuid4())[:8]
-    pin_hash = hashlib.sha256(req.pin.encode()).hexdigest() if req.pin else None
+    pin_hash = _hash_pin(req.pin) if req.pin else None
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute(
             "INSERT INTO miembros VALUES (?,?,?,?,?,?,0,'{}',1,?)",
@@ -1438,7 +1437,7 @@ async def aprobar_mision(mid: str, req: AprobarMision):
         if not row: raise HTTPException(404, "No encontrada")
         m = dict(row)
         if m["estado"] != "completada": raise HTTPException(400, "No completada aún")
-        pin_hash = hashlib.sha256(req.pin_padre.encode()).hexdigest()
+        pin_hash = _hash_pin(req.pin_padre)
         cur2 = await db.execute(
             "SELECT id FROM miembros WHERE familia_id=? AND rol IN ('padre','madre') AND pin_hash=?",
             (req.familia_id, pin_hash))
@@ -1751,7 +1750,8 @@ async def registrar_maestro(req: RegistrarMaestro):
         cur = await db.execute("SELECT id FROM escuelas WHERE id=?", (req.escuela_id,))
         if not await cur.fetchone():
             raise HTTPException(404, "Escuela no encontrada")
-        await db.execute("INSERT INTO maestros VALUES (?,?,?,?,?,1,?)",
+        await db.execute(
+            "INSERT INTO maestros (id, escuela_id, nombre, materia, grado, activo, creado) VALUES (?,?,?,?,?,1,?)",
             (mid, req.escuela_id, req.nombre, req.materia, req.grado, time.time()))
         await db.commit()
     return {"ok": True, "maestro_id": mid, "nombre": req.nombre}
@@ -2129,13 +2129,16 @@ async def sembrar_demo(request: Request):
         fid2 = "demo-fam-02"
         cur = await db.execute("SELECT id FROM familias WHERE id=?", (fid2,))
         if not await cur.fetchone():
-            await db.execute("INSERT OR IGNORE INTO familias VALUES (?,?,?,?)",
-                             (fid2, "Familia Hernández Demo", "DEMO02", now))
+            await db.execute(
+                "INSERT OR IGNORE INTO familias (id, nombre, codigo_acceso, creado) VALUES (?,?,?,?)",
+                (fid2, "Familia Hernández Demo", "DEMO02", now))
             pin2 = hashlib.sha256("5678".encode()).hexdigest()
-            await db.execute("INSERT OR IGNORE INTO miembros VALUES (?,?,?,?,?,?,0,'{}',1,?)",
-                             ("demo-p2", fid2, "Mamá Hernández", "padre", 42, pin2, now))
-            await db.execute("INSERT OR IGNORE INTO miembros VALUES (?,?,?,?,?,?,0,'{}',1,?)",
-                             ("demo-t2", fid2, "Sofía Hernández", "teen", 15, None, now))
+            await db.execute(
+                "INSERT OR IGNORE INTO miembros (id, familia_id, nombre, rol, edad, pin_hash, puntos_total, active_context, activo, creado) VALUES (?,?,?,?,?,?,0,'{}',1,?)",
+                ("demo-p2", fid2, "Mamá Hernández", "padre", 42, pin2, now))
+            await db.execute(
+                "INSERT OR IGNORE INTO miembros (id, familia_id, nombre, rol, edad, pin_hash, puntos_total, active_context, activo, creado) VALUES (?,?,?,?,?,?,0,'{}',1,?)",
+                ("demo-t2", fid2, "Sofía Hernández", "teen", 15, None, now))
 
         # Misiones para DEMO01
         misiones_demo = [
@@ -2146,14 +2149,14 @@ async def sembrar_demo(request: Request):
         for txt, estado, padre, teen in misiones_demo:
             mid = str(uuid.uuid4())[:8]
             await db.execute(
-                "INSERT OR IGNORE INTO misiones VALUES (?,?,?,?,?,?,?)",
-                (mid, "demo-fam-01", padre, teen, txt, estado, now - random.randint(0, 604800)))
+                "INSERT OR IGNORE INTO misiones (id, familia_id, titulo, descripcion, puntos, asignado_a, estado, evidencia_url, aprobado_por, creado, completado, aprobado) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                (mid, "demo-fam-01", txt, None, 10, teen, estado, None, padre, now - random.randint(0, 604800), None, None))
 
         # Mood logs para demo-teen-01 (últimos 7 días)
         for i in range(7):
             ts = now - (i * 86400)
             score = random.randint(2, 5)
-            await db.execute("INSERT INTO mood_log VALUES (?,?,?,?,?)",
+            await db.execute("INSERT INTO mood_history (id, miembro_id, score, nota, creado) VALUES (?,?,?,?,?)",
                              (str(uuid.uuid4())[:8], "demo-teen-01", score, None, ts))
 
         # Acuerdos
@@ -2163,22 +2166,24 @@ async def sembrar_demo(request: Request):
         ]
         for txt, estado in acuerdos_demo:
             aid = str(uuid.uuid4())[:8]
-            await db.execute("INSERT OR IGNORE INTO acuerdos VALUES (?,?,?,?,?)",
-                             (aid, "demo-fam-01", txt, estado, now - 86400))
+            await db.execute(
+                "INSERT OR IGNORE INTO acuerdos (id, familia_id, teen_id, descripcion, condicion, recompensa, propuesto_por, estado, creado, cumplido) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                (aid, "demo-fam-01", "demo-teen-01", txt, None, None, "padre", estado, now - 86400, None))
 
         # Alerta de riesgo demo
-        await db.execute("INSERT OR IGNORE INTO alertas VALUES (?,?,?,?,?,?,?)",
-                         (str(uuid.uuid4())[:8], "demo-fam-01", "demo-teen-01",
-                          "riesgo_medio", "Patrón de bajo bienestar detectado esta semana",
-                          0, now - 3600))
+        await db.execute(
+            "INSERT OR IGNORE INTO alertas (id, familia_id, teen_id, tipo, resumen, sugerencia, visto, creado) VALUES (?,?,?,?,?,?,?,?)",
+            (str(uuid.uuid4())[:8], "demo-fam-01", "demo-teen-01",
+             "riesgo_medio", "Patrón de bajo bienestar detectado esta semana",
+             SUGERENCIAS_PADRES.get("riesgo_medio", ""), 0, now - 3600))
 
         # Escuela demo
         cur2 = await db.execute("SELECT id FROM escuelas WHERE id=?", ("escuela-demo-01",))
         if not await cur2.fetchone():
             await db.execute(
-                "INSERT OR IGNORE INTO escuelas VALUES (?,?,?,?,?,1,?)",
-                ("escuela-demo-01", "Prepa Lázaro Cárdenas Demo", "ESCUELA01",
-                 "Tlaquepaque, Jalisco", "Dr. Roberto Pérez", now))
+                "INSERT OR IGNORE INTO escuelas (id, nombre, tipo, codigo, carisma, activo, creado) VALUES (?,?,?,?,?,1,?)",
+                ("escuela-demo-01", "Prepa Lázaro Cárdenas Demo", "laico",
+                 "ESCUELA01", "Dr. Roberto Pérez — Tlaquepaque, Jalisco", now))
             await db.execute(
                 "INSERT OR IGNORE INTO escuela_familias VALUES (?,?)",
                 ("escuela-demo-01", "demo-fam-01"))
@@ -2187,8 +2192,8 @@ async def sembrar_demo(request: Request):
         cur3 = await db.execute("SELECT id FROM maestros WHERE id=?", ("maestro-demo-01",))
         if not await cur3.fetchone():
             await db.execute(
-                "INSERT OR IGNORE INTO maestros VALUES (?,?,?,?,?)",
-                ("maestro-demo-01", "escuela-demo-01", "Prof. Ana García", "Matemáticas", now))
+                "INSERT OR IGNORE INTO maestros (id, escuela_id, nombre, materia, grado, activo, creado) VALUES (?,?,?,?,?,1,?)",
+                ("maestro-demo-01", "escuela-demo-01", "Prof. Ana García", "Matemáticas", "", now))
         for i in range(5):
             ts = now - (i * 86400)
             score = random.choice([2, 2, 3, 2, 1])
@@ -2210,12 +2215,6 @@ async def panel_escolar():
 @app.get("/nosotros", response_class=HTMLResponse)
 async def pagina_nosotros():
     p = os.path.join(os.path.dirname(__file__), "nosotros.html")
-    with open(p, encoding="utf-8") as f:
-        return f.read()
-
-@app.get("/privacidad", response_class=HTMLResponse)
-async def pagina_privacidad():
-    p = os.path.join(os.path.dirname(__file__), "privacidad.html")
     with open(p, encoding="utf-8") as f:
         return f.read()
 
@@ -2265,7 +2264,6 @@ async def get_streak(mid: str):
         racha += 1
         dia -= datetime.timedelta(days=1)
     # calcular max racha histórica
-    sorted_dias = sorted(dias_con_actividad, reverse=True)
     max_racha, cur_r = 0, 0
     prev = None
     for d in sorted(dias_con_actividad):
@@ -2980,11 +2978,35 @@ Ejemplo: si piden "envía reportes", responde ejecutando la acción."""
             accion_data = json.loads(respuesta_ia[s:e])
             accion = accion_data.get("accion", "ninguna")
             if accion == "/api/admin/reporte-masivo":
-                result = await admin_reporte_masivo()
-                accion_ejecutada = f"Reportes enviados: {result['enviados']}/{result['total']} familias"
+                # Inline broadcast logic (avoids passing dummy Request)
+                async with aiosqlite.connect(DB_PATH) as _db:
+                    _cur = await _db.execute("SELECT id, telefono_padre FROM familias WHERE telefono_padre IS NOT NULL AND telefono_padre != ''")
+                    _familias = [(r[0], r[1]) for r in await _cur.fetchall()]
+                _rm_enviados = 0
+                for _fid, _tel in _familias:
+                    try:
+                        from evolucion_reporte import enviar_reporte_whatsapp
+                        ok = await enviar_reporte_whatsapp(_tel, _fid, DB_PATH)
+                        if ok: _rm_enviados += 1
+                        await asyncio.sleep(2)
+                    except Exception: pass
+                accion_ejecutada = f"Reportes enviados: {_rm_enviados}/{len(_familias)} familias"
             elif accion == "/api/admin/pregunta-dia-masiva":
-                result = await admin_pregunta_masiva()
-                accion_ejecutada = f"Pregunta enviada: {result['enviados']} familias"
+                # Inline pregunta masiva logic
+                import datetime as _dt
+                _dia = _dt.date.today().toordinal()
+                _pregunta = PREGUNTAS_DIA[_dia % len(PREGUNTAS_DIA)]
+                async with aiosqlite.connect(DB_PATH) as _db:
+                    _cur = await _db.execute("SELECT id FROM familias WHERE telefono_padre IS NOT NULL AND telefono_padre != ''")
+                    _fids = [r[0] for r in await _cur.fetchall()]
+                _pm_enviados = 0
+                for _fid in _fids:
+                    try:
+                        r = await enviar_pregunta_dia(_fid)
+                        if r.get("ok"): _pm_enviados += 1
+                        await asyncio.sleep(1)
+                    except Exception: pass
+                accion_ejecutada = f"Pregunta enviada: {_pm_enviados} familias"
             elif accion == "/api/admin/broadcast-whatsapp":
                 params = accion_data.get("params", {})
                 if params.get("mensaje"):

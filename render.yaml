@@ -5,10 +5,8 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: python evolucion_server.py
     envVars:
-      - key: PORT
-        value: 8080
       - key: EVO_DB
-        value: /var/data/evolucion.db
+        value: /data/evolucion.db
       - key: ADMIN_KEY
         generateValue: true
       - key: APP_SECRET
