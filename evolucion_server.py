@@ -993,6 +993,16 @@ async def arranque_escolar():
     with open(os.path.join(os.path.dirname(__file__), "arranque_escolar.html"), encoding="utf-8") as f:
         return f.read()
 
+@app.get("/privacidad", response_class=HTMLResponse)
+async def privacidad():
+    with open(os.path.join(os.path.dirname(__file__), "privacidad.html"), encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/precios", response_class=HTMLResponse)
+async def precios():
+    with open(os.path.join(os.path.dirname(__file__), "precios.html"), encoding="utf-8") as f:
+        return f.read()
+
 @app.get("/manifest.json")
 async def manifest():
     return {

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planes y Precios — Evolucion</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:#030308;color:#e2e8f0;min-height:100vh;padding:3rem 1rem;}
+.wrap{max-width:960px;margin:0 auto;}
+.header{text-align:center;margin-bottom:3rem;}
+.logo{display:inline-flex;align-items:center;gap:.6rem;margin-bottom:1.5rem;}
+.logo-ico{width:32px;height:32px;background:#00e5a0;border-radius:7px;
+  font-size:.9rem;font-weight:900;color:#030308;display:flex;align-items:center;justify-content:center;}
+.logo-txt{font-size:1rem;font-weight:700;color:#fff;}
+h1{font-size:2rem;font-weight:900;color:#fff;margin-bottom:.75rem;}
+.sub{font-size:1rem;color:#64748b;max-width:500px;margin:0 auto;}
+.badge-piloto{display:inline-block;background:#00e5a020;border:1px solid #00e5a060;
+  color:#00e5a0;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:.3rem .9rem;border-radius:20px;margin-bottom:1rem;}
+
+/* planes */
+.planes{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-bottom:3rem;}
+.plan{background:#0d1829;border:1.5px solid #1e3a5f;border-radius:14px;padding:2rem 1.5rem;
+  position:relative;transition:border-color .2s;}
+.plan.destacado{border-color:#00e5a0;box-shadow:0 0 30px #00e5a015;}
+.plan-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+  background:#00e5a0;color:#030308;font-size:.68rem;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase;padding:.25rem .85rem;border-radius:20px;
+  white-space:nowrap;}
+.plan-nombre{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+  color:#64748b;margin-bottom:.5rem;}
+.plan-precio{font-size:2.4rem;font-weight:900;color:#fff;line-height:1;margin-bottom:.25rem;}
+.plan-precio span{font-size:.9rem;font-weight:400;color:#64748b;}
+.plan-desc{font-size:.8rem;color:#64748b;margin-bottom:1.5rem;line-height:1.5;}
+.plan-sep{border:none;border-top:1px solid #1e3a5f;margin:1.25rem 0;}
+.plan-feat{list-style:none;padding:0;}
+.plan-feat li{font-size:.82rem;color:#94a3b8;padding:.35rem 0;
+  display:flex;align-items:flex-start;gap:.6rem;line-height:1.4;}
+.plan-feat li::before{content:"✓";color:#00e5a0;font-weight:700;flex-shrink:0;margin-top:.05rem;}
+.plan-feat li.no{color:#475569;}
+.plan-feat li.no::before{content:"—";color:#334155;}
+.plan-cta{display:block;width:100%;margin-top:1.5rem;padding:.75rem;
+  border-radius:8px;font-size:.88rem;font-weight:700;text-align:center;
+  border:none;cursor:pointer;text-decoration:none;}
+.cta-ghost{background:transparent;border:1.5px solid #1e3a5f;color:#64748b;}
+.cta-primary{background:#00e5a0;color:#030308;}
+.cta-outline{background:transparent;border:1.5px solid #00e5a0;color:#00e5a0;}
+
+/* tabla comparativa */
+.tabla-wrap{margin-bottom:3rem;}
+.tabla-wrap h2{font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:1rem;text-align:center;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase;
+  letter-spacing:.05em;padding:.75rem 1rem;text-align:left;border-bottom:1px solid #1e3a5f;}
+th:not(:first-child){text-align:center;}
+td{font-size:.84rem;color:#94a3b8;padding:.7rem 1rem;border-bottom:1px solid #0d1829;}
+td:not(:first-child){text-align:center;}
+tr:last-child td{border-bottom:none;}
+.chk{color:#00e5a0;font-weight:700;}
+.x{color:#334155;}
+.td-cat{color:#e2e8f0;font-weight:600;}
+
+/* FAQ */
+.faq{margin-bottom:3rem;}
+.faq h2{font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:1.25rem;text-align:center;}
+.faq-item{background:#0d1829;border:1px solid #1e3a5f;border-radius:10px;
+  padding:1.25rem 1.5rem;margin-bottom:.75rem;}
+.faq-item h3{font-size:.88rem;font-weight:700;color:#e2e8f0;margin-bottom:.5rem;}
+.faq-item p{font-size:.82rem;color:#64748b;line-height:1.7;}
+
+/* contacto */
+.contacto{background:#0d1829;border:1.5px solid #00e5a040;border-radius:14px;
+  padding:2rem;text-align:center;}
+.contacto h2{font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:.5rem;}
+.contacto p{font-size:.88rem;color:#64748b;margin-bottom:1.25rem;}
+.contacto a{display:inline-block;background:#00e5a0;color:#030308;font-weight:700;
+  font-size:.9rem;padding:.7rem 1.75rem;border-radius:8px;text-decoration:none;}
+
+@media(max-width:700px){
+  .planes{grid-template-columns:1fr;}
+  table th:nth-child(2),table td:nth-child(2){display:none;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="logo">
+      <div class="logo-ico">E</div>
+      <span class="logo-txt">Evolucion by SIMPLEX</span>
+    </div>
+    <div class="badge-piloto">Piloto escolar 2026</div>
+    <h1>Planes y Precios</h1>
+    <p class="sub">Transparente desde el inicio. Las escuelas que participan en el piloto entran gratis y sin compromiso.</p>
+  </div>
+
+  <!-- PLANES -->
+  <div class="planes">
+
+    <div class="plan">
+      <div class="plan-nombre">Piloto</div>
+      <div class="plan-precio">$0 <span>/ 3 meses</span></div>
+      <div class="plan-desc">Para escuelas que quieren probar sin riesgo. Sin tarjeta, sin contrato.</div>
+      <hr class="plan-sep">
+      <ul class="plan-feat">
+        <li>Hasta 3 grupos (90 alumnos)</li>
+        <li>Panel del maestro completo</li>
+        <li>Semaforo familiar</li>
+        <li>Comunicados y acceso a padres</li>
+        <li>Soporte por WhatsApp</li>
+        <li class="no">Reporte PDF mensual</li>
+        <li class="no">Integracion con plataforma SEP</li>
+        <li class="no">Multi-plantel</li>
+      </ul>
+      <a href="mailto:contacto@evolucionapp.mx?subject=Quiero el piloto" class="plan-cta cta-ghost">Solicitar piloto</a>
+    </div>
+
+    <div class="plan destacado">
+      <div class="plan-badge">Mas popular</div>
+      <div class="plan-nombre">Escuela</div>
+      <div class="plan-precio">$1,500 <span>MXN / mes</span></div>
+      <div class="plan-desc">Un plantel completo. Hasta 15 grupos, todos los maestros, todos los padres.</div>
+      <hr class="plan-sep">
+      <ul class="plan-feat">
+        <li>Hasta 15 grupos (450 alumnos)</li>
+        <li>Panel del maestro completo</li>
+        <li>Semaforo familiar para todos</li>
+        <li>WhatsApp automatico 7am</li>
+        <li>Reporte PDF mensual por grupo</li>
+        <li>Soporte prioritario</li>
+        <li class="no">Integracion con plataforma SEP</li>
+        <li class="no">Multi-plantel</li>
+      </ul>
+      <a href="mailto:contacto@evolucionapp.mx?subject=Plan Escuela" class="plan-cta cta-primary">Contratar ahora</a>
+    </div>
+
+    <div class="plan">
+      <div class="plan-nombre">Zona / SEP</div>
+      <div class="plan-precio">A conv. <span></span></div>
+      <div class="plan-desc">Para zonas escolares, supervisiones o jefaturas de sector. Precio por volumen.</div>
+      <hr class="plan-sep">
+      <ul class="plan-feat">
+        <li>Planteles ilimitados</li>
+        <li>Dashboard por zona</li>
+        <li>Reportes agregados por supervisor</li>
+        <li>Reporte PDF mensual</li>
+        <li>Integracion con plataforma SEP</li>
+        <li>Multi-plantel centralizado</li>
+        <li>Capacitacion presencial</li>
+        <li>SLA de disponibilidad</li>
+      </ul>
+      <a href="mailto:contacto@evolucionapp.mx?subject=Plan Zona SEP" class="plan-cta cta-outline">Hablar con nosotros</a>
+    </div>
+
+  </div>
+
+  <!-- TABLA COMPARATIVA -->
+  <div class="tabla-wrap">
+    <h2>Comparativa detallada</h2>
+    <table>
+      <tr>
+        <th>Funcion</th>
+        <th>Piloto</th>
+        <th>Escuela</th>
+        <th>Zona / SEP</th>
+      </tr>
+      <tr><td class="td-cat">Grupos incluidos</td><td>Hasta 3</td><td>Hasta 15</td><td>Ilimitados</td></tr>
+      <tr><td class="td-cat">Chat IA para teens</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk">✓</td></tr>
+      <tr><td class="td-cat">Semaforo familiar</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk">✓</td></tr>
+      <tr><td class="td-cat">Panel del maestro</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk">✓</td></tr>
+      <tr><td class="td-cat">Heatmap de clase</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk">✓</td></tr>
+      <tr><td class="td-cat">Protocolo de intervencion IA</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk">✓</td></tr>
+      <tr><td class="td-cat">Pregunta del dia WhatsApp 7am</td><td class="x">—</td><td class="chk">✓</td><td class="chk">✓</td></tr>
+      <tr><td class="td-cat">Reporte PDF mensual</td><td class="x">—</td><td class="chk">✓</td><td class="chk">✓</td></tr>
+      <tr><td class="td-cat">Dashboard multi-plantel</td><td class="x">—</td><td class="x">—</td><td class="chk">✓</td></tr>
+      <tr><td class="td-cat">Integracion SEP</td><td class="x">—</td><td class="x">—</td><td class="chk">✓</td></tr>
+      <tr><td class="td-cat">Capacitacion presencial</td><td class="x">—</td><td class="x">—</td><td class="chk">✓</td></tr>
+      <tr><td class="td-cat">SLA garantizado</td><td class="x">—</td><td class="x">—</td><td class="chk">✓</td></tr>
+    </table>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq">
+    <h2>Preguntas frecuentes</h2>
+
+    <div class="faq-item">
+      <h3>?Por que el piloto es gratis?</h3>
+      <p>Porque necesitamos datos reales para mejorar la plataforma. A cambio de 3 meses de acceso total sin costo, pedimos retroalimentacion mensual del maestro y permiso de usar estadisticas anonimas para mejorar el sistema.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>?Que pasa al terminar el piloto?</h3>
+      <p>La escuela decide si continua con el plan Escuela ($1,500 MXN/mes) o no. No hay contrato ni penalizacion. Los datos de los alumnos se eliminan si la escuela no continua.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>?Quien paga? ?La escuela o la SEP?</h3>
+      <p>Durante el piloto, nadie. Despues, puede ser la direccion del plantel con presupuesto operativo, la asociacion de padres o, en el caso de zonas, la jefatura de sector. Emitimos factura CFDI.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>?Hay costo por alumno?</h3>
+      <p>No. El precio es fijo por plantel, no por alumno. Asi la escuela no tiene incentivo de limitar el acceso a los estudiantes que mas lo necesitan.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>?Pueden los padres pagar directamente?</h3>
+      <p>En el futuro contemplamos un plan familiar opcional ($99 MXN/mes) con funciones premium para el padre. Durante el piloto, todo es gratuito para las familias sin excepcion.</p>
+    </div>
+
+  </div>
+
+  <!-- CONTACTO -->
+  <div class="contacto">
+    <h2>?Lista para el piloto?</h2>
+    <p>Escribenos y coordinamos la presentacion con el director en menos de 48 horas.</p>
+    <a href="mailto:contacto@evolucionapp.mx?subject=Quiero el piloto de Evolucion">Solicitar piloto gratuito</a>
+  </div>
+
+</div>
+</body>
+</html>
