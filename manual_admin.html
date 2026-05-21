@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Manual Admin — Evolución</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#030308;--surface:#0c0c18;--surface2:#14142a;--border:#1e1e3a;
+  --red:#ff4060;--accent:#00e5a0;--blue:#0080ff;--text:#eeeef8;--muted:#6a6a8a;--r:14px;}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;
+  padding:1.25rem;max-width:500px;margin:0 auto;}
+.logo{font-size:1.5rem;font-weight:900;padding:1.5rem 0 .25rem;}
+.logo span{color:var(--red);}
+.tag{display:inline-block;background:rgba(255,64,96,.12);color:var(--red);
+  border:1px solid rgba(255,64,96,.3);border-radius:99px;padding:.2rem .75rem;
+  font-size:.72rem;font-weight:700;letter-spacing:.05em;margin-bottom:1.5rem;}
+h2{font-size:.95rem;font-weight:800;color:var(--accent);margin:1.5rem 0 .75rem;
+  display:flex;align-items:center;gap:.5rem;}
+h2::before{content:'';display:block;width:3px;height:1rem;background:var(--accent);border-radius:2px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:1.1rem;margin-bottom:.75rem;}
+.step{display:flex;gap:.75rem;align-items:flex-start;margin-bottom:.85rem;}
+.step:last-child{margin-bottom:0;}
+.num{background:var(--red);color:#fff;border-radius:50%;width:1.5rem;height:1.5rem;
+  display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;
+  flex-shrink:0;margin-top:.1rem;}
+.step p{font-size:.85rem;line-height:1.6;}
+.step p strong{color:var(--accent);}
+.link-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:.7rem 1rem;font-family:monospace;font-size:.82rem;color:var(--blue);
+  margin:.5rem 0;word-break:break-all;}
+.cred{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1rem;margin:.5rem 0;}
+.cred .row{display:flex;justify-content:space-between;align-items:center;
+  padding:.3rem 0;border-bottom:1px solid var(--border);font-size:.83rem;}
+.cred .row:last-child{border-bottom:none;}
+.cred .label{color:var(--muted);}
+.cred .val{font-family:monospace;font-weight:700;color:var(--accent);}
+.endpoint{background:var(--surface2);border-left:3px solid var(--blue);border-radius:0 8px 8px 0;
+  padding:.5rem .85rem;font-family:monospace;font-size:.78rem;color:var(--blue);margin:.3rem 0;}
+.endpoint .method{color:var(--accent);margin-right:.4rem;}
+.warn{background:rgba(255,64,96,.07);border:1px solid rgba(255,64,96,.25);
+  border-radius:10px;padding:.75rem 1rem;font-size:.82rem;line-height:1.6;margin-top:.5rem;}
+.warn strong{color:var(--red);}
+footer{font-size:.72rem;color:var(--muted);text-align:center;padding:1.5rem 0 2rem;}
+</style>
+</head>
+<body>
+
+<div class="logo">EVO<span>LUCIÓN</span></div>
+<div class="tag">PANEL ADMINISTRADOR</div>
+
+<h2>Acceso al panel escolar</h2>
+<div class="link-box">evolucion-v2.onrender.com/escuela</div>
+<div class="card">
+  <div class="step">
+    <div class="num">1</div>
+    <p>Entra al panel escolar con tu <strong>código de escuela</strong> y la <strong>clave admin</strong>.</p>
+  </div>
+  <div class="step">
+    <div class="num">2</div>
+    <p>Desde ahí puedes agregar maestros, ver el listado de familias y revisar estadísticas generales.</p>
+  </div>
+</div>
+
+<h2>Credenciales del piloto</h2>
+<div class="cred">
+  <div class="row"><span class="label">Código escuela</span><span class="val">C8FD7372</span></div>
+  <div class="row"><span class="label">Panel escolar</span><span class="val">/escuela</span></div>
+  <div class="row"><span class="label">Panel maestro</span><span class="val">/maestro</span></div>
+  <div class="row"><span class="label">App alumnos/padres</span><span class="val">/app</span></div>
+  <div class="row"><span class="label">Roster completo</span><span class="val">/roster?clave=…</span></div>
+</div>
+
+<h2>Cómo agregar un maestro</h2>
+<div class="card">
+  <div class="step">
+    <div class="num">1</div>
+    <p>En el panel escolar, sección <strong>"Maestros"</strong>, clic en <strong>"+ Agregar"</strong>.</p>
+  </div>
+  <div class="step">
+    <div class="num">2</div>
+    <p>O bien, da al maestro el <strong>código C8FD7372</strong> para que se registre solo en <strong>/maestro</strong>.</p>
+  </div>
+</div>
+
+<h2>Endpoints clave (API)</h2>
+<div class="card">
+  <div class="endpoint"><span class="method">GET</span>/api/escuela/dfeaaf84/heatmap</div>
+  <div class="endpoint"><span class="method">GET</span>/api/escuela/dfeaaf84/reporte-semana</div>
+  <div class="endpoint"><span class="method">POST</span>/api/admin/seed-piloto</div>
+  <div class="endpoint"><span class="method">GET</span>/roster?escuela_id=dfeaaf84&amp;clave=ADMIN_KEY</div>
+  <div class="endpoint"><span class="method">POST</span>/api/admin/sembrar-demo</div>
+</div>
+
+<h2>Duración del piloto</h2>
+<div class="card">
+  <p style="font-size:.85rem;line-height:1.65;"><strong>1 mes gratuito</strong> para el salón completo. Al finalizar, presentas resultados a dirección. Si hay interés, pasamos a <strong>plan Escuela ($1,500 MXN/mes)</strong> que cubre hasta 15 grupos.</p>
+</div>
+
+<div class="warn">
+  <strong>Confidencialidad:</strong> El roster con los 40 códigos de familia es información sensible. Compártelo únicamente al maestro a cargo, no por grupos abiertos.
+</div>
+
+<footer>Evolución · by Simplex · evolucion-v2.onrender.com<br>Soporte: milanmontellanoanuar@gmail.com</footer>
+</body>
+</html>

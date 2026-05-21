@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Manual Padre — Evolución</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#030308;--surface:#0c0c18;--surface2:#14142a;--border:#1e1e3a;
+  --blue:#0080ff;--accent:#00e5a0;--gold:#ffab00;--text:#eeeef8;--muted:#6a6a8a;--r:14px;}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;
+  padding:1.25rem;max-width:500px;margin:0 auto;}
+.logo{font-size:1.5rem;font-weight:900;padding:1.5rem 0 .25rem;}
+.logo span{color:var(--gold);}
+.tag{display:inline-block;background:rgba(255,171,0,.12);color:var(--gold);
+  border:1px solid rgba(255,171,0,.3);border-radius:99px;padding:.2rem .75rem;
+  font-size:.72rem;font-weight:700;letter-spacing:.05em;margin-bottom:1.5rem;}
+h2{font-size:.95rem;font-weight:800;color:var(--accent);margin:1.5rem 0 .75rem;
+  display:flex;align-items:center;gap:.5rem;}
+h2::before{content:'';display:block;width:3px;height:1rem;background:var(--accent);border-radius:2px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:1.1rem;margin-bottom:.75rem;}
+.step{display:flex;gap:.75rem;align-items:flex-start;margin-bottom:.85rem;}
+.step:last-child{margin-bottom:0;}
+.num{background:var(--gold);color:#111;border-radius:50%;width:1.5rem;height:1.5rem;
+  display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;
+  flex-shrink:0;margin-top:.1rem;}
+.step p{font-size:.85rem;line-height:1.6;color:var(--text);}
+.step p strong{color:var(--accent);}
+.link-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:.7rem 1rem;font-family:monospace;font-size:.85rem;color:var(--blue);
+  margin:.5rem 0;word-break:break-all;}
+.feature{display:flex;gap:.75rem;padding:.6rem 0;border-bottom:1px solid var(--border);}
+.feature:last-child{border-bottom:none;}
+.icon{font-size:1.2rem;flex-shrink:0;}
+.feature-text{font-size:.83rem;line-height:1.55;}
+.feature-text strong{display:block;font-weight:700;color:var(--text);}
+.feature-text span{color:var(--muted);}
+.code-box{background:var(--surface2);border:2px solid var(--gold);border-radius:12px;
+  padding:1rem;text-align:center;margin:.5rem 0;}
+.code-box .label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+.code-box .code{font-size:1.8rem;font-weight:900;font-family:monospace;color:var(--gold);letter-spacing:.15em;}
+.code-box .pin{font-size:.82rem;color:var(--muted);margin-top:.25rem;}
+.tip{background:rgba(0,229,160,.07);border:1px solid rgba(0,229,160,.2);border-radius:10px;
+  padding:.75rem 1rem;font-size:.82rem;line-height:1.6;margin-top:.5rem;}
+.tip strong{color:var(--accent);}
+.wa-btn{display:block;background:#25d366;color:#fff;text-decoration:none;
+  padding:1rem;border-radius:var(--r);text-align:center;font-weight:700;
+  font-size:.95rem;margin:1.5rem 0 .5rem;}
+footer{font-size:.72rem;color:var(--muted);text-align:center;padding:1.5rem 0 2rem;}
+</style>
+</head>
+<body>
+
+<div class="logo">EVO<span>LUCIÓN</span></div>
+<div class="tag">MANUAL PARA PADRES</div>
+
+<h2>Cómo crear tu cuenta</h2>
+<div class="card">
+  <div class="step">
+    <div class="num">1</div>
+    <p>Abre en tu celular:<br>
+    <strong>evolucion-v2.onrender.com/app</strong></p>
+  </div>
+  <div class="step">
+    <div class="num">2</div>
+    <p>Toca <strong>"Soy papá o mamá"</strong> y luego <strong>"Crear familia"</strong>.</p>
+  </div>
+  <div class="step">
+    <div class="num">3</div>
+    <p>Escribe el nombre de tu familia, crea un <strong>PIN de 4 dígitos</strong> y guarda el <strong>código que aparece</strong>.</p>
+  </div>
+  <div class="step">
+    <div class="num">4</div>
+    <p>Comparte ese código con tu hijo/a para que él/ella también pueda entrar.</p>
+  </div>
+</div>
+
+<div class="link-box">evolucion-v2.onrender.com/app</div>
+
+<h2>Si el maestro ya te dio un código</h2>
+<div class="card">
+  <div class="step">
+    <div class="num">1</div>
+    <p>Entra a la app → <strong>"Soy papá o mamá"</strong> → <strong>"Ya tengo código"</strong>.</p>
+  </div>
+  <div class="step">
+    <div class="num">2</div>
+    <p>Ingresa el <strong>código de familia</strong> de la lista del maestro y el PIN <strong>1234</strong>.</p>
+  </div>
+  <div class="step">
+    <div class="num">3</div>
+    <p>¡Listo! Ya tienes acceso al panel de tu familia.</p>
+  </div>
+</div>
+
+<h2>Qué puedes ver</h2>
+<div class="card">
+  <div class="feature">
+    <div class="icon">🚦</div>
+    <div class="feature-text">
+      <strong>Semáforo familiar</strong>
+      <span>Verde, amarillo o rojo: el estado emocional de tu hijo/a hoy.</span>
+    </div>
+  </div>
+  <div class="feature">
+    <div class="icon">📅</div>
+    <div class="feature-text">
+      <strong>Temas de la semana</strong>
+      <span>Qué está pensando o sintiendo tu hijo/a, sin revelar sus conversaciones privadas.</span>
+    </div>
+  </div>
+  <div class="feature">
+    <div class="icon">💬</div>
+    <div class="feature-text">
+      <strong>Pregunta del día</strong>
+      <span>Una pregunta diaria para conectar con tu hijo/a en casa.</span>
+    </div>
+  </div>
+  <div class="feature">
+    <div class="icon">🎯</div>
+    <div class="feature-text">
+      <strong>Misiones en familia</strong>
+      <span>Pequeños retos para fortalecer el vínculo. Tu hijo/a gana puntos al completarlas.</span>
+    </div>
+  </div>
+  <div class="feature">
+    <div class="icon">🆘</div>
+    <div class="feature-text">
+      <strong>Modo SOS</strong>
+      <span>Protocolo de 6 pasos si tu hijo/a está en crisis. IA te guía paso a paso.</span>
+    </div>
+  </div>
+</div>
+
+<div class="tip">
+  <strong>Tu hijo/a tiene privacidad total.</strong> Tú ves indicadores generales, no el contenido exacto de sus conversaciones. Eso es intencional — genera confianza.
+</div>
+
+<a class="wa-btn" href="https://wa.me/?text=Acabo%20de%20unirme%20a%20Evolución%2C%20la%20app%20de%20bienestar%20emocional%20para%20adolescentes%20%F0%9F%92%9A%20Si%20tienes%20hijos%20en%20secundaria%2C%20te%20la%20recomiendo.%20Entra%20en%3A%20evolucion-v2.onrender.com">
+  Recomendar a otro papá/mamá
+</a>
+
+<footer>Evolución · by Simplex · evolucion-v2.onrender.com<br>Dudas: milanmontellanoanuar@gmail.com</footer>
+</body>
+</html>

@@ -2207,6 +2207,152 @@ async def sembrar_demo(request: Request):
         await db.commit()
     return {"ok": True, "msg": "Escenario demo sembrado: DEMO01/1234, DEMO02/5678, escuela, misiones, mood, alertas, maestro con burnout"}
 
+# ── Seed piloto completo (1 salón, 40 alumnos) ────────────────────────────────
+_NOMBRES_PILOTO = [
+    ("Sofía","García"),("Valentina","Martínez"),("Camila","López"),
+    ("Isabella","González"),("Daniela","Rodríguez"),("Fernanda","Hernández"),
+    ("Mariana","Pérez"),("Andrea","Ramírez"),("Valeria","Torres"),("Natalia","Flores"),
+    ("Diego","Rivera"),("Santiago","Mendoza"),("Mateo","Sánchez"),
+    ("Sebastián","Castro"),("Nicolás","Reyes"),("Alejandro","Morales"),
+    ("Samuel","Jiménez"),("Emilio","Vargas"),("Leonardo","Rojas"),("Roberto","Cruz"),
+    ("Emma","Ortiz"),("Luna","Núñez"),("Paulina","Medina"),
+    ("Gabriela","Herrera"),("Ana","Ramos"),("Renata","Luna"),
+    ("Julia","Gutiérrez"),("Karla","Álvarez"),("Alicia","Vega"),("Lucía","Delgado"),
+    ("Carlos","Aguilar"),("Miguel","Suárez"),("Óscar","Ruiz"),
+    ("Ricardo","Díaz"),("Felipe","Moreno"),("Eduardo","Ponce"),
+    ("Antonio","Navarro"),("Jorge","Salinas"),("Iván","Ibarra"),("Javier","Chávez"),
+]
+
+@app.post("/api/admin/seed-piloto")
+async def seed_piloto(request: Request, escuela_id: str = "dfeaaf84", grado: str = "2° B Secundaria", maestro_id: str = ""):
+    _verify_admin(request)
+    import random, string
+    pin_hash = _hash_pin("1234")
+    now = time.time()
+    roster = []
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        # Verificar escuela existe
+        cur = await db.execute("SELECT id, nombre FROM escuelas WHERE id=? OR codigo=?", (escuela_id, escuela_id.upper()))
+        esc = await cur.fetchone()
+        if not esc:
+            raise HTTPException(404, "Escuela no encontrada")
+        esc_id = esc["id"]
+        esc_nombre = esc["nombre"]
+        for nom, ape in _NOMBRES_PILOTO:
+            nombre_teen = f"{nom} {ape}"
+            nombre_familia = f"Familia {ape}"
+            # Código único 6 chars
+            while True:
+                codigo = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+                cur2 = await db.execute("SELECT id FROM familias WHERE codigo_acceso=?", (codigo,))
+                if not await cur2.fetchone():
+                    break
+            fid = str(uuid.uuid4())[:8]
+            tid = str(uuid.uuid4())[:8]
+            pid = str(uuid.uuid4())[:8]
+            await db.execute(
+                "INSERT OR IGNORE INTO familias (id, nombre, codigo_acceso, creado) VALUES (?,?,?,?)",
+                (fid, nombre_familia, codigo, now))
+            await db.execute(
+                "INSERT OR IGNORE INTO miembros (id, familia_id, nombre, rol, edad, pin_hash, puntos_total, active_context, activo, creado) VALUES (?,?,?,?,?,?,0,'{}',1,?)",
+                (tid, fid, nombre_teen, "teen", 14, pin_hash, now))
+            await db.execute(
+                "INSERT OR IGNORE INTO miembros (id, familia_id, nombre, rol, edad, pin_hash, puntos_total, active_context, activo, creado) VALUES (?,?,?,?,?,?,0,'{}',1,?)",
+                (pid, fid, f"Papá/Mamá {ape}", "padre", 40, pin_hash, now))
+            await db.execute(
+                "INSERT OR IGNORE INTO escuela_familias VALUES (?,?)", (esc_id, fid))
+            roster.append({
+                "num": len(roster)+1,
+                "teen": nombre_teen,
+                "familia": nombre_familia,
+                "codigo": codigo,
+                "pin": "1234",
+                "teen_id": tid,
+                "padre_id": pid,
+            })
+        # Asociar maestro a escuela si se dio ID
+        if maestro_id:
+            await db.execute("UPDATE maestros SET escuela_id=?, grado=? WHERE id=?", (esc_id, grado, maestro_id))
+        await db.commit()
+    return {
+        "ok": True,
+        "escuela": esc_nombre,
+        "escuela_id": esc_id,
+        "grado": grado,
+        "total": len(roster),
+        "roster": roster,
+    }
+
+@app.get("/roster", response_class=HTMLResponse)
+async def roster_page(escuela_id: str = "dfeaaf84", clave: str = ""):
+    if clave != ADMIN_KEY:
+        raise HTTPException(403, "Acceso no autorizado — incluye ?clave=ADMIN_KEY")
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT id, nombre, codigo FROM escuelas WHERE id=? OR codigo=?", (escuela_id, escuela_id.upper()))
+        esc = await cur.fetchone()
+        if not esc:
+            raise HTTPException(404, "Escuela no encontrada")
+        cur2 = await db.execute("""
+            SELECT f.nombre as fam, f.codigo_acceso as codigo,
+                   m.nombre as teen, m.id as tid
+            FROM escuela_familias ef
+            JOIN familias f ON f.id = ef.familia_id
+            LEFT JOIN miembros m ON m.familia_id = f.id AND m.rol = 'teen'
+            WHERE ef.escuela_id = ?
+            ORDER BY m.nombre
+        """, (esc["id"],))
+        rows = await cur2.fetchall()
+    filas = ""
+    for i, r in enumerate(rows, 1):
+        filas += f"<tr><td>{i}</td><td>{r['teen'] or '—'}</td><td>{r['fam']}</td><td class='codigo'>{r['codigo']}</td><td class='codigo'>1234</td></tr>\n"
+    return f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Roster Piloto — {esc['nombre']}</title>
+<style>
+*{{box-sizing:border-box;margin:0;padding:0;}}
+body{{font-family:system-ui,sans-serif;background:#f5f5f5;color:#111;padding:1.5rem;}}
+h1{{font-size:1.2rem;font-weight:800;margin-bottom:.25rem;}}
+.sub{{color:#555;font-size:.85rem;margin-bottom:1.5rem;}}
+.badge{{display:inline-block;background:#00b87a;color:#fff;padding:.2rem .7rem;border-radius:99px;font-size:.75rem;font-weight:700;margin-bottom:1rem;}}
+table{{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);}}
+th{{background:#1a1a2e;color:#fff;padding:.65rem .75rem;font-size:.78rem;text-align:left;}}
+td{{padding:.6rem .75rem;font-size:.82rem;border-bottom:1px solid #eee;}}
+tr:last-child td{{border-bottom:none;}}
+tr:nth-child(even) td{{background:#fafafa;}}
+.codigo{{font-family:monospace;font-weight:700;font-size:.9rem;letter-spacing:.05em;color:#0052cc;}}
+.instrucciones{{background:#fff;border-radius:12px;padding:1.25rem;margin-top:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.08);}}
+.instrucciones h2{{font-size:.95rem;font-weight:700;margin-bottom:.75rem;color:#1a1a2e;}}
+.instrucciones p{{font-size:.82rem;color:#444;line-height:1.7;margin-bottom:.5rem;}}
+.link{{background:#e8f0fe;border-radius:8px;padding:.5rem .85rem;font-family:monospace;font-size:.85rem;color:#0052cc;margin:.25rem 0;display:block;}}
+@media print{{body{{background:#fff;padding:.5cm;}} .no-print{{display:none;}}}}
+</style>
+</head>
+<body>
+<div class="badge">PILOTO 1 MES</div>
+<h1>Evolución — {esc['nombre']}</h1>
+<p class="sub">Escuela ID: {esc['codigo']} · {len(rows)} alumnos registrados · PIN universal: <strong>1234</strong></p>
+<button class="no-print" onclick="window.print()" style="background:#1a1a2e;color:#fff;border:none;padding:.6rem 1.2rem;border-radius:8px;cursor:pointer;margin-bottom:1rem;font-size:.85rem;">Imprimir / Guardar PDF</button>
+<table>
+<thead><tr><th>#</th><th>Alumno</th><th>Familia</th><th>Código Acceso</th><th>PIN</th></tr></thead>
+<tbody>{filas}</tbody>
+</table>
+<div class="instrucciones">
+<h2>Instrucciones para distribución</h2>
+<p><strong>Para padres y alumnos:</strong> Entrar a la app en:</p>
+<span class="link">https://evolucion-v2.onrender.com/app</span>
+<p>Seleccionar su rol → ingresar el <strong>Código de Familia</strong> de la tabla → PIN <strong>1234</strong></p>
+<p style="margin-top:.75rem;"><strong>Para el panel de maestro:</strong></p>
+<span class="link">https://evolucion-v2.onrender.com/maestro</span>
+<p style="margin-top:.75rem;font-size:.75rem;color:#888;">Este roster es confidencial. Distribúyelo solo al personal autorizado.</p>
+</div>
+</body>
+</html>"""
+
 # ── Panel Escolar ──────────────────────────────────────────────────────────────
 @app.get("/escuela", response_class=HTMLResponse)
 async def panel_escolar():
@@ -2225,6 +2371,23 @@ async def pagina_terminos():
     p = os.path.join(os.path.dirname(__file__), "terminos.html")
     with open(p, encoding="utf-8") as f:
         return f.read()
+
+def _html_file(name: str):
+    p = os.path.join(os.path.dirname(__file__), name)
+    with open(p, encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/manual/maestro", response_class=HTMLResponse)
+async def manual_maestro(): return _html_file("manual_maestro.html")
+
+@app.get("/manual/padre", response_class=HTMLResponse)
+async def manual_padre(): return _html_file("manual_padre.html")
+
+@app.get("/manual/teen", response_class=HTMLResponse)
+async def manual_teen(): return _html_file("manual_teen.html")
+
+@app.get("/manual/admin", response_class=HTMLResponse)
+async def manual_admin(): return _html_file("manual_admin.html")
 
 # ── Diferenciadores ───────────────────────────────────────────────────────────
 
