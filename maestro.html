@@ -197,6 +197,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 #modal-reporte{position:fixed;inset:0;background:rgba(3,3,8,.88);z-index:900;
   display:none;align-items:center;justify-content:center;padding:1.25rem;}
 #modal-reporte.open{display:flex;}
+/* MODAL REGISTRO */
+#modal-registro{position:fixed;inset:0;background:rgba(3,3,8,.92);z-index:950;
+  display:none;align-items:flex-end;justify-content:center;padding:0;}
+#modal-registro.open{display:flex;}
+#modal-registro .reg-box{background:var(--surface);border:1px solid var(--border);
+  border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:1.5rem;
+  display:flex;flex-direction:column;gap:1rem;max-height:92vh;overflow-y:auto;
+  animation:slideUp .28s ease;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+#modal-registro h3{font-size:1rem;font-weight:800;color:var(--blue);}
+.reg-handle{width:36px;height:4px;background:var(--border);border-radius:99px;margin:0 auto -.25rem;}
 .modal-box{background:var(--surface2);border:1px solid var(--border);border-radius:20px;
   padding:1.5rem;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;position:relative;}
 .modal-box h3{font-size:1rem;font-weight:800;margin-bottom:1rem;color:var(--blue);}
@@ -218,31 +229,43 @@ html,body{height:100%;background:var(--bg);color:var(--text);
     <div class="err" id="l-err"></div>
     <button class="btn blue" onclick="acceder()">Entrar al panel</button>
   </div>
-  <div class="card" id="c-nuevo" style="margin-top:0;">
-    <h2>Primera vez</h2>
-    <p style="font-size:.82rem;color:var(--muted2);margin-top:-.25rem;line-height:1.5;">Pide a tu coordinador el código de escuela para registrarte.</p>
-    <div class="field"><label>Código de escuela</label>
-      <input id="n-eid" placeholder="Código de 8 caracteres" autocomplete="off" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
-    <div class="field"><label>Tu nombre</label>
-      <input id="n-nombre" placeholder="Prof. García" autocomplete="off"></div>
-    <div class="field"><label>Materia que impartes</label>
-      <input id="n-materia" placeholder="Ej: Matemáticas" autocomplete="off"></div>
-    <div class="field"><label>Grado / grupo</label>
-      <input id="n-grado" placeholder="Ej: 2° B Secundaria" autocomplete="off"></div>
-    <div class="err" id="n-err"></div>
-    <button class="btn ghost" onclick="registrar()">Registrarme</button>
-  </div>
-  <!-- Confirmación de registro: muestra el ID antes de entrar -->
-  <div class="card" id="c-confirmacion" style="margin-top:0;display:none;text-align:center;">
-    <div style="font-size:2rem;">✅</div>
-    <h2 style="color:var(--accent);">¡Registro exitoso!</h2>
-    <p style="font-size:.82rem;color:var(--muted2);line-height:1.5;">Guarda tu ID — lo necesitarás cada vez que entres al panel.</p>
-    <div style="background:var(--surface2);border:2px solid var(--accent);border-radius:12px;padding:1rem;margin:.25rem 0;">
-      <div style="font-size:.7rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">Tu ID de maestro</div>
-      <div id="c-id-display" style="font-size:1.6rem;font-weight:900;color:var(--accent);letter-spacing:.12em;font-family:monospace;"></div>
+  <button class="btn ghost" style="max-width:420px;margin-top:-.25rem;" onclick="abrirModalRegistro()">Primera vez — Registrarme</button>
+</div>
+
+<!-- MODAL REGISTRO -->
+<div id="modal-registro" onclick="if(event.target===this)cerrarModalRegistro()">
+  <div class="reg-box">
+    <div class="reg-handle"></div>
+    <!-- Vista: formulario -->
+    <div id="reg-form">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3>Registro de docente</h3>
+        <button style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:1.2rem;" onclick="cerrarModalRegistro()">✕</button>
+      </div>
+      <p style="font-size:.82rem;color:var(--muted2);margin-top:-.5rem;line-height:1.5;">Pide a tu coordinador el código de escuela.</p>
+      <div class="field"><label>Código de escuela</label>
+        <input id="n-eid" placeholder="Código de 8 caracteres" autocomplete="off" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
+      <div class="field"><label>Tu nombre completo</label>
+        <input id="n-nombre" placeholder="Prof. García" autocomplete="off"></div>
+      <div class="field"><label>Materia que impartes</label>
+        <input id="n-materia" placeholder="Ej: Matemáticas" autocomplete="off"></div>
+      <div class="field"><label>Grado / grupo</label>
+        <input id="n-grado" placeholder="Ej: 2° B Secundaria" autocomplete="off"></div>
+      <div class="err" id="n-err"></div>
+      <button class="btn blue" onclick="registrar()">Registrarme</button>
     </div>
-    <button class="btn ghost" onclick="copiarId()" style="margin-top:-.25rem;">Copiar ID</button>
-    <button class="btn blue" onclick="entrarDesdeConfirmacion()">Entrar al panel →</button>
+    <!-- Vista: confirmación con ID -->
+    <div id="reg-confirmacion" style="display:none;text-align:center;">
+      <div style="font-size:2.5rem;margin-bottom:.25rem;">✅</div>
+      <h3 style="color:var(--accent);justify-content:center;">¡Listo, estás registrado!</h3>
+      <p style="font-size:.82rem;color:var(--muted2);line-height:1.6;">Guarda este ID — es tu acceso permanente al panel.</p>
+      <div style="background:var(--surface);border:2px solid var(--accent);border-radius:14px;padding:1.25rem;margin:.25rem 0;">
+        <div style="font-size:.68rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;">Tu ID de maestro</div>
+        <div id="c-id-display" style="font-size:2rem;font-weight:900;color:var(--accent);letter-spacing:.18em;font-family:monospace;"></div>
+      </div>
+      <button class="btn ghost" onclick="copiarId()">📋 Copiar ID</button>
+      <button class="btn blue" onclick="entrarDesdeConfirmacion()">Entrar al panel →</button>
+    </div>
   </div>
 </div>
 
@@ -344,18 +367,29 @@ async function registrar(){
   try{
     const r = await api('/maestros','POST',{escuela_id:eid, nombre, materia:mat, grado});
     if(!r.ok){errEl.textContent='Código de escuela no válido.';return;}
-    document.getElementById('l-mid').value = r.maestro_id;
-    document.getElementById('l-err').textContent='';
-    // Guardar mid para usarlo al entrar
     window._midRegistrado = r.maestro_id;
-    // Mostrar pantalla de confirmación con ID visible
-    document.getElementById('c-acceso').style.display = 'none';
-    document.getElementById('c-nuevo').style.display = 'none';
+    document.getElementById('l-mid').value = r.maestro_id;
+    // Mostrar confirmación con ID dentro del modal
     document.getElementById('c-id-display').textContent = r.maestro_id;
-    document.getElementById('c-confirmacion').style.display = 'flex';
-    document.getElementById('c-confirmacion').style.flexDirection = 'column';
-    document.getElementById('c-confirmacion').style.gap = '1rem';
+    document.getElementById('reg-form').style.display = 'none';
+    document.getElementById('reg-confirmacion').style.display = 'flex';
+    document.getElementById('reg-confirmacion').style.flexDirection = 'column';
+    document.getElementById('reg-confirmacion').style.gap = '1rem';
   }catch(e){errEl.textContent='Error al registrar.';}
+}
+
+function abrirModalRegistro(){
+  document.getElementById('reg-form').style.display = 'flex';
+  document.getElementById('reg-form').style.flexDirection = 'column';
+  document.getElementById('reg-form').style.gap = '1rem';
+  document.getElementById('reg-confirmacion').style.display = 'none';
+  document.getElementById('n-err').textContent = '';
+  document.getElementById('modal-registro').classList.add('open');
+  setTimeout(()=>document.getElementById('n-eid').focus(), 300);
+}
+
+function cerrarModalRegistro(){
+  document.getElementById('modal-registro').classList.remove('open');
 }
 
 function copiarId(){
@@ -364,6 +398,7 @@ function copiarId(){
 }
 
 function entrarDesdeConfirmacion(){
+  cerrarModalRegistro();
   accederConId(window._midRegistrado);
 }
 
