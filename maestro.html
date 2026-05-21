@@ -232,6 +232,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);
     <div class="err" id="n-err"></div>
     <button class="btn ghost" onclick="registrar()">Registrarme</button>
   </div>
+  <!-- Confirmación de registro: muestra el ID antes de entrar -->
+  <div class="card" id="c-confirmacion" style="margin-top:0;display:none;text-align:center;">
+    <div style="font-size:2rem;">✅</div>
+    <h2 style="color:var(--accent);">¡Registro exitoso!</h2>
+    <p style="font-size:.82rem;color:var(--muted2);line-height:1.5;">Guarda tu ID — lo necesitarás cada vez que entres al panel.</p>
+    <div style="background:var(--surface2);border:2px solid var(--accent);border-radius:12px;padding:1rem;margin:.25rem 0;">
+      <div style="font-size:.7rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">Tu ID de maestro</div>
+      <div id="c-id-display" style="font-size:1.6rem;font-weight:900;color:var(--accent);letter-spacing:.12em;font-family:monospace;"></div>
+    </div>
+    <button class="btn ghost" onclick="copiarId()" style="margin-top:-.25rem;">Copiar ID</button>
+    <button class="btn blue" onclick="entrarDesdeConfirmacion()">Entrar al panel →</button>
+  </div>
 </div>
 
 <!-- PANEL -->
@@ -334,9 +346,25 @@ async function registrar(){
     if(!r.ok){errEl.textContent='Código de escuela no válido.';return;}
     document.getElementById('l-mid').value = r.maestro_id;
     document.getElementById('l-err').textContent='';
-    toast('Registrado. Tu ID: '+r.maestro_id+' — guárdalo.');
-    accederConId(r.maestro_id);
+    // Guardar mid para usarlo al entrar
+    window._midRegistrado = r.maestro_id;
+    // Mostrar pantalla de confirmación con ID visible
+    document.getElementById('c-acceso').style.display = 'none';
+    document.getElementById('c-nuevo').style.display = 'none';
+    document.getElementById('c-id-display').textContent = r.maestro_id;
+    document.getElementById('c-confirmacion').style.display = 'flex';
+    document.getElementById('c-confirmacion').style.flexDirection = 'column';
+    document.getElementById('c-confirmacion').style.gap = '1rem';
   }catch(e){errEl.textContent='Error al registrar.';}
+}
+
+function copiarId(){
+  const id = window._midRegistrado || document.getElementById('c-id-display').textContent;
+  navigator.clipboard.writeText(id).then(()=>toast('ID copiado ✓')).catch(()=>toast('ID: '+id));
+}
+
+function entrarDesdeConfirmacion(){
+  accederConId(window._midRegistrado);
 }
 
 function entrarPanel(){
@@ -344,7 +372,7 @@ function entrarPanel(){
   document.getElementById('s-panel').classList.add('active');
   document.getElementById('p-av').textContent = (M.nombre||'M')[0].toUpperCase();
   document.getElementById('p-nombre').textContent = M.nombre||'Docente';
-  document.getElementById('p-escuela').textContent = '● '+(M.escuela_nombre||'panel docente')+(M.grado?' · '+M.grado:'');
+  document.getElementById('p-escuela').textContent = '● '+(M.escuela_nombre||'panel docente')+(M.grado?' · '+M.grado:'')+' · ID: '+M.mid;
   _tabActual = 'resumen';
   cargarPanel();
   setInterval(()=>{ if(_tabActual!=='coaching') cargarPanel(true); }, 60000);
